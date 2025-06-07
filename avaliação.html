@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Interativo de Formatação de Computadores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals & Soft Teal -->
+    <!-- Application Structure Plan: A multi-section single-page application (SPA) designed as a guided learning journey. The structure uses a top navigation bar for easy access to thematic sections. This non-linear, task-oriented structure was chosen over a simple report layout to enhance user engagement. The core of the application is the interactive quiz, which turns passive learning into an active assessment. -->
+    <!-- Visualization & Content Choices: HTML table for comparisons, step-by-step diagram for process, Chart.js bar chart for data units, and interactive quiz form. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .nav-link { transition: color 0.3s, border-bottom-color 0.3s; }
+        .nav-link.active { color: #0d9488; border-bottom-color: #0d9488; }
+        .quiz-option { transition: background-color 0.2s; }
+        .quiz-option:hover { background-color: #f0f9ff; }
+        .quiz-option.selected { background-color: #e0f2fe; border-color: #38bdf8; }
+        .quiz-option.correct { background-color: #dcfce7; border-color: #22c55e; }
+        .quiz-option.incorrect { background-color: #fee2e2; border-color: #ef4444; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 350px; max-height: 500px; }
+        @media (min-width: 768px) { .chart-container { height: 450px; } }
+        /* Style for disabled button */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#inicio" class="text-xl font-bold text-teal-700">Guia de Formatação</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#conceitos" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent">Conceitos</a>
+                        <a href="#processo" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent">Processo</a>
+                        <a href="#seguranca" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent">Segurança</a>
+                        <a href="#quiz" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent">Quiz Interativo</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-white hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-teal-600 focus:ring-white">
+                        <span class="sr-only">Abrir menu principal</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#conceitos" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600">Conceitos</a>
+                    <a href="#processo" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600">Processo</a>
+                    <a href="#seguranca" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600">Segurança</a>
+                    <a href="#quiz" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600">Quiz Interativo</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Seção de Introdução -->
+        <section id="inicio" class="text-center mb-16 md:mb-24">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-teal-700 mb-4">Desvendando a Formatação</h1>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600">Um guia essencial para otimizar o desempenho, garantir a segurança e entender o ciclo de vida dos dados no seu computador.</p>
+        </section>
+
+        <!-- Seção de Conceitos -->
+        <section id="conceitos" class="mb-16 md:mb-24 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">Conceitos Fundamentais</h2>
+                <p class="text-md text-slate-500">Tudo começa com o entendimento do "o quê" e do "porquê". Explore os conceitos básicos que definem a formatação.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow-lg mb-12">
+                <h3 class="text-2xl font-semibold mb-4 text-teal-700">O que é Formatação?</h3>
+                <p class="text-slate-600 mb-6">A formatação é um processo técnico que remove todos os dados de um disco (HD ou SSD) e o prepara para um novo uso. É uma etapa crucial na reinstalação de um sistema operacional (como Windows, macOS ou Linux), restaurando o computador a um estado inicial, como se fosse recém-saído da fábrica. Este procedimento não só libera espaço, mas também resolve problemas de desempenho e segurança.</p>
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                    <div class="bg-slate-100 p-4 rounded-lg">
+                        <h4 class="font-semibold">🧹 Limpeza Total</h4>
+                        <p class="text-sm text-slate-500">Apaga todos os dados e configura o disco para receber novas informações.</p>
+                    </div>
+                    <div class="bg-slate-100 p-4 rounded-lg">
+                        <h4 class="font-semibold">⚙️ Preparação do Dispositivo</h4>
+                        <p class="text-sm text-slate-500">Deixa HDs e SSDs prontos para a instalação de um novo sistema.</p>
+                    </div>
+                    <div class="bg-slate-100 p-4 rounded-lg">
+                        <h4 class="font-semibold">✨ Sistema Novo em Folha</h4>
+                        <p class="text-sm text-slate-500">Reinstala o sistema operacional, devolvendo a agilidade original.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow-lg mb-12">
+                <h3 class="text-2xl font-semibold mb-4 text-teal-700">Formatação Rápida vs. Completa</h3>
+                <p class="text-slate-600 mb-6">Existem dois tipos principais de formatação. Compreender a diferença é crucial para garantir a segurança e a integridade das suas informações. A escolha errada pode deixar seus dados vulneráveis.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th class="p-4 font-semibold border-b border-slate-200">Característica</th>
+                                <th class="p-4 font-semibold border-b border-slate-200">Formatação Rápida</th>
+                                <th class="p-4 font-semibold border-b border-slate-200">Formatação Completa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 border-b border-slate-200 font-medium">Método</td>
+                                <td class="p-4 border-b border-slate-200">Apaga apenas os índices dos arquivos.</td>
+                                <td class="p-4 border-b border-slate-200">Apaga os índices e sobrescreve os dados.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 border-b border-slate-200 font-medium">Velocidade</td>
+                                <td class="p-4 border-b border-slate-200">Muito mais rápida.</td>
+                                <td class="p-4 border-b border-slate-200">Consideravelmente mais demorada.</td>
+                            </tr>
+                             <tr class="hover:bg-slate-50">
+                                <td class="p-4 border-b border-slate-200 font-medium">Segurança</td>
+                                <td class="p-4 border-b border-slate-200">Baixa. Dados podem ser recuperados.</td>
+                                <td class="p-4 border-b border-slate-200">Alta. Recuperação quase impossível.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 border-b border-slate-200 font-medium">Verificação de Disco</td>
+                                <td class="p-4 border-b border-slate-200">Não verifica a integridade física.</td>
+                                <td class="p-4 border-b border-slate-200">Verifica o disco por setores defeituosos.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-medium">Uso Ideal</td>
+                                <td class="p-4">Reinstalar o SO rapidamente em um PC pessoal.</td>
+                                <td class="p-4">Vender/doar o PC, ou se há suspeita de problemas no disco.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                 <h3 class="text-2xl font-semibold mb-4 text-teal-700">Unidades de Armazenamento Digital</h3>
+                <p class="text-slate-600 mb-6">Do menor pulso elétrico ao maior data center, os dados são medidos em unidades que crescem exponencialmente. O gráfico abaixo ilustra a escala massiva, mostrando quantos da unidade anterior cabem em cada nova unidade (escala logarítmica).</p>
+                <div class="chart-container">
+                    <canvas id="storageChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Seção de Processo -->
+        <section id="processo" class="mb-16 md:mb-24 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">O Processo de Formatação Segura</h2>
+                <p class="text-md text-slate-500">Siga estes passos para garantir uma formatação bem-sucedida, sem perda de dados importantes.</p>
+            </div>
+            
+            <div class="relative">
+                <div class="absolute left-1/2 -ml-0.5 w-1 h-full bg-teal-200 hidden md:block" aria-hidden="true"></div>
+                <div class="space-y-12 md:space-y-16">
+                    <!-- Passo 1 -->
+                    <div class="relative flex items-start md:items-center md:space-x-8">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-lg z-10">1</div>
+                        <div class="flex-grow bg-white p-6 rounded-xl shadow-lg">
+                            <h4 class="text-xl font-semibold mb-2">Backup de Dados: A Etapa Crítica</h4>
+                            <p class="text-slate-600">Antes de tudo, copie seus arquivos essenciais (fotos, documentos, etc.) para um disco externo ou serviço de nuvem. Esta é sua única apólice de seguro contra a perda permanente de dados.</p>
+                        </div>
+                    </div>
+                    <!-- Passo 2 -->
+                    <div class="relative flex items-start md:items-center md:space-x-8">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-lg z-10">2</div>
+                        <div class="flex-grow bg-white p-6 rounded-xl shadow-lg">
+                            <h4 class="text-xl font-semibold mb-2">Reinstalação do Sistema Operacional</h4>
+                            <p class="text-slate-600">Utilize um pendrive bootável ou DVD com a imagem do sistema operacional (Windows, macOS, Linux) para iniciar o processo de instalação após a formatação do disco.</p>
+                        </div>
+                    </div>
+                    <!-- Passo 3 -->
+                    <div class="relative flex items-start md:items-center md:space-x-8">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-lg z-10">3</div>
+                        <div class="flex-grow bg-white p-6 rounded-xl shadow-lg">
+                            <h4 class="text-xl font-semibold mb-2">Instalação de Drivers</h4>
+                            <p class="text-slate-600">Após instalar o SO, instale os drivers do fabricante para todos os componentes de hardware (placa de vídeo, som, rede). Isso é crucial para o bom funcionamento do sistema.</p>
+                        </div>
+                    </div>
+                    <!-- Passo 4 -->
+                    <div class="relative flex items-start md:items-center md:space-x-8">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-lg z-10">4</div>
+                        <div class="flex-grow bg-white p-6 rounded-xl shadow-lg">
+                            <h4 class="text-xl font-semibold mb-2">Instalação de Programas</h4>
+                            <p class="text-slate-600">Instale seus programas essenciais, como navegador de internet, pacote de escritório e outros aplicativos que você usa no dia a dia.</p>
+                        </div>
+                    </div>
+                    <!-- Passo 5 -->
+                    <div class="relative flex items-start md:items-center md:space-x-8">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-lg z-10">5</div>
+                        <div class="flex-grow bg-white p-6 rounded-xl shadow-lg">
+                            <h4 class="text-xl font-semibold mb-2">Restauração dos Dados</h4>
+                            <p class="text-slate-600">Finalmente, copie os arquivos do seu backup de volta para o computador. Seu sistema está agora limpo, otimizado e com seus dados de volta.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção de Segurança -->
+        <section id="seguranca" class="mb-16 md:mb-24 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-2">Proteção Avançada de Dados</h2>
+                <p class="text-md text-slate-500">A formatação é apenas o começo. Aprenda a proteger suas informações de forma proativa.</p>
+            </div>
+            <div class="grid md:grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-semibold mb-3 text-teal-700">Backup Automatizado</h4>
+                    <p class="text-slate-600">Explore softwares de backup que criam cópias de segurança programadas. Para dados mais sensíveis, use ferramentas que criam "imagens do sistema", permitindo uma restauração completa em caso de necessidade.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-semibold mb-3 text-teal-700">Criptografia de Disco</h4>
+                    <p class="text-slate-600">Após a formatação, ative a criptografia de disco. Ferramentas como BitLocker (Windows) e FileVault (macOS) protegem seus arquivos, tornando-os ilegíveis caso o computador seja roubado ou perdido.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h4 class="text-xl font-semibold mb-3 text-teal-700">Destruição Segura de Dados</h4>
+                    <p class="text-slate-600">Ao vender ou descartar um disco, a formatação não basta. Use softwares de "limpeza segura" que sobrescrevem o disco várias vezes. Em casos extremes, a destruição física é a única garantia.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção do Quiz -->
+        <section id="quiz" class="scroll-mt-16">
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Teste seus Conhecimentos</h2>
+                    <p class="text-md text-slate-500">Complete o quiz para avaliar sua compreensão sobre formatação e segurança de dados.</p>
+                </div>
+
+                <div id="quiz-container">
+                    <div id="quiz-start-screen">
+                        <div class="mb-6">
+                            <label for="student-name" class="block text-sm font-medium text-slate-700 mb-1">Nome do Aluno(a):</label>
+                            <input type="text" id="student-name" name="student-name" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm" placeholder="Digite seu nome completo">
+                            <div id="student-name-error" class="text-red-500 text-xs mt-1"></div>
+                        </div>
+                        <p class="text-center text-slate-600 mb-6">São 44 perguntas para testar seu conhecimento. Clique abaixo para começar!</p>
+                        <div class="text-center">
+                            <button id="start-quiz-btn" class="bg-teal-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-teal-700 transition-colors">Iniciar Quiz</button>
+                        </div>
+                    </div>
+
+                    <div id="quiz-question-screen" class="hidden">
+                        <div class="text-center mb-4">
+                            <p id="quiz-progress" class="text-sm font-medium text-slate-500">Pergunta 1 de 44</p>
+                            <div class="w-full bg-slate-200 rounded-full h-2.5 mt-2">
+                                <div id="quiz-progress-bar" class="bg-teal-500 h-2.5 rounded-full" style="width: 2.27%"></div>
+                            </div>
+                             <p id="quiz-attempt-info" class="text-center text-xs text-slate-500 mt-2 mb-1"></p> <!-- Attempt Number Display -->
+                        </div>
+                        <div id="question-timer-display" class="text-center text-sm text-slate-600 my-3">Tempo: 00:00.000</div>
+                        <h3 id="quiz-question" class="text-xl font-semibold text-center my-6"></h3>
+                        <div id="quiz-options" class="space-y-4"></div>
+                        <div id="quiz-message" class="text-red-500 text-sm text-center mt-4 mb-2 h-5"></div>
+                        <div class="mt-8 flex justify-between items-center">
+                           <button id="prev-question-btn" class="bg-slate-200 text-slate-700 font-bold py-2 px-6 rounded-lg hover:bg-slate-300 transition-colors">Anterior</button>
+                           <button id="next-question-btn" class="bg-teal-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-teal-700 transition-colors">Próxima</button>
+                        </div>
+                    </div>
+
+                    <div id="quiz-results-screen" class="hidden">
+                        <h3 class="text-2xl font-bold text-center mb-4">Quiz Finalizado!</h3>
+                        <div class="text-center text-lg text-slate-600 mb-6">
+                            <p>Aluno(a): <span id="results-student-name" class="font-bold text-teal-700"></span></p>
+                            <p>Tentativa Nº: <span id="results-attempt-number" class="font-bold"></span></p> <!-- Attempt Number on Results -->
+                            <p>Você acertou <span id="quiz-score" class="font-bold text-teal-600">0</span> de <span id="quiz-total" class="font-bold">44</span> perguntas.</p>
+                            <p id="quiz-percentage" class="text-3xl font-bold mt-2 text-teal-500">0%</p>
+                        </div>
+                        <div id="quiz-feedback" class="text-center text-slate-700 font-medium mb-8"></div>
+                        <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                            <button id="restart-quiz-btn" class="w-full sm:w-auto bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors">Tentar Novamente</button>
+                            <button id="download-pdf-btn" class="w-full sm:w-auto bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-colors">Baixar Relatório em PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-white mt-16 md:mt-24">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
+            <p>&copy; 2024 Guia Interativo de Formatação. Conteúdo adaptado de "Desvendando a Formatação: Um Guia Essencial para seu Computador".</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4 
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                let activeSectionId = null;
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+                         activeSectionId = entry.target.id;
+                    }
+                });
+
+                if (activeSectionId) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href').substring(1) === activeSectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                } else {
+                    let currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+                    let foundActive = false;
+                    sections.forEach(section => {
+                        if (section.offsetTop <= currentScroll + window.innerHeight * 0.5 && 
+                            section.offsetTop + section.offsetHeight > currentScroll + window.innerHeight * 0.2) { 
+                            navLinks.forEach(link => {
+                                link.classList.remove('active');
+                                if (link.getAttribute('href').substring(1) === section.id) {
+                                    link.classList.add('active');
+                                    foundActive = true;
+                                }
+                            });
+                        }
+                    });
+                    if (!foundActive) { 
+                         navLinks.forEach(link => link.classList.remove('active'));
+                         if (currentScroll < sections[0].offsetTop) {
+                            const firstNavLink = document.querySelector('.nav-link[href="#inicio"]') || document.querySelector('.nav-link[href="#conceitos"]');
+                            if(firstNavLink) firstNavLink.classList.add('active');
+                         }
+                    }
+                }
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                    if (mobileMenu.classList.contains('hidden') === false) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const storageCtx = document.getElementById('storageChart').getContext('2d');
+            new Chart(storageCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Kilobyte (KB)', 'Megabyte (MB)', 'Gigabyte (GB)', 'Terabyte (TB)', 'Petabyte (PB)'],
+                    datasets: [{
+                        label: 'Fator de Multiplicação (base 1024)',
+                        data: [1024, 1024*1024, 1024*1024*1024, 1024*1024*1024*1024, 1024*1024*1024*1024*1024],
+                        backgroundColor: [
+                            'rgba(15, 118, 110, 0.2)',
+                            'rgba(13, 148, 136, 0.4)',
+                            'rgba(20, 184, 166, 0.6)',
+                            'rgba(45, 212, 191, 0.8)',
+                            'rgba(99, 222, 207, 1)'
+                        ],
+                        borderColor: [
+                            'rgba(15, 118, 110, 1)',
+                            'rgba(13, 148, 136, 1)',
+                            'rgba(20, 184, 166, 1)',
+                            'rgba(45, 212, 191, 1)',
+                            'rgba(99, 222, 207, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Tamanho em Bytes (Escala Logarítmica)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    let value = context.parsed.y;
+                                    if(value >= 1e15) return (value/1e15).toFixed(0) + ' PB (' + (value/1e15).toFixed(2) + ' Quatrilhões de Bytes)';
+                                    if(value >= 1e12) return (value/1e12).toFixed(0) + ' TB (' + (value/1e12).toFixed(2) + ' Trilhões de Bytes)';
+                                    if(value >= 1e9) return (value/1e9).toFixed(0) + ' GB (' + (value/1e9).toFixed(2) + ' Bilhões de Bytes)';
+                                    if(value >= 1e6) return (value/1e6).toFixed(0) + ' MB (' + (value/1e6).toFixed(2) + ' Milhões de Bytes)';
+                                    if(value >= 1e3) return (value/1e3).toFixed(0) + ' KB (' + value + ' Bytes)';
+                                    return value + ' Bytes';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const quizData = [
+                { question: "Qual é a definição central da formatação de um computador?", options: ["Liberar espaço no disco", "Remover vírus", "Remover todos os dados e preparar o disco para novo uso", "Atualizar o sistema operacional"], answer: "Remover todos os dados e preparar o disco para novo uso" },
+                { question: "A formatação tem como objetivo principal apenas liberar espaço.", type: "boolean", answer: false },
+                { question: "Qual dos seguintes NÃO é um propósito principal da formatação?", options: ["Resolução de problemas de desempenho", "Instalar novos drivers de hardware", "Reinstalação do sistema operacional", "Preparação do dispositivo para um novo sistema"], answer: "Instalar novos drivers de hardware" },
+                { question: "O que significa 'restaurar o computador a um estado inicial'?", options: ["Desfragmentar o disco", "Limpar o cache do navegador", "Reinstalar o SO, removendo dados e configurações anteriores", "Fazer backup dos arquivos"], answer: "Reinstalar o SO, removendo dados e configurações anteriores" },
+                { question: "A formatação é um processo exclusivamente destrutivo.", type: "boolean", answer: false },
+                { question: "Qual a principal característica da Formatação Rápida?", options: ["Sobrescreve todos os dados", "Verifica a integridade do disco", "Apaga apenas os índices dos arquivos", "É mais segura que a completa"], answer: "Apaga apenas os índices dos arquivos" },
+                { question: "Qual formatação torna a recuperação de dados mais difícil?", options: ["Rápida", "Completa", "Ambas", "Nenhuma"], answer: "Completa" },
+                { question: "Para vender um PC com segurança, qual formatação é recomendada?", options: ["Rápida", "Completa", "Tanto faz", "Nenhuma, deve-se destruir o disco"], answer: "Completa" },
+                { question: "A Formatação Rápida é mais demorada que a Completa.", type: "boolean", answer: false },
+                { question: "Qual tipo de formatação verifica a integridade física do disco?", options: ["Rápida", "Completa", "Ambas", "Nenhuma"], answer: "Completa" },
+                { question: "Computador lento e travando constantemente é um cenário de:", options: ["Falha de hardware", "Problemas de Desempenho", "Falta de memória RAM", "Vírus"], answer: "Problemas de Desempenho" },
+                { question: "Se um antivírus falha em remover um malware, a solução eficaz é:", options: ["Desfragmentar o disco", "Atualizar o antivírus", "Formatar o computador", "Restaurar o sistema"], answer: "Formatar o computador" },
+                { question: "Por que formatar um PC antes de doá-lo?", options: ["Para aumentar seu valor", "Para proteger a privacidade do usuário", "Para instalar jogos", "Para testar o hardware"], answer: "Para proteger a privacidade do usuário" },
+                { question: "A 'tela azul da morte' (BSOD) é um exemplo de:", options: ["Vírus", "Problema de desempenho", "Falha de hardware", "Falhas Graves do Sistema"], answer: "Falhas Graves do Sistema" },
+                { question: "A formatação é uma solução apenas para problemas de hardware.", type: "boolean", answer: false },
+                { question: "Qual é a etapa mais crítica no processo de formatação?", options: ["Instalar drivers", "Backup de Dados", "Escolher o SO", "Restaurar dados"], answer: "Backup de Dados" },
+                { question: "Por que o backup é considerado uma 'apólice de seguro'?", options: ["Porque acelera a formatação", "Porque protege contra vírus", "Porque garante que arquivos essenciais não sejam perdidos", "Porque melhora o desempenho"], answer: "Porque garante que arquivos essenciais não sejam perdidos" },
+                { question: "Após instalar o SO, o que deve ser instalado para a funcionalidade completa?", options: ["Apenas jogos", "Apenas o antivírus", "Drivers e programas do usuário", "Apenas o navegador"], answer: "Drivers e programas do usuário" },
+                { question: "Qual a finalidade de um pendrive bootável no processo?", options: ["Para fazer backup", "Para instalar drivers", "Para reinstalar o sistema operacional", "Para verificar a integridade do disco"], answer: "Para reinstalar o sistema operacional" },
+                { question: "A restauração dos dados deve ser feita antes da reinstalação do SO.", type: "boolean", answer: false },
+                { question: "Qual é a menor unidade de informação em um computador?", options: ["Byte", "Bit", "Kilobyte", "Gigabit"], answer: "Bit" },
+                { question: "Um Bit representa qual estado?", options: ["Aberto ou Fechado", "Positivo ou Negativo", "Ligado ou Desligado (0 ou 1)", "Verdadeiro ou Falso"], answer: "Ligado ou Desligado (0 ou 1)" },
+                { question: "Quantos bits formam um Byte?", options: ["4", "8", "16", "32"], answer: "8" },
+                { question: "Um Byte é a unidade fundamental para armazenar:", options: ["Um arquivo de vídeo", "Um programa completo", "Um único caractere", "Uma imagem"], answer: "Um único caractere" },
+                { question: "A combinação de bits em bytes permite a codificação de todas as informações em um computador.", type: "boolean", answer: true },
+                { question: "Qual unidade equivale a 1.024 bytes?", options: ["Megabyte (MB)", "Gigabyte (GB)", "Kilobyte (KB)", "Terabyte (TB)"], answer: "Kilobyte (KB)" },
+                { question: "Quantos Kilobytes (KB) compõem um Megabyte (MB)?", options: ["1000", "1024", "2048", "512"], answer: "1024" },
+                { question: "Filmes, jogos e sistemas operacionais são geralmente medidos em:", options: ["MB", "KB", "TB", "GB"], answer: "GB" },
+                { question: "Qual unidade representa aproximadamente 1 trilhão de bytes?", options: ["Gigabyte (GB)", "Petabyte (PB)", "Terabyte (TB)", "Megabyte (MB)"], answer: "Terabyte (TB)" },
+                { question: "Petabytes (PB) e Exabytes (EB) são unidades usadas para:", options: ["Armazenamento em smartphones", "Disquetes antigos", "Grandes data centers e armazenamento global", "Memória RAM de notebooks"], answer: "Grandes data centers e armazenamento global" },
+                { question: "Uma música MP3 geralmente tem alguns:", options: ["KB", "MB", "GB", "TB"], answer: "MB" },
+                { question: "A segurança dos dados é primordial apenas durante a formatação.", type: "boolean", answer: false },
+                { question: "Qual é a primeira e mais importante prática de segurança antes de formatar?", options: ["Instalar um antivírus", "Realizar um backup completo", "Criptografar o disco", "Desconectar da internet"], answer: "Realizar um backup completo" },
+                { question: "Qual dos seguintes NÃO é um método de backup mencionado?", options: ["Discos rígidos externos", "Serviços de nuvem", "Mídias removíveis", "Memória RAM"], answer: "Memória RAM" },
+                { question: "O que são 'imagens do sistema' usadas para backup?", options: ["Coleções de fotos do usuário", "Cópias exatas de todo o sistema para restauração completa", "Capturas de tela do sistema operacional", "Ícones personalizados do sistema"], answer: "Cópias exatas de todo o sistema para restauração completa" },
+                { question: "Qual medida de segurança é recomendada APÓS a reinstalação do SO?", options: ["Desfragmentação", "Criptografia de dados", "Limpeza de disco", "Backup"], answer: "Criptografia de dados" },
+                { question: "BitLocker e FileVault são ferramentas de:", options: ["Backup", "Antivírus", "Desfragmentação", "Criptografia"], answer: "Criptografia" },
+                { question: "Ao descartar um disco, a formatação simples é suficiente para garantir a segurança dos dados.", type: "boolean", answer: false },
+                { question: "Softwares de 'limpeza segura' tornam a recuperação de dados impossível ao:", options: ["Apagar os índices", "Comprimir os dados", "Sobrescrever o disco várias vezes", "Criptografar os dados"], answer: "Sobrescrever o disco várias vezes" },
+                { question: "A destruição física do disco é necessária quando:", options: ["O disco está lento", "O disco tem pouco espaço", "A segurança dos dados é de máxima importância", "O usuário quer comprar um novo"], answer: "A segurança dos dados é de máxima importância" },
+                { question: "A escolha entre formatação rápida e completa depende da necessidade de segurança e do estado do disco.", type: "boolean", answer: true },
+                { question: "Como a formatação resolve problemas de desempenho?", options: ["Aumentando a velocidade da internet", "Aumentando a memória RAM", "Removendo acúmulos de arquivos e erros", "Atualizando os drivers de vídeo"], answer: "Removendo acúmulos de arquivos e erros" },
+                { question: "Por que Bit e Byte são fundamentais para o armazenamento?", options: ["Porque medem a velocidade do processador", "Porque são as unidades básicas que codificam toda a informação digital", "Porque determinam a resolução da tela", "Porque gerenciam a energia do computador"], answer: "Porque são as unidades básicas que codificam toda a informação digital" },
+                { question: "Qual a principal diferença de segurança entre formatação rápida e 'limpeza segura'?", options: ["Não há diferença", "A formatação rápida criptografa, a limpeza não", "A rápida oculta dados (recuperáveis), a limpeza sobrescreve (irrecuperáveis)", "A limpeza segura é mais rápida"], answer: "A rápida oculta dados (recuperáveis), a limpeza sobrescreve (irrecuperáveis)" },
+            ];
+
+            const startScreen = document.getElementById('quiz-start-screen');
+            const questionScreen = document.getElementById('quiz-question-screen');
+            const resultsScreen = document.getElementById('quiz-results-screen');
+            
+            const studentNameInput = document.getElementById('student-name');
+            const studentNameErrorEl = document.getElementById('student-name-error');
+            const resultsStudentNameEl = document.getElementById('results-student-name');
+            const resultsAttemptNumberEl = document.getElementById('results-attempt-number'); // Added
+
+            const startBtn = document.getElementById('start-quiz-btn');
+            const restartBtn = document.getElementById('restart-quiz-btn');
+            const downloadPdfBtn = document.getElementById('download-pdf-btn');
+
+            const questionEl = document.getElementById('quiz-question');
+            const optionsEl = document.getElementById('quiz-options');
+            const progressEl = document.getElementById('quiz-progress');
+            const progressBarEl = document.getElementById('quiz-progress-bar');
+            const quizMessageEl = document.getElementById('quiz-message'); 
+            const timerDisplayEl = document.getElementById('question-timer-display');
+            const attemptInfoEl = document.getElementById('quiz-attempt-info'); // Added
+
+
+            const prevBtn = document.getElementById('prev-question-btn');
+            const nextBtn = document.getElementById('next-question-btn');
+
+            let currentQuestionIndex = 0;
+            let userAnswers = new Array(quizData.length).fill(null);
+            // let studentName = ''; // Replaced by currentStudentNameForQuiz
+            
+            let questionStartTime = 0; 
+            let userTimes = []; 
+            let currentTimerInterval = null; 
+
+            let attemptCounts = {}; // Stores { studentName: count }
+            let currentStudentNameForQuiz = ''; // Name for the active quiz session
+
+            function formatTime(ms) {
+                if (ms === null || ms === undefined) return "00:00.000";
+                let totalSeconds = Math.floor(ms / 1000);
+                let minutes = Math.floor(totalSeconds / 60);
+                let seconds = totalSeconds % 60;
+                let millis = ms % 1000;
+                return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
+            }
+            
+            function startQuiz() {
+                const name = studentNameInput.value.trim();
+                if (name === '') {
+                    studentNameErrorEl.textContent = 'Por favor, insira seu nome para começar.';
+                    return;
+                }
+                currentStudentNameForQuiz = name; // Set the active student name for this quiz session
+                studentNameErrorEl.textContent = ''; 
+                
+                // Increment attempt count for the current student
+                attemptCounts[currentStudentNameForQuiz] = (attemptCounts[currentStudentNameForQuiz] || 0) + 1;
+
+                // Reset quiz state for the new attempt (answers, times, index)
+                currentQuestionIndex = 0;
+                userAnswers.fill(null);
+                userTimes = new Array(quizData.length).fill(0);
+                questionStartTime = 0;
+                if (currentTimerInterval) {
+                    clearInterval(currentTimerInterval);
+                    currentTimerInterval = null;
+                }
+                
+                startScreen.classList.add('hidden');
+                resultsScreen.classList.add('hidden');
+                questionScreen.classList.remove('hidden');
+                quizMessageEl.textContent = ''; 
+
+                // Display attempt number on question screen
+                attemptInfoEl.textContent = `Tentativa Nº: ${attemptCounts[currentStudentNameForQuiz]}`;
+                
+                showQuestion();
+            }
+
+            function showQuestion() {
+                if (currentTimerInterval) {
+                    clearInterval(currentTimerInterval);
+                }
+
+                const questionData = quizData[currentQuestionIndex];
+                questionEl.textContent = questionData.question;
+                optionsEl.innerHTML = ''; 
+
+                if (questionData.type === 'boolean') {
+                    const options = ['Verdadeiro', 'Falso'];
+                    options.forEach(optionText => {
+                        const isSelected = (optionText === 'Verdadeiro' && userAnswers[currentQuestionIndex] === true) || (optionText === 'Falso' && userAnswers[currentQuestionIndex] === false);
+                        const button = document.createElement('button');
+                        button.textContent = optionText;
+                        button.className = `w-full text-left p-4 border rounded-lg quiz-option ${isSelected ? 'selected' : ''}`;
+                        button.onclick = () => selectAnswer(optionText === 'Verdadeiro');
+                        optionsEl.appendChild(button);
+                    });
+                } else {
+                    questionData.options.forEach(optionText => {
+                        const isSelected = userAnswers[currentQuestionIndex] === optionText;
+                        const button = document.createElement('button');
+                        button.textContent = optionText;
+                        button.className = `w-full text-left p-4 border rounded-lg quiz-option ${isSelected ? 'selected' : ''}`;
+                        button.onclick = () => selectAnswer(optionText);
+                        optionsEl.appendChild(button);
+                    });
+                }
+
+                questionStartTime = Date.now(); 
+                
+                const initialDisplayTime = userTimes[currentQuestionIndex] || 0;
+                timerDisplayEl.textContent = `Tempo: ${formatTime(initialDisplayTime)}`;
+                
+                let sessionStartTimestamp = Date.now(); 
+
+                currentTimerInterval = setInterval(() => {
+                    const currentSessionElapsedTime = Date.now() - sessionStartTimestamp;
+                    timerDisplayEl.textContent = `Tempo: ${formatTime(initialDisplayTime + currentSessionElapsedTime)}`;
+                }, 100); 
+
+
+                updateNavigation();
+                updateProgress();
+                
+                if (userAnswers[currentQuestionIndex] === null) {
+                    nextBtn.disabled = true;
+                    nextBtn.title = "Por favor, selecione uma resposta para continuar.";
+                } else {
+                    nextBtn.disabled = false;
+                    nextBtn.title = "";
+                }
+                 quizMessageEl.textContent = ''; 
+            }
+
+            function recordTimeForCurrentQuestion() {
+                if (questionStartTime > 0 && currentQuestionIndex >= 0 && currentQuestionIndex < userTimes.length) {
+                    const timeSpentThisSession = Date.now() - questionStartTime;
+                    userTimes[currentQuestionIndex] = (userTimes[currentQuestionIndex] || 0) + timeSpentThisSession;
+                }
+                questionStartTime = 0; 
+                if (currentTimerInterval) {
+                    clearInterval(currentTimerInterval);
+                    currentTimerInterval = null;
+                }
+            }
+            
+            function selectAnswer(answer) {
+                userAnswers[currentQuestionIndex] = answer;
+                quizMessageEl.textContent = ''; 
+                
+                const optionButtons = optionsEl.querySelectorAll('.quiz-option');
+                 optionButtons.forEach(btn => {
+                    let btnValue;
+                    if (quizData[currentQuestionIndex].type === 'boolean') {
+                        btnValue = (btn.textContent === 'Verdadeiro');
+                    } else {
+                        btnValue = btn.textContent;
+                    }
+                    if (btnValue === answer) {
+                        btn.classList.add('selected');
+                    } else {
+                        btn.classList.remove('selected');
+                    }
+                });
+
+                if (userAnswers[currentQuestionIndex] !== null) {
+                    nextBtn.disabled = false;
+                    nextBtn.title = "";
+                }
+            }
+
+            function updateNavigation() {
+                prevBtn.disabled = currentQuestionIndex === 0;
+                if (currentQuestionIndex === quizData.length - 1) {
+                    nextBtn.textContent = 'Finalizar';
+                } else {
+                    nextBtn.textContent = 'Próxima';
+                }
+            }
+
+            function updateProgress() {
+                const progress = currentQuestionIndex + 1;
+                progressEl.textContent = `Pergunta ${progress} de ${quizData.length}`;
+                progressBarEl.style.width = `${(progress / quizData.length) * 100}%`;
+            }
+
+            function nextQuestion() {
+                if (userAnswers[currentQuestionIndex] === null) {
+                    quizMessageEl.textContent = 'Por favor, selecione uma resposta para continuar.';
+                    return; 
+                }
+                quizMessageEl.textContent = ''; 
+                
+                recordTimeForCurrentQuestion(); 
+
+                if (currentQuestionIndex < quizData.length - 1) {
+                    currentQuestionIndex++;
+                    showQuestion();
+                } else {
+                    showResults(); 
+                }
+            }
+
+            function prevQuestion() {
+                if (currentQuestionIndex > 0) {
+                    recordTimeForCurrentQuestion(); 
+                    currentQuestionIndex--;
+                    quizMessageEl.textContent = ''; 
+                    showQuestion();
+                }
+            }
+
+            function showResults() {
+                recordTimeForCurrentQuestion(); 
+
+                questionScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                
+                resultsStudentNameEl.textContent = currentStudentNameForQuiz; 
+                resultsAttemptNumberEl.textContent = attemptCounts[currentStudentNameForQuiz]; // Display attempt
+
+                let score = 0;
+                userAnswers.forEach((answer, index) => {
+                    if(answer === quizData[index].answer) {
+                        score++;
+                    }
+                });
+
+                const percentage = Math.round((score / quizData.length) * 100);
+                document.getElementById('quiz-score').textContent = score;
+                document.getElementById('quiz-total').textContent = quizData.length;
+                document.getElementById('quiz-percentage').textContent = `${percentage}%`;
+
+                const feedbackEl = document.getElementById('quiz-feedback');
+                if (percentage >= 90) {
+                    feedbackEl.textContent = "Excelente! Você é um mestre da formatação e segurança digital.";
+                    feedbackEl.className = "text-center text-green-700 font-medium mb-8";
+                } else if (percentage >= 70) {
+                    feedbackEl.textContent = "Muito bom! Você tem um ótimo conhecimento sobre o assunto.";
+                    feedbackEl.className = "text-center text-blue-700 font-medium mb-8";
+                } else if (percentage >= 50) {
+                    feedbackEl.textContent = "Bom trabalho! Continue estudando para aprimorar alguns conceitos.";
+                     feedbackEl.className = "text-center text-yellow-700 font-medium mb-8";
+                } else {
+                    feedbackEl.textContent = "Não desanime. Reveja os conceitos e tente novamente para fixar o conhecimento!";
+                    feedbackEl.className = "text-center text-red-700 font-medium mb-8";
+                }
+            }
+
+            function resetQuizState() {
+                // Pre-fill the student name input with the name from the *just completed* quiz for convenience
+                if (currentStudentNameForQuiz) {
+                    studentNameInput.value = currentStudentNameForQuiz;
+                } else {
+                    studentNameInput.value = ''; 
+                }
+                studentNameErrorEl.textContent = '';
+                
+                // Clear timer and other visual quiz elements specific to question screen
+                if (currentTimerInterval) {
+                    clearInterval(currentTimerInterval);
+                    currentTimerInterval = null;
+                }
+                timerDisplayEl.textContent = `Tempo: ${formatTime(0)}`;
+                attemptInfoEl.textContent = ''; // Clear attempt info on question screen
+
+                // Transition UI back to start screen
+                // Quiz-specific data like answers, times, currentQuestionIndex, and attempt counts
+                // will be freshly initialized/incremented in startQuiz() when the user starts again.
+                startScreen.classList.remove('hidden');
+                questionScreen.classList.add('hidden');
+                resultsScreen.classList.add('hidden');
+                quizMessageEl.textContent = '';
+            }
+            
+            function generatePDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const score = document.getElementById('quiz-score').textContent;
+                const total = document.getElementById('quiz-total').textContent;
+                const percentage = document.getElementById('quiz-percentage').textContent;
+                const feedback = document.getElementById('quiz-feedback').textContent;
+                const date = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const currentAttemptNumber = attemptCounts[currentStudentNameForQuiz] || 0;
+
+
+                doc.setFontSize(22);
+                doc.text("Relatório de Desempenho do Quiz", 105, 20, null, null, 'center');
+                doc.setFontSize(12);
+                doc.text(`Data: ${date}`, 105, 30, null, null, 'center');
+                doc.text(`Aluno(a): ${currentStudentNameForQuiz}`, 105, 38, null, null, 'center'); 
+                doc.text(`Tentativa Nº: ${currentAttemptNumber}`, 105, 46, null, null, 'center'); // Added attempt number
+                
+                let currentY = 46 + 10; // Start Y position after attempt number
+
+                doc.setFontSize(16);
+                doc.text("Seu Resultado:", 20, currentY); 
+                currentY += 10;
+                doc.setFontSize(12);
+                doc.text(`- Pontuação: ${score} de ${total} acertos`, 20, currentY); 
+                currentY += 10;
+                doc.text(`- Percentual de acerto: ${percentage}`, 20, currentY); 
+                currentY += 10;
+                
+                const feedbackLines = doc.splitTextToSize(`- Feedback: ${feedback}`, 170); 
+                doc.text(feedbackLines, 20, currentY); 
+                currentY += (feedbackLines.length * 7) + 10; // Adjusted spacing
+                
+                doc.setFontSize(16);
+                doc.text("Resumo das Respostas:", 20, currentY);
+                currentY += 10;
+
+                userAnswers.forEach((answer, index) => {
+                    const questionData = quizData[index];
+                    const userAnswerText = answer === null ? "Não respondida" : (typeof answer === 'boolean' ? (answer ? 'Verdadeiro' : 'Falso') : answer);
+                    const correctAnswerText = typeof questionData.answer === 'boolean' ? (questionData.answer ? 'Verdadeiro' : 'Falso') : questionData.answer;
+                    const isCorrect = answer === questionData.answer;
+                    const timeTaken = userTimes[index]; 
+                    const timeText = formatTime(timeTaken);
+                    
+                    if (currentY > 260) { 
+                        doc.addPage();
+                        currentY = 20;
+                         doc.setFontSize(12); 
+                         doc.text(`Aluno(a): ${currentStudentNameForQuiz} (continuação)`, 105, 10, null, null, 'center');
+                         currentY = 25; 
+                    }
+                    
+                    doc.setFontSize(10);
+                    const questionTextLines = doc.splitTextToSize(`${index + 1}. ${questionData.question}`, 170);
+                    doc.setTextColor(isCorrect ? '#166534' : '#991b1b'); 
+                    doc.text(questionTextLines, 20, currentY);
+                    currentY += (questionTextLines.length * 4) + 2; 
+
+                    doc.setTextColor(0); 
+                    const userAnswerLines = doc.splitTextToSize(`Sua resposta: ${userAnswerText}`, 165);
+                    doc.text(userAnswerLines, 25, currentY);
+                    currentY += (userAnswerLines.length * 4) + 2;
+
+                    if (!isCorrect) {
+                       const correctAnswerLines = doc.splitTextToSize(`Resposta correta: ${correctAnswerText}`, 165);
+                       doc.setTextColor('#1e40af'); 
+                       doc.text(correctAnswerLines, 25, currentY);
+                       currentY += (correctAnswerLines.length * 4) + 2;
+                       doc.setTextColor(0);
+                    }
+
+                    doc.setFontSize(9);
+                    doc.setTextColor('#334155'); 
+                    doc.text(`Tempo gasto: ${timeText}`, 25, currentY);
+                    currentY += 4; 
+
+                    currentY += 6; 
+                });
+
+                doc.save(`relatorio-quiz-${currentStudentNameForQuiz.replace(/\s+/g, '_')}-tentativa_${currentAttemptNumber}-${new Date().getTime()}.pdf`);
+            }
+
+            startBtn.addEventListener('click', startQuiz);
+            restartBtn.addEventListener('click', resetQuizState); 
+            nextBtn.addEventListener('click', nextQuestion);
+            prevBtn.addEventListener('click', prevQuestion);
+            downloadPdfBtn.addEventListener('click', generatePDF);
+        });
+
+    </script>
+</body>
+</html>
