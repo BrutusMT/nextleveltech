@@ -428,13 +428,65 @@
 
         // --- QUIZ LOGIC ---
         const quizData = [ /* quizData array remains unchanged */ 
-             { question: "Qual é a definição central da formatação?", options: ["Liberar espaço", "Remover vírus", "Remover todos os dados e preparar o disco para novo uso", "Atualizar o SO"], answer: "Remover todos os dados e preparar o disco para novo uso", videoUrl: "https://www.youtube.com/results?search_query=o+que+é+formatação+de+computador" },
-             { question: "Formatação Rápida é mais segura que a Completa.", type: "boolean", answer: false, videoUrl: "https://www.youtube.com/results?search_query=formatação+rápida+vs+completa" },
-             { question: "Qual a etapa mais crítica antes de formatar?", options: ["Instalar drivers", "Backup de Dados", "Escolher o SO", "Restaurar dados"], answer: "Backup de Dados", videoUrl: "https://www.youtube.com/results?search_query=importancia+do+backup+antes+de+formatar" },
-             { question: "Quantos bits formam um Byte?", options: ["4", "8", "16", "32"], answer: "8", videoUrl: "https://www.youtube.com/results?search_query=quantos+bits+tem+um+byte" },
-             { question: "BitLocker é uma ferramenta de:", options: ["Backup", "Antivírus", "Desfragmentação", "Criptografia"], answer: "Criptografia", videoUrl: "https://www.youtube.com/results?search_query=como+usar+bitlocker" },
-        ]; // Using a shorter version for brevity in this example, the full list is in the HTML.
-        
+        // Perguntas iniciais. Elas serão carregadas do localStorage se existirem.
+        const initialQuestions = [
+            // HARDWARE (17 Questões)
+            { id: 1, area: "Hardware", question: "Qual o acrônimo para 'Unidade Central de Processamento'?", options: ["GPU", "RAM", "CPU", "SSD"], answer: "CPU" },
+            { id: 2, area: "Hardware", question: "Qual componente armazena dados temporariamente para acesso rápido pela CPU?", options: ["HD", "SSD", "RAM", "ROM"], answer: "RAM" },
+            { id: 3, area: "Hardware", question: "Um disco rígido (HD) é um tipo de memória...", options: ["volátil", "cache", "primária", "secundária"], answer: "secundária" },
+            { id: 4, area: "Hardware", question: "Qual dispositivo de saída é usado para exibir imagens?", options: ["Teclado", "Impressora", "Monitor", "Mouse"], answer: "Monitor" },
+            { id: 5, area: "Hardware", question: "Qual porta é comumente usada para conectar periféricos como pen drives e impressoras?", options: ["HDMI", "VGA", "USB", "Ethernet"], answer: "USB" },
+            { id: 6, area: "Hardware", question: "A BIOS é um firmware armazenado em qual tipo de memória?", options: ["RAM", "ROM", "SSD", "HD"], answer: "ROM" },
+            { id: 7, area: "Hardware", question: "Qual componente é responsável por gerar as imagens em um monitor?", options: ["CPU", "GPU", "RAM", "Placa Mãe"], answer: "GPU" },
+            { id: 8, area: "Hardware", question: "O que significa SSD?", options: ["Solid State Drive", "Super Speed Disk", "Software Storage Device", "System Service Drive"], answer: "Solid State Drive" },
+            { id: 9, area: "Hardware", question: "Qual o nome da principal placa de circuito do computador?", options: ["Placa de Vídeo", "Placa de Rede", "Placa Mãe", "Placa de Som"], answer: "Placa Mãe" },
+            { id: 10, area: "Hardware", question: "Qual dispositivo é usado para digitalizar documentos e imagens?", options: ["Impressora", "Plotter", "Scanner", "Projetor"], answer: "Scanner" },
+            { id: 11, area: "Hardware", question: "Um microfone é um dispositivo de...", options: ["saída", "entrada", "processamento", "armazenamento"], answer: "entrada" },
+            { id: 12, area: "Hardware", question: "Qual tipo de impressora usa toner para imprimir?", options: ["Jato de Tinta", "Matricial", "Laser", "Térmica"], answer: "Laser" },
+            { id: 13, area: "Hardware", question: "O que é um 'cooler' no computador?", options: ["Dispositivo de som", "Ventoinha para resfriamento", "Unidade de medida de temperatura", "Tipo de memória"], answer: "Ventoinha para resfriamento" },
+            { id: 14, area: "Hardware", question: "Qual componente fornece energia para todos os outros componentes do computador?", options: ["Estabilizador", "Bateria", "Fonte de Alimentação", "No-break"], answer: "Fonte de Alimentação" },
+            { id: 15, area: "Hardware", question: "PCI Express é um tipo de slot para...", options: ["RAM", "HD", "Placa de Vídeo", "Processador"], answer: "Placa de Vídeo" },
+            { id: 16, area: "Hardware", question: "Qual a função de um no-break?", options: ["Aumentar a velocidade da internet", "Proteger contra vírus", "Fornecer energia temporária em caso de queda de luz", "Otimizar o desempenho da CPU"], answer: "Fornecer energia temporária em caso de queda de luz" },
+            { id: 17, area: "Hardware", question: "O que é um 'byte'?", options: ["Uma unidade de CPU", "Oito bits", "Um tipo de vírus", "Um conector de placa mãe"], answer: "Oito bits" },
+
+            // SOFTWARE & SISTEMAS OPERACIONAIS (17 Questões)
+            { id: 18, area: "Software & Sistemas Operacionais", question: "Qual destes é um sistema operacional de código aberto?", options: ["Windows", "macOS", "Linux", "iOS"], answer: "Linux" },
+            { id: 19, area: "Software & Sistemas Operacionais", question: "Qual software é usado para criar e editar documentos de texto?", options: ["Excel", "PowerPoint", "Word", "Outlook"], answer: "Word" },
+            { id: 20, area: "Software & Sistemas Operacionais", question: "Um 'firewall' tem como principal função...", options: ["Acelerar a internet", "Proteger a rede contra acessos não autorizados", "Organizar arquivos", "Compactar dados"], answer: "Proteger a rede contra acessos não autorizados" },
+            { id: 21, area: "Software & Sistemas Operacionais", question: "Qual o sistema operacional mais utilizado em smartphones?", options: ["Windows Phone", "iOS", "Android", "BlackBerry OS"], answer: "Android" },
+            { id: 22, area: "Software & Sistemas Operacionais", question: "O que é um 'driver'?", options: ["Um tipo de vírus", "Um programa que permite ao SO interagir com um hardware", "Um software de navegação", "Um componente de rede"], answer: "Um programa que permite ao SO interagir com um hardware" },
+            { id: 23, area: "Software & Sistemas Operacionais", question: "Qual atalho de teclado é usado para copiar um item?", options: ["Ctrl+X", "Ctrl+V", "Ctrl+C", "Ctrl+Z"], answer: "Ctrl+C" },
+            { id: 24, area: "Software & Sistemas Operacionais", question: "No Windows, qual aplicativo é usado para gerenciar arquivos e pastas?", options: ["Painel de Controle", "Gerenciador de Tarefas", "Explorador de Arquivos", "Prompt de Comando"], answer: "Explorador de Arquivos" },
+            { id: 25, area: "Software & Sistemas Operacionais", question: "Qual o principal objetivo de um antivírus?", options: ["Otimizar o sistema", "Proteger contra softwares maliciosos", "Compactar arquivos", "Navegar na internet"], answer: "Proteger contra softwares maliciosos" },
+            { id: 26, area: "Software & Sistemas Operacionais", question: "Software proprietário é aquele que...", options: ["Pode ser modificado livremente", "Tem seu código fonte aberto", "É vendido sob licença de uso", "Não precisa de instalação"], answer: "É vendido sob licença de uso" },
+            { id: 27, area: "Software & Sistemas Operacionais", question: "Qual destas NÃO é uma função de um sistema operacional?", options: ["Gerenciamento de memória", "Gerenciamento de processos", "Criação de gráficos 3D", "Interface com o usuário"], answer: "Criação de gráficos 3D" },
+            { id: 28, area: "Software & Sistemas Operacionais", question: "O que é 'malware'?", options: ["Um tipo de hardware avançado", "Software malicioso", "Um erro de programação", "Um termo para internet lenta"], answer: "Software malicioso" },
+            { id: 29, area: "Software & Sistemas Operacionais", question: "Em um sistema operacional, o que é um 'ícone'?", options: ["Um tipo de arquivo executável", "Uma representação gráfica de um programa ou arquivo", "Um comando de terminal", "Uma unidade de medida"], answer: "Uma representação gráfica de um programa ou arquivo" },
+            { id: 30, area: "Software & Sistemas Operacionais", question: "Qual o nome do software que traduz o código fonte de um programa para código de máquina?", options: ["Editor de texto", "Navegador", "Compilador", "Processador de texto"], answer: "Compilador" },
+            { id: 31, area: "Software & Sistemas Operacionais", question: "O que é 'multitarefa' em um sistema operacional?", options: ["Capacidade de rodar um único programa muito rápido", "Capacidade de executar vários programas simultaneamente", "Capacidade de conectar a várias redes", "Capacidade de processar apenas um tipo de dado"], answer: "Capacidade de executar vários programas simultaneamente" },
+            { id: 32, area: "Software & Sistemas Operacionais", question: "Para que serve a tecla 'Print Screen'?", options: ["Imprimir o documento atual", "Tirar uma foto da tela", "Apagar arquivos", "Fechar um programa"], answer: "Tirar uma foto da tela" },
+            { id: 33, area: "Software & Sistemas Operacionais", question: "Qual a extensão padrão para arquivos de texto simples?", options: [".doc", ".pdf", ".txt", ".exe"], answer: ".txt" },
+            { id: 34, area: "Software & Sistemas Operacionais", question: "Um 'loop infinito' é um problema comum em...", options: ["Hardware", "Redes", "Programação", "Armazenamento"], answer: "Programação" },
+
+            // REDES & INTERNET (16 Questões)
+            { id: 35, area: "Redes & Internet", question: "O que significa 'HTTP'?", options: ["HyperText Transfer Protocol", "High-Tech Transfer Program", "Home Tool Transfer Process", "Hyperlink Texting Protocol"], answer: "HyperText Transfer Protocol" },
+            { id: 36, area: "Redes & Internet", question: "Qual o nome do dispositivo que conecta múltiplas redes locais entre si e à internet?", options: ["Switch", "Hub", "Modem", "Roteador"], answer: "Roteador" },
+            { id: 37, area: "Redes & Internet", question: "Um endereço IP (Internet Protocol) serve para...", options: ["Identificar um site na internet", "Identificar um dispositivo em uma rede", "Armazenar senhas", "Aumentar a velocidade de download"], answer: "Identificar um dispositivo em uma rede" },
+            { id: 38, area: "Redes & Internet", question: "O que é 'phishing'?", options: ["Um tipo de hardware para pesca", "Uma técnica de fraude para roubar informações pessoais", "Um novo protocolo de rede", "Um software de edição de fotos"], answer: "Uma técnica de fraude para roubar informações pessoais" },
+            { id: 39, "area": "Redes & Internet", question: "Qual serviço permite enviar e receber mensagens eletrônicas?", options: ["FTP", "SMTP", "E-mail", "DNS"], answer: "E-mail" },
+            { id: 40, area: "Redes & Internet", question: "O que significa 'URL'?", options: ["Universal Resource Locator", "Uniform Remote Link", "User Request Language", "Unified Router Login"], answer: "Universal Resource Locator" },
+            { id: 41, area: "Redes & Internet", question: "Qual é o principal protocolo para transferência de arquivos na internet?", options: ["HTTP", "TCP", "UDP", "FTP"], answer: "FTP" },
+            { id: 42, area: "Redes & Internet", question: "Uma VPN (Rede Virtual Privada) é usada para...", options: ["Aumentar o número de conexões Wi-Fi", "Criar uma conexão segura e privada através de uma rede pública", "Armazenar arquivos na nuvem", "Otimizar o desempenho do computador"], answer: "Criar uma conexão segura e privada através de uma rede pública" },
+            { id: 43, area: "Redes & Internet", question: "O que é um 'browser'?", options: ["Um tipo de servidor", "Um programa para navegar na internet", "Um dispositivo de rede", "Um sistema operacional"], answer: "Um programa para navegar na internet" },
+            { id: 44, area: "Redes & Internet", question: "HTTPS é uma versão segura de qual protocolo?", options: ["FTP", "HTTP", "SMTP", "DNS"], answer: "HTTP" },
+            { id: 45, area: "Redes & Internet", question: "Qual o termo para uma rede de computadores dentro de uma área geográfica limitada (ex: um escritório)?", options: ["WAN", "LAN", "MAN", "GAN"], answer: "LAN" },
+            { id: 46, area: "Redes & Internet", question: "Um 'servidor DNS' é responsável por...", options: ["Distribuir endereços IP", "Traduzir nomes de domínio para endereços IP", "Hospedar websites", "Gerenciar o tráfego de e-mails"], answer: "Traduzir nomes de domínio para endereços IP" },
+            { id: 47, area: "Redes & Internet", question: "Qual o principal meio de comunicação utilizado pela internet?", options: ["Rede Wi-Fi", "Cabos de rede", "Ondas de rádio", "Fibras ópticas"], answer: "Fibras ópticas" },
+            { id: 48, area: "Redes & Internet", question: "O que é 'spam' em e-mail?", options: ["Mensagens importantes", "E-mails indesejados em massa", "Anexos de arquivo", "Notificações de sistema"], answer: "E-mails indesejados em massa" },
+            { id: 49, area: "Redes & Internet", question: "Qual dos seguintes é um exemplo de navegador de internet?", options: ["Microsoft Word", "Google Chrome", "Adobe Photoshop", "Windows Explorer"], answer: "Google Chrome" },
+            { id: 50, area: "Redes & Internet", question: "Uma 'URL' é usada para...", options: ["Identificar um usuário", "Localizar um recurso na internet", "Conectar a um servidor", "Compactar arquivos"], answer: "Localizar um recurso na internet" }
+        ];
+
         let currentQuestionIndex = 0;
         let userAnswers = new Array(quizData.length).fill(null);
         
