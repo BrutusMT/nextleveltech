@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Sistemas Operacionais</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Estilos Globais e de Fundo */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e0f2f7 0%, #bbdefb 100%); /* Gradiente de azul claro */
+            color: #333;
+            overflow-x: hidden; /* Evita barra de rolagem horizontal */
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 900px; /* Aumenta a largura máxima para o relatório */
+            width: 100%;
+            box-sizing: border-box;
+            opacity: 0; /* Começa invisível e é mostrado pelo JS */
+            transform: translateY(20px);
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1, h2, h3 {
+            color: #1a237e; /* Azul escuro para títulos */
+            margin-bottom: 20px;
+        }
+
+        /* Estilos dos Botões de Ação */
+        .action-button {
+            background-color: #4285f4; /* Azul Google */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-decoration: none; /* Para botões que são links */
+            display: inline-block; /* Para que margin e padding funcionem */
+        }
+
+        .action-button:hover {
+            background-color: #357ae8;
+            transform: translateY(-2px);
+        }
+
+        .action-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Estilos para Inputs de Texto */
+        input[type="text"],
+        input[type="password"],
+        select,
+        textarea {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box; /* Garante que padding não aumente a largura */
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #4285f4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+        }
+
+        /* --- Login/Registro Pop-up --- */
+        #login-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Garante que fique por cima de tudo */
+        }
+
+        .auth-form {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        .auth-form h2 {
+            margin-bottom: 25px;
+            color: #1a237e;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .auth-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .auth-form input[type="text"],
+        .auth-form input[type="password"] {
+            width: 100%; /* Ocupa 100% do form-group */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .auth-form button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 1.1em;
+            background-color: #1a73e8; /* Azul mais forte */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .auth-form button:hover {
+            background-color: #0f62d1;
+        }
+
+        .auth-form .toggle-link {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .auth-form .toggle-link a {
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .auth-form .toggle-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Tela Inicial (Start Screen) --- */
+        #start-screen {
+            display: flex; /* Para centralizar o conteúdo */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px; /* Altura mínima para o conteúdo inicial */
+        }
+
+        #start-screen h2 {
+            margin-bottom: 30px;
+        }
+
+        #start-screen input[type="text"] {
+            margin-bottom: 20px;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        /* --- Seção do Quiz --- */
+        #quiz {
+            display: none; /* Escondido por padrão */
+            text-align: center;
+        }
+
+        #question-text {
+            font-size: 1.4em;
+            margin-bottom: 25px;
+            color: #1a237e;
+            min-height: 80px; /* Para evitar saltos no layout */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.4;
+        }
+
+        #question-text img {
+            max-width: 100%; /* Garante que a imagem se ajuste ao contêiner */
+            max-height: 200px; /* Limita a altura da imagem */
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .option-button {
+            background-color: #e3f2fd; /* Azul clarinho para opções */
+            color: #1a237e;
+            border: 1px solid #90caf9;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+            text-align: left;
+        }
+
+        .option-button:hover {
+            background-color: #bbdefb;
+            transform: translateY(-2px);
+        }
+
+        .option-button.selected {
+            background-color: #4285f4; /* Azul forte quando selecionado */
+            color: white;
+            border-color: #2b70f4;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        /* Esconder div de resultado temporariamente */
+        #result {
+            display: none;
+        }
+
+        /* --- Seção de Relatório --- */
+        #report-section {
+            display: none; /* Escondido por padrão */
+            text-align: left;
+            padding: 20px;
+            background-color: #f8fcfd; /* Fundo ligeiramente diferente para o relatório */
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            max-width: 800px; /* Garante que o relatório não fique muito largo */
+            margin: 0 auto;
+        }
+
+        #report-summary {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        #report-summary p {
+            font-size: 1.1em;
+            margin: 8px 0;
+            color: #333;
+        }
+
+        #report-summary p strong {
+            color: #1a237e;
+        }
+
+        #report-score-display {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #4CAF50; /* Verde para o score */
+            margin: 15px 0;
+        }
+
+        #report-score-display .total-questions {
+            font-size: 0.6em;
+            color: #555;
+        }
+
+        /* Estilos dos gráficos */
+        .chart-container {
+            width: 100%;
+            max-width: 450px; /* Limita a largura dos gráficos */
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .chart-container canvas {
+            max-height: 350px; /* Altura máxima para os gráficos */
+        }
+
+        #report-buttons {
+            display: flex;
+            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
+            justify-content: center;
+            margin-top: 30px;
+            gap: 15px; /* Espaço entre os botões */
+        }
+
+        #detailed-results {
+            margin-top: 40px;
+            border-top: 2px solid #bbdefb;
+            padding-top: 30px;
+            text-align: left;
+        }
+
+        #detailed-results h3 {
+            color: #1a237e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* --- OTIMIZAÇÃO PARA PDF: Novos estilos para o relatório detalhado --- */
+        #detailed-results.pdf-mode ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #detailed-results.pdf-mode li {
+            font-size: 0.9em; /* Texto menor */
+            line-height: 1.4; /* Espaçamento de linha mais compacto */
+            margin-bottom: 5px; /* Menos margem entre itens */
+            color: #333;
+        }
+
+        #detailed-results.pdf-mode li .q-num {
+            font-weight: bold;
+            color: #1a237e;
+        }
+        #detailed-results.pdf-mode li .q-text {
+            font-weight: bold;
+            color: #1a237e;
+        }
+
+        #detailed-results.pdf-mode li .user-answer-pdf {
+            font-weight: normal; /* Não negrito */
+            color: #4285f4;
+        }
+        #detailed-results.pdf-mode li .correct-answer-pdf {
+            font-weight: normal; /* Não negrito */
+            color: #4CAF50;
+        }
+        #detailed-results.pdf-mode li .status-correct {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        #detailed-results.pdf-mode li .status-incorrect {
+            color: #F44336;
+            font-weight: bold;
+        }
+
+        /* Esconder elementos específicos para a exportação (visível apenas no CSS do PDF) */
+        .hide-for-pdf {
+            display: none !important;
+        }
+
+
+        /* Estilos para o modo de exibição normal (não-PDF) */
+        .question-result {
+            background-color: #f0f8ff; /* Fundo mais claro para cada pergunta */
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            line-height: 1.6;
+        }
+
+        .question-result.correct-q {
+            border-left: 5px solid #4CAF50; /* Borda verde para acertos */
+        }
+
+        .question-result.wrong-q {
+            border-left: 5px solid #F44336; /* Borda vermelha para erros */
+        }
+
+        .question-result .q-text {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #1a237e;
+        }
+
+        .question-result .user-answer {
+            font-weight: bold;
+            color: #4285f4; /* Azul para a resposta do usuário */
+        }
+
+        .question-result .correct-answer {
+            font-weight: bold;
+            color: #4CAF50; /* Verde para a resposta correta */
+        }
+
+        .question-result .attempt-count-report {
+            font-size: 0.9em;
+            color: #777;
+            margin-top: 10px;
+        }
+
+        /* --- Painel Administrativo --- */
+        #admin-panel {
+            display: none; /* Escondido por padrão */
+            flex-direction: column;
+            width: 100%;
+            max-width: 900px;
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            text-align: left;
+            box-sizing: border-box;
+            min-height: 80vh; /* Ocupa mais espaço na tela */
+            position: relative; /* Para posicionar o botão de fechar */
+        }
+
+        #admin-panel h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #admin-panel .action-button {
+            margin-bottom: 20px;
+        }
+
+        #questions-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        #questions-list li {
+            background-color: #f0f8ff;
+            border: 1px solid #bbdefb;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        #questions-list li strong {
+            color: #1a237e;
+            font-size: 1.1em;
+        }
+
+        #questions-list li span {
+            font-size: 0.95em;
+            color: #555;
+        }
+
+        #questions-list li .actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        #questions-list li .edit-btn,
+        #questions-list li .delete-btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+        }
+
+        #questions-list li .edit-btn {
+            background-color: #ffc107; /* Amarelo */
+            color: #333;
+            border: none;
+        }
+
+        #questions-list li .edit-btn:hover {
+            background-color: #ffb300;
+        }
+
+        #questions-list li .delete-btn {
+            background-color: #f44336; /* Vermelho */
+            color: white;
+            border: none;
+        }
+
+        #questions-list li .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        #close-admin-panel-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #555;
+            transition: color 0.3s ease;
+        }
+
+        #close-admin-panel-button:hover {
+            color: #1a237e;
+        }
+
+        /* --- Modal de Edição/Adição de Pergunta --- */
+        #edit-question-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Escondido por padrão */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: left;
+            width: 90%;
+            max-width: 600px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .modal-content h3 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #1a237e;
+        }
+
+        .modal-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .modal-content .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-content .modal-buttons button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-content #save-question-button {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+            border: none;
+        }
+
+        .modal-content #save-question-button:hover {
+            background-color: #43a047;
+        }
+
+        .modal-content #cancel-edit-button {
+            background-color: #f44336; /* Vermelho */
+            color: white;
+            border: none;
+        }
+
+        .modal-content #cancel-edit-button:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Contador de Tentativas */
+        .attempt-count {
+            font-size: 0.7em;
+            color: #777;
+            margin-left: 10px;
+        }
+
+
+        /* Media Queries para Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 15px;
+            }
+
+            .option-button {
+                padding: 12px 15px;
+                font-size: 1em;
+            }
+
+            .action-button {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+
+            #report-summary p {
+                font-size: 1em;
+            }
+
+            #report-score-display {
+                font-size: 1.8em;
+            }
+
+            .chart-container {
+                max-width: 95%;
+            }
+
+            #admin-panel {
+                padding: 20px;
+                margin: 15px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.4em;
+            }
+            .action-button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            .navigation-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            #report-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="login-popup">
+        <div class="auth-form">
+            <h2 id="form-title">Acessar Quiz</h2>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Usuário:</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Senha:</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="button" id="login-button">Login</button>
+                <p class="toggle-link">Não tem uma conta? <a href="#" id="show-register-button">Registre-se</a></p>
+            </form>
+
+            <form id="register-form" style="display: none;">
+                <div class="form-group">
+                    <label for="register-username">Nome Completo:</label>
+                    <input type="text" id="register-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Senha:</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password-confirm">Confirmar Senha:</label>
+                    <input type="password" id="register-password-confirm" required>
+                </div>
+                <button type="button" id="register-button">Registrar</button>
+                <p class="toggle-link">Já tem uma conta? <a href="#" id="show-login-button">Fazer Login</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-content-wrapper" class="container" style="display: none;">
+        <h1>Bem-vindo(a) Aula de Sistemas Operacionais!</h1>
+
+        <div id="start-screen">
+            <h2>Pronto para testar seus conhecimentos?</h2>
+            <p>Seu nome será preenchido automaticamente com seu usuário de login.</p>
+            <input type="text" id="student-name-input" placeholder="Nome do Aluno(a)" readonly>
+            <a href="https://gerencia-de-processos-ce3vlhn.gamma.site" target="_blank" id="content-link-button" class="action-button" style="display: none;">Acessar Conteúdo Teórico</a>
+            <button id="start-quiz-button" class="action-button">Iniciar Quiz</button>
+        </div>
+
+        <div id="quiz">
+            <p id="question-text"></p>
+            <div id="options-container"></div>
+            <div class="navigation-buttons">
+                <button id="prev-button" class="action-button">Anterior</button>
+                <button id="next-button" class="action-button">Próxima</button>
+            </div>
+            <div id="result"></div>
+        </div>
+
+        <div id="report-section">
+            <h2>Relatório de Desempenho</h2>
+            <div id="report-summary">
+                <p>Aluno(a): <strong id="report-student-name"></strong></p>
+                <p>Tempo Total: <strong id="report-time-taken"></strong> segundos</p>
+                <div id="report-score-display">
+                    <span id="report-score"></span> / <span id="report-total-questions"></span>
+                    <br>
+                    <span class="total-questions">(<span id="report-average"></span>% de acerto)</span>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+                <div class="chart-container">
+                    <canvas id="report-canvas"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="area-report-canvas"></canvas>
+                </div>
+            </div>
+
+
+            <div id="report-buttons">
+                <button id="restart-button-report" class="action-button">Reiniciar Quiz</button>
+                <button id="export-pdf-button" class="action-button">Exportar PDF</button>
+                <button id="export-sheets-button" class="action-button">Exportar para Planilhas Google</button>
+                <button id="next-activity-button" class="action-button">Próxima Atividade</button>
+            </div>
+
+            <div id="detailed-results"></div>
+        </div>
+    </div>
+
+    <div id="admin-panel">
+        <button id="close-admin-panel-button">&times;</button>
+        <h2>Painel de Controle do Admin</h2>
+        <button id="add-question-button" class="action-button">Adicionar Nova Pergunta</button>
+        <h3>Perguntas Cadastradas:</h3>
+        <ul id="questions-list"></ul>
+    </div>
+
+    <div id="edit-question-modal">
+        <div class="modal-content">
+            <h3 id="edit-modal-title">Editar Pergunta</h3>
+            <input type="hidden" id="edit-question-id">
+            <div class="form-group">
+                <label for="edit-question-topic">Tópico:</label>
+                <select id="edit-question-topic">
+                    <option value="Processos">Processos</option>
+                    <option value="Threads">Threads</option>
+                    <option value="Comunicação interprocessos (IPC)">Comunicação interprocessos (IPC)</option>
+                    <option value="Escalonamento">Escalonamento</option>
+                    <option value="Uso direto de memória">Uso direto de memória</option>
+                    <option value="Abstração de memória: espaço de endereçamento">Abstração de memória: espaço de endereçamento</option>
+                    <option value="Memória virtual">Memória virtual</option>
+                    <option value="Algoritmos de substituição de páginas">Algoritmos de substituição de páginas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="edit-question-text">Pergunta:</label>
+                <textarea id="edit-question-text" rows="3" required></textarea>
+            </div>
+            <button id="fetch-image-button" type="button" class="action-button" style="margin-top: 10px; margin-bottom: 5px;">
+                Buscar Imagem
+            </button>
+            <div class="form-group">
+                <label for="edit-question-image">URL da Imagem (Opcional):</label>
+                <input type="text" id="edit-question-image" placeholder="Ex: https://example.com/imagem.jpg">
+            </div>
+            <div class="form-group">
+                <label>Opções de Resposta:</label>
+                <input type="text" id="edit-option-1" placeholder="Opção 1" required>
+                <input type="text" id="edit-option-2" placeholder="Opção 2" required>
+                <input type="text" id="edit-option-3" placeholder="Opção 3">
+                <input type="text" id="edit-option-4" placeholder="Opção 4">
+            </div>
+            <div class="form-group">
+                <label for="edit-correct-answer">Resposta Correta:</label>
+                <select id="edit-correct-answer" required></select>
+            </div>
+            <div class="modal-buttons">
+                <button id="save-question-button">Salvar</button>
+                <button id="cancel-edit-button">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const initialQuestions = [
+            // Gerência de processos - Processos
+            { id: 1, topic: "Processos", question: "Qual a principal diferença entre um processo e um programa?", options: ["Um processo é estático, um programa é dinâmico.", "Um programa é uma entidade passiva, um processo é uma instância em execução de um programa.", "Processo é apenas código, programa é código e dados.", "Não há diferença, são sinônimos."], answer: "Um programa é uma entidade passiva, um processo é uma instância em execução de um programa.", image: "https://source.unsplash.com/random/400x300/?process,code,running" },
+            { id: 2, topic: "Processos", question: "O que é um 'estado de processo'?", options: ["A linguagem de programação usada no processo.", "O status atual da execução de um processo (novo, pronto, executando, esperando, terminado).", "A quantidade de memória alocada para o processo.", "A prioridade do processo na fila de execução."], answer: "O status atual da execução de um processo (novo, pronto, executando, esperando, terminado).", image: "https://source.unsplash.com/random/400x300/?process,state,flowchart" },
+            { id: 3, topic: "Processos", question: "Qual o papel do Bloco de Controle de Processo (PCB)?", options: ["Gerenciar a interface gráfica do usuário.", "Armazenar informações sobre um processo específico, como seu estado, contador de programa, registradores, etc.", "Controlar o acesso a dispositivos de E/S.", "Definir as permissões de arquivo para o processo."], answer: "Armazenar informações sobre um processo específico, como seu estado, contador de programa, registradores, etc.", image: "https://source.unsplash.com/random/400x300/?PCB,data,structure" },
+            { id: 4, topic: "Processos", question: "Um 'zombie process' (processo zumbi) é um processo que...", options: ["Está em execução e consumindo muitos recursos.", "Foi terminado, mas ainda tem uma entrada na tabela de processos porque seu processo pai não leu seu status de saída.", "Está esperando por uma operação de E/S.", "Nunca foi iniciado corretamente."], answer: "Foi terminado, mas ainda tem uma entrada na tabela de processos porque seu processo pai não leu seu status de saída.", image: "https://source.unsplash.com/random/400x300/?zombie,process,computer" },
+            { id: 5, topic: "Processos", question: "Um 'orphan process' (processo órfão) é um processo que...", options: ["Não tem permissão para acessar o sistema de arquivos.", "Foi inicializado sem um programa associado.", "Continua a ser executado após o término de seu processo pai, sendo então adotado por um processo 'init' (geralmente).", "Causa erros no sistema operacional."], answer: "Continua a ser executado após o término de seu processo pai, sendo então adotado por um processo 'init' (geralmente).", image: "https://source.unsplash.com/random/400x300/?orphan,process,system" },
+
+            // Gerência de processos - Threads
+            { id: 6, topic: "Threads", question: "O que são 'threads' (linhas de execução)?", options: ["Processos independentes que não compartilham recursos.", "Uma unidade básica de utilização da CPU dentro de um processo, compartilhando recursos com outras threads do mesmo processo.", "Partes do código que nunca são executadas.", "Programas maliciosos que se replicam."], answer: "Uma unidade básica de utilização da CPU dentro de um processo, compartilhando recursos com outras threads do mesmo processo.", image: "https://source.unsplash.com/random/400x300/?threads,multitasking,cpu" },
+            { id: 7, topic: "Threads", question: "Qual a vantagem de usar threads em vez de múltiplos processos?", options: ["Threads são mais seguras contra ataques de segurança.", "Threads exigem mais recursos do sistema.", "Threads compartilham o mesmo espaço de endereço e recursos, reduzindo a sobrecarga de comunicação e comutação de contexto.", "Threads só podem ser usadas em sistemas de 64 bits."], answer: "Threads compartilham o mesmo espaço de endereço e recursos, reduzindo a sobrecarga de comunicação e comutação de contexto.", image: "https://source.unsplash.com/random/400x300/?threads,performance,concurrency" },
+            { id: 8, topic: "Threads", question: "O que é 'sincronização de processos/threads'?", options: ["O ato de fazer processos executarem em paralelo sem coordenação.", "Garantir que processos ou threads acessem recursos compartilhados de forma ordenada para evitar inconsistências e erros.", "Aumentar a velocidade de comunicação entre processos.", "Reduzir o número de processos em execução."], answer: "Garantir que processos ou threads acessem recursos compartilhados de forma ordenada para evitar inconsistências e erros.", image: "https://source.unsplash.com/random/400x300/?synchronization,threads,resources" },
+            { id: 9, topic: "Threads", question: "Qual o problema do 'produtor-consumidor' em sistemas operacionais?", options: ["Um problema de hardware que impede a produção de dados.", "Um cenário de sincronização onde um processo produz dados e outro os consome de um buffer compartilhado, exigindo coordenação para evitar acessos inválidos.", "Um tipo de vírus que consome recursos excessivamente.", "A falta de recursos para criar novos processos."], answer: "Um cenário de sincronização onde um processo produz dados e outro os consome de um buffer compartilhado, exigindo coordenação para evitar acessos inválidos.", image: "https://source.unsplash.com/random/400x300/?producer,consumer,buffer" },
+            { id: 10, topic: "Threads", question: "Um 'semáforo' é usado para...", options: ["Acelerar a execução de programas.", "Sincronizar o acesso a recursos compartilhados por múltiplos processos/threads.", "Gerenciar a conexão com a internet.", "Armazenar dados temporários."], answer: "Sincronizar o acesso a recursos compartilhados por múltiplos processos/threads.", image: "https://source.unsplash.com/random/400x300/?semaphore,lock,threads" },
+
+            // Gerência de processos - Comunicação interprocessos (IPC)
+            { id: 11, topic: "Comunicação interprocessos (IPC)", question: "O que é 'Inter-Process Communication (IPC)'?", options: ["A comunicação entre CPUs diferentes.", "Mecanismos fornecidos pelo sistema operacional para que processos diferentes possam trocar informações e coordenar suas ações.", "A comunicação entre o sistema operacional e o hardware.", "A comunicação entre usuários de um sistema."], answer: "Mecanismos fornecidos pelo sistema operacional para que processos diferentes possam trocar informações e coordenar suas ações.", image: "https://source.unsplash.com/random/400x300/?IPC,communication,processes" },
+            { id: 12, topic: "Comunicação interprocessos (IPC)", question: "Qual das seguintes não é um método comum de IPC?", options: ["Pipes (tubulações).", "Memória compartilhada.", "Mensagens (message passing).", "Email."], answer: "Email.", image: "https://source.unsplash.com/random/400x300/?IPC,methods,data" },
+            { id: 13, topic: "Comunicação interprocessos (IPC)", question: "Em comunicação via 'memória compartilhada', como os processos trocam dados?", options: ["Através de chamadas de sistema complexas.", "Escrevendo e lendo diretamente em uma região da memória que ambos os processos mapearam em seu espaço de endereçamento.", "Enviando pacotes pela rede interna.", "Através de arquivos temporários no disco."], answer: "Escrevendo e lendo diretamente em uma região da memória que ambos os processos mapearam em seu espaço de endereçamento.", image: "https://source.unsplash.com/random/400x300/?shared,memory,communication" },
+            { id: 14, topic: "Comunicação interprocessos (IPC)", question: "Qual a desvantagem da comunicação por 'memória compartilhada'?", options: ["É muito lenta.", "Exige coordenação (sincronização) explícita entre os processos para evitar condições de corrida.", "Não pode ser usada por mais de dois processos.", "Não é suportada por sistemas operacionais modernos."], answer: "Exige coordenação (sincronização) explícita entre os processos para evitar condições de corrida.", image: "https://source.unsplash.com/random/400x300/?race,condition,shared,memory" },
+            { id: 15, topic: "Comunicação interprocessos (IPC)", question: "O que são 'pipes' (tubulações) em IPC?", options: ["Conexões de rede entre computadores.", "Um canal unidirecional de comunicação entre dois processos, onde a saída de um é a entrada do outro.", "Dispositivos de armazenamento temporário.", "Ferramentas para instalar software."], answer: "Um canal unidirecional de comunicação entre dois processos, onde a saída de um é a entrada do outro.", image: "https://source.unsplash.com/random/400x300/?pipes,IPC,data,flow" },
+            { id: 16, topic: "Comunicação interprocessos (IPC)", question: "Qual a diferença entre pipes nomeados e não nomeados?", options: ["Pipes nomeados podem ser usados por processos não relacionados e persistem no sistema de arquivos; pipes não nomeados são para processos relacionados e temporários.", "Pipes nomeados são mais lentos.", "Pipes não nomeados são mais seguros.", "Não há diferença."], answer: "Pipes nomeados podem ser usados por processos não relacionados e persistem no sistema de arquivos; pipes não nomeados são para processos relacionados e temporários.", image: "https://source.unsplash.com/random/400x300/?named,pipes,IPC" },
+            { id: 17, topic: "Comunicação interprocessos (IPC)", question: "O que é 'passagem de mensagens' (message passing) em IPC?", options: ["Enviar e-mails entre processos.", "Troca de informações entre processos através do envio de mensagens encapsuladas (com cabeçalho e dados).", "Armazenar mensagens em um banco de dados.", "Gerenciar as notificações do sistema."], answer: "Troca de informações entre processos através do envio de mensagens encapsuladas (com cabeçalho e dados).", image: "https://source.unsplash.com/random/400x300/?message,passing,IPC" },
+            { id: 18, topic: "Comunicação interprocessos (IPC)", question: "Qual a vantagem da passagem de mensagens sobre memória compartilhada?", options: ["É sempre mais rápida.", "Não requer sincronização explícita entre os processos, pois a comunicação é controlada pelo sistema operacional.", "É mais difícil de implementar.", "Consome mais recursos do sistema."], answer: "Não requer sincronização explícita entre os processos, pois a comunicação é controlada pelo sistema operacional.", image: "https://source.unsplash.com/random/400x300/?message,passing,advantage" },
+            { id: 19, topic: "Comunicação interprocessos (IPC)", question: "O que é um 'socket' em IPC?", options: ["Uma ferramenta para instalação de hardware.", "Um endpoint de comunicação em uma rede, que permite a troca de dados entre processos em diferentes máquinas ou na mesma máquina.", "Um tipo de estrutura de dados.", "Um componente da CPU."], answer: "Um endpoint de comunicação em uma rede, que permite a troca de dados entre processos em diferentes máquinas ou na mesma máquina.", image: "https://source.unsplash.com/random/400x300/?socket,network,communication" },
+            { id: 20, topic: "Comunicação interprocessos (IPC)", question: "Qual o principal benefício da 'comunicação por portas' (ports) em IPC?", options: ["Permite a comunicação apenas entre processos de um mesmo usuário.", "Fornece um mecanismo genérico e flexível para processos trocarem mensagens, geralmente em ambientes distribuídos.", "É um método de IPC muito antigo e obsoleto.", "É usado apenas para comunicação de hardware."], answer: "Fornece um mecanismo genérico e flexível para processos trocarem mensagens, geralmente em ambientes distribuídos.", image: "https://source.unsplash.com/random/400x300/?ports,communication,distributed" },
+
+            // Gerência de processos - Escalonamento
+            { id: 21, topic: "Escalonamento", question: "Qual o objetivo do 'escalonamento de CPU'?", options: ["Gerenciar o tempo de tela do monitor.", "Distribuir o tempo da CPU entre os processos e threads que estão prontos para execução, otimizando o throughput e minimizando o tempo de resposta.", "Controlar o acesso a dispositivos de E/S.", "Alocar memória para os processos."], answer: "Distribuir o tempo da CPU entre os processos e threads que estão prontos para execução, otimizando o throughput e minimizando o tempo de resposta.", image: "https://source.unsplash.com/random/400x300/?CPU,scheduling,optimization" },
+            { id: 22, topic: "Escalonamento", question: "Em 'First-Come, First-Served (FCFS)', a CPU é alocada para o processo...", options: ["Com a menor prioridade.", "Que tem o menor tempo de execução restante.", "Que solicitou a CPU primeiro.", "Aleatoriamente."], answer: "Que solicitou a CPU primeiro.", image: "https://source.unsplash.com/random/400x300/?FCFS,queue,first" },
+            { id: 23, topic: "Escalonamento", question: "Qual o problema do 'Starvation' em escalonamento?", options: ["Um processo executa muito rápido.", "Um processo de alta prioridade consome todos os recursos do sistema.", "Um processo de baixa prioridade nunca ou muito raramente recebe a CPU, ficando indefinidamente sem ser executado.", "A CPU fica ociosa por muito tempo."], answer: "Um processo de baixa prioridade nunca ou muito raramente recebe a CPU, ficando indefinidamente sem ser executado.", image: "https://source.unsplash.com/random/400x300/?starvation,scheduling,fairness" },
+            { id: 24, topic: "Escalonamento", question: "O que é 'Round Robin' (RR) em escalonamento?", options: ["Um algoritmo de escalonamento não preemptivo.", "Um algoritmo preemptivo onde cada processo recebe um 'quantum' de tempo de CPU e, ao final, é colocado no final da fila de prontos.", "Um algoritmo que sempre prioriza processos de E/S.", "Um algoritmo que executa processos em ordem alfabética."], answer: "Um algoritmo preemptivo onde cada processo recebe um 'quantum' de tempo de CPU e, ao final, é colocado no final da fila de prontos.", image: "https://source.unsplash.com/random/400x300/?round,robin,quantum" },
+            { id: 25, topic: "Escalonamento", question: "Qual a importância do 'quantum de tempo' no algoritmo Round Robin?", options: ["Determina a quantidade total de tempo que um processo pode executar.", "Define o tempo máximo que um processo pode usar a CPU antes de ser preemptado e dar vez a outro processo.", "É o tempo que a CPU leva para inicializar.", "É a prioridade de um processo."], answer: "Define o tempo máximo que um processo pode usar a CPU antes de ser preemptado e dar vez a outro processo.", image: "https://source.unsplash.com/random/400x300/?quantum,time,slice" },
+            { id: 26, topic: "Escalonamento", question: "Qual algoritmo de escalonamento é mais adequado para sistemas em tempo real com prazos rígidos?", options: ["Round Robin.", "FCFS.", "Shortest Job First (SJF) preemptivo ou Rate Monotonic Scheduling (RMS).", "Escalonamento por prioridade."], answer: "Shortest Job First (SJF) preemptivo ou Rate Monotonic Scheduling (RMS).", image: "https://source.unsplash.com/random/400x300/?realtime,scheduling,deadlines" },
+            { id: 27, topic: "Escalonamento", question: "O que significa 'preemptivo' em escalonamento?", options: ["Um processo não pode ser interrompido uma vez que começou a executar.", "O sistema operacional pode interromper um processo em execução e alocar a CPU para outro processo.", "Processos são executados em ordem de chegada.", "Apenas processos de alta prioridade podem ser executados."], answer: "O sistema operacional pode interromper um processo em execução e alocar a CPU para outro processo.", image: "https://source.unsplash.com/random/400x300/?preemptive,scheduling,interrupt" },
+            { id: 28, topic: "Escalonamento", question: "O que é 'SJF' (Shortest Job First)?", options: ["Prioriza o processo que chegou primeiro.", "Prioriza o processo com o menor tempo total de execução esperado.", "Prioriza o processo que tem a menor prioridade.", "Prioriza o processo que está mais tempo esperando."], answer: "Prioriza o processo com o menor tempo total de execução esperado.", image: "https://source.unsplash.com/random/400x300/?SJF,shortest,job" },
+            { id: 29, topic: "Escalonamento", question: "Qual a desvantagem do SJF não preemptivo?", options: ["Pode causar starvation para processos longos se houver um fluxo constante de processos curtos.", "É muito complexo de implementar.", "Não considera o tempo de chegada dos processos.", "Não é eficiente para sistemas interativos."], answer: "Pode causar starvation para processos longos se houver um fluxo constante de processos curtos.", image: "https://source.unsplash.com/random/400x300/?SJF,non-preemptive,disadvantage" },
+            { id: 30, topic: "Escalonamento", question: "O que é 'prioridade dinâmica' em escalonamento?", options: ["A prioridade de um processo é fixa e não pode ser alterada.", "A prioridade de um processo é ajustada pelo sistema operacional em tempo de execução, com base em fatores como tempo de espera ou uso da CPU.", "Todos os processos têm a mesma prioridade.", "A prioridade é definida pelo usuário no início."], answer: "A prioridade de um processo é ajustada pelo sistema operacional em tempo de execução, com base em fatores como tempo de espera ou uso da CPU.", image: "https://source.unsplash.com/random/400x300/?dynamic,priority,scheduling" },
+
+            // Gerência de memória - Uso direto
+            { id: 31, topic: "Uso direto de memória", question: "Qual o objetivo principal da gerência de memória?", options: ["Aumentar a velocidade do processador.", "Controlar o acesso da CPU à memória principal, alocar e desalocar espaço de memória para programas e dados, e otimizar o uso da memória.", "Gerenciar o sistema de arquivos no disco.", "Controlar a comunicação entre dispositivos de rede."], answer: "Controlar o acesso da CPU à memória principal, alocar e desalocar espaço de memória para programas e dados, e otimizar o uso da memória.", image: "https://source.unsplash.com/random/400x300/?memory,management,optimization" },
+            { id: 32, topic: "Uso direto de memória", question: "O que é 'endereço físico' e 'endereço lógico'?", options: ["Ambos se referem ao mesmo endereço de memória.", "Endereço físico é o endereço real na memória, e endereço lógico é o endereço gerado pela CPU e visto pelo programa.", "Endereço físico é usado por programas, lógico por hardware.", "Endereço físico é em disco, lógico é em RAM."], answer: "Endereço físico é o endereço real na memória, e endereço lógico é o endereço gerado pela CPU e visto pelo programa.", image: "https://source.unsplash.com/random/400x300/?physical,logical,address" },
+            { id: 33, topic: "Uso direto de memória", question: "Qual a função da 'Unidade de Gerenciamento de Memória (MMU)'?", options: ["Acelerar o acesso ao disco rígido.", "Converter endereços lógicos em endereços físicos em tempo de execução.", "Gerenciar a memória cache do processador.", "Controlar os dispositivos de E/S."], answer: "Converter endereços lógicos em endereços físicos em tempo de execução.", image: "https://source.unsplash.com/random/400x300/?MMU,address,translation" },
+            { id: 34, topic: "Uso direto de memória", question: "O que é 'alocação contígua de memória'?", options: ["Alocar blocos de memória para um processo em locais não adjacentes.", "Alocar blocos de memória para um processo em um único bloco contíguo de endereços.", "Alocar memória apenas para o sistema operacional.", "Alocar memória dinamicamente em tempo de execução."], answer: "Alocar blocos de memória para um processo em um único bloco contíguo de endereços.", image: "https://source.unsplash.com/random/400x300/?contiguous,memory,allocation" },
+            { id: 35, topic: "Uso direto de memória", question: "Qual problema a alocação contígua de memória pode causar?", options: ["Superaquecimento da CPU.", "Fragmentação externa, dificultando a alocação de processos maiores, mesmo com memória livre total suficiente.", "Perda de dados importantes.", "Atrasos na comunicação de rede."], answer: "Fragmentação externa, dificultando a alocação de processos maiores, mesmo com memória livre total suficiente.", image: "https://source.unsplash.com/random/400x300/?external,fragmentation,memory" },
+
+            // Gerência de memória - Abstração de memória: espaço de endereçamento
+            { id: 36, topic: "Abstração de memória: espaço de endereçamento", question: "O que é 'paginação' em sistemas de memória?", options: ["Dividir a memória em blocos de tamanho variável.", "Dividir a memória física em quadros (frames) e a memória lógica dos processos em páginas, permitindo alocação não contígua.", "Armazenar dados em um arquivo paginado no disco.", "Apenas uma técnica de compactação de dados."], answer: "Dividir a memória física em quadros (frames) e a memória lógica dos processos em páginas, permitindo alocação não contígua.", image: "https://source.unsplash.com/random/400x300/?pagination,memory,frames" },
+            { id: 37, topic: "Abstração de memória: espaço de endereçamento", question: "Qual a principal vantagem da paginação?", options: ["Eliminar a necessidade de memória RAM.", "Permitir a alocação não contígua de memória para processos, reduzindo a fragmentação externa.", "Aumentar a velocidade do disco rígido.", "Simplificar o sistema de arquivos."], answer: "Permitir a alocação não contígua de memória para processos, reduzindo a fragmentação externa.", image: "https://source.unsplash.com/random/400x300/?paging,advantage,fragmentation" },
+            { id: 38, topic: "Abstração de memória: espaço de endereçamento", question: "O que é 'fragmentação interna'?", options: ["Espaço de memória não utilizado dentro de uma partição ou página alocada para um processo.", "Espaço livre entre blocos alocados de memória.", "Ocorre apenas em discos rígidos.", "É um erro de hardware."], answer: "Espaço de memória não utilizado dentro de uma partição ou página alocada para um processo.", image: "https://source.unsplash.com/random/400x300/?internal,fragmentation,memory" },
+            { id: 39, topic: "Abstração de memória: espaço de endereçamento", question: "O que é 'fragmentação externa'?", options: ["Espaço não utilizado dentro de um registro de banco de dados.", "Espaço livre de memória que está disperso em pequenos blocos não contíguos, dificultando a alocação de blocos maiores.", "Ocorre apenas em CPUs.", "É a desorganização de arquivos no disco."], answer: "Espaço livre de memória que está disperso em pequenos blocos não contíguos, dificultando a alocação de blocos maiores.", image: "https://source.unsplash.com/random/400x300/?external,fragmentation,memory" },
+            { id: 40, topic: "Abstração de memória: espaço de endereçamento", question: "Qual a diferença entre paginação e segmentação?", options: ["Paginação usa blocos de tamanho fixo, segmentação usa blocos de tamanho variável (lógicos).", "Paginação é para discos, segmentação é para RAM.", "Paginação é manual, segmentação é automática.", "Não há diferença, são sinônimos."], answer: "Paginação usa blocos de tamanho fixo, segmentação usa blocos de tamanho variável (lógicos).", image: "https://source.unsplash.com/random/400x300/?paging,segmentation,memory" },
+
+            // Gerência de memória - Memória virtual
+            { id: 41, topic: "Memória virtual", question: "O que é 'memória virtual'?", options: ["Memória RAM adicional instalada fisicamente.", "Uma técnica que permite que um programa utilize mais memória do que a RAM física disponível, usando o disco como uma extensão da memória.", "Um tipo de memória cache.", "Memória usada apenas para armazenar o sistema operacional."], answer: "Uma técnica que permite que um programa utilize mais memória do que a RAM física disponível, usando o disco como uma extensão da memória.", image: "https://source.unsplash.com/random/400x300/?virtual,memory,swap" },
+            { id: 42, topic: "Memória virtual", question: "O que é 'page fault' (falta de página)?", options: ["Um erro de hardware na memória.", "Uma interrupção que ocorre quando um programa tenta acessar uma página que não está atualmente na memória física.", "A remoção de uma página da memória.", "A criação de uma nova página de memória."], answer: "Uma interrupção que ocorre quando um programa tenta acessar uma página que não está atualmente na memória física.", image: "https://source.unsplash.com/random/400x300/?page,fault,virtual,memory" },
+            { id: 43, topic: "Memória virtual", question: "O que é 'thrashing' (sobrecarga)?", options: ["Um problema de hardware que causa superaquecimento.", "Uma situação em que o sistema gasta mais tempo em paginação (troca de páginas entre RAM e disco) do que executando o trabalho útil, devido à falta de memória física.", "A execução excessiva de processos em paralelo.", "Um tipo de erro de programação."], answer: "Uma situação em que o sistema gasta mais tempo em paginação (troca de páginas entre RAM e disco) do que executando o trabalho útil, devido à falta de memória física.", image: "https://source.unsplash.com/random/400x300/?thrashing,performance,paging" },
+            { id: 44, topic: "Memória virtual", question: "Qual o papel do 'arquivo de swap' ou 'arquivo de paginação'?", options: ["Armazenar backups de arquivos do usuário.", "Atuar como uma extensão da memória RAM no disco rígido para suportar a memória virtual.", "Guardar informações de configuração do sistema.", "Armazenar drivers de dispositivos."], answer: "Atuar como uma extensão da memória RAM no disco rígido para suportar a memória virtual.", image: "https://source.unsplash.com/random/400x300/?swap,file,virtual,memory" },
+            { id: 45, topic: "Memória virtual", question: "O que é 'proteção de memória'?", options: ["Proteger a memória contra ataques físicos.", "Garantir que um processo não acesse a memória alocada para outro processo ou para o sistema operacional.", "Proteger a memória contra vírus.", "Ocultar a memória dos usuários."], answer: "Garantir que um processo não acesse a memória alocada para outro processo ou para o sistema operacional.", image: "https://source.unsplash.com/random/400x300/?memory,protection,security" },
+
+            // Gerência de memória - Algoritmos de substituição de páginas
+            { id: 46, topic: "Algoritmos de substituição de páginas", question: "Qual algoritmo de substituição de páginas é o 'FIFO'?", options: ["Substitui a página menos utilizada recentemente.", "Substitui a página que está na memória há mais tempo (primeiro a entrar, primeiro a sair).", "Substitui a página que será usada mais tarde.", "Substitui uma página aleatoriamente."], answer: "Substitui a página que está na memória há mais tempo (primeiro a entrar, primeiro a sair).", image: "https://source.unsplash.com/random/400x300/?FIFO,page,replacement" },
+            { id: 47, topic: "Algoritmos de substituição de páginas", question: "Qual algoritmo de substituição de páginas é o 'LRU'?", options: ["Substitui a página que está na memória há mais tempo.", "Substitui a página menos utilizada recentemente.", "Substitui a página que será usada mais tarde.", "Substitui uma página aleatoriamente."], answer: "Substitui a página menos utilizada recentemente.", image: "https://source.unsplash.com/random/400x300/?LRU,page,replacement" },
+            { id: 48, topic: "Algoritmos de substituição de páginas", question: "Em qual algoritmo de substituição de páginas a anomalia de Belady pode ocorrer?", options: ["LRU.", "FIFO.", "Ótimo.", "LFU."], answer: "FIFO.", image: "https://source.unsplash.com/random/400x300/?Belady,anomaly,page,replacement" },
+            { id: 49, topic: "Algoritmos de substituição de páginas", question: "Qual algoritmo de substituição de páginas é o mais eficiente, mas impraticável de implementar?", options: ["FIFO.", "LRU.", "Ótimo (OPT).", "Relógio (Clock)."], answer: "Ótimo (OPT).", image: "https://source.unsplash.com/random/400x300/?optimal,page,replacement" },
+            { id: 50, topic: "Algoritmos de substituição de páginas", question: "O que é o algoritmo 'Second-Chance' (ou Clock) em substituição de páginas?", options: ["Um aprimoramento do LRU.", "Um aprimoramento do FIFO que dá uma 'segunda chance' às páginas antes de serem removidas, usando um bit de referência.", "Substitui a página que tem o maior número de referências.", "Substitui uma página aleatoriamente, mas duas vezes."], answer: "Um aprimoramento do FIFO que dá uma 'segunda chance' às páginas antes de serem removidas, usando um bit de referência.", image: "https://source.unsplash.com/random/400x300/?second,chance,page,replacement" }
+        ];
+
+
+        let questions = JSON.parse(localStorage.getItem('quizQuestions')) || initialQuestions;
+        let users = JSON.parse(localStorage.getItem('quizUsers')) || {
+            'admin': { password: 'admin', isAdmin: true },
+            'aluno': { password: '123', isAdmin: false }
+        };
+        let currentUser = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let quizStartTime;
+        let quizTimer;
+        let currentChart = null; // Para destruir o gráfico anterior
+        let currentTopicChart = null; // Para o gráfico de tópico
+
+        const loginPopup = document.getElementById('login-popup');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showRegisterButton = document.getElementById('show-register-button');
+        const showLoginButton = document.getElementById('show-login-button');
+        const formTitle = document.getElementById('form-title');
+        const loginUsernameInput = document.getElementById('login-username');
+        const loginPasswordInput = document.getElementById('login-password');
+        const registerUsernameInput = document.getElementById('register-username');
+        const registerPasswordInput = document.getElementById('register-password');
+        const registerPasswordConfirmInput = document.getElementById('register-password-confirm');
+        const loginButton = document.getElementById('login-button');
+        const registerButton = document.getElementById('register-button');
+        const mainContentWrapper = document.getElementById('main-content-wrapper');
+        const studentNameInput = document.getElementById('student-name-input');
+        const startQuizButton = document.getElementById('start-quiz-button');
+        const contentLinkButton = document.getElementById('content-link-button'); // Novo botão de link
+        const quizDiv = document.getElementById('quiz');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const reportSection = document.getElementById('report-section');
+        const reportStudentName = document.getElementById('report-student-name');
+        const reportTimeTaken = document.getElementById('report-time-taken');
+        const reportScore = document.getElementById('report-score');
+        const reportTotalQuestions = document.getElementById('report-total-questions');
+        const reportAverage = document.getElementById('report-average');
+        const restartButtonReport = document.getElementById('restart-button-report');
+        const exportPdfButton = document.getElementById('export-pdf-button');
+        const exportSheetsButton = document.getElementById('export-sheets-button');
+        const nextActivityButton = document.getElementById('next-activity-button');
+        const detailedResults = document.getElementById('detailed-results');
+        const adminPanel = document.getElementById('admin-panel');
+        const closeAdminPanelButton = document.getElementById('close-admin-panel-button');
+        const addQuestionButton = document.getElementById('add-question-button');
+        const questionsList = document.getElementById('questions-list');
+        const editQuestionModal = document.getElementById('edit-question-modal');
+        const editModalTitle = document.getElementById('edit-modal-title');
+        const editQuestionId = document.getElementById('edit-question-id');
+        const editQuestionTopic = document.getElementById('edit-question-topic'); // Mudou de área para tópico
+        const editQuestionText = document.getElementById('edit-question-text');
+        const editQuestionImage = document.getElementById('edit-question-image');
+        const editOption1 = document.getElementById('edit-option-1');
+        const editOption2 = document.getElementById('edit-option-2');
+        const editOption3 = document.getElementById('edit-option-3');
+        const editOption4 = document.getElementById('edit-option-4');
+        const editCorrectAnswer = document.getElementById('edit-correct-answer');
+        const saveQuestionButton = document.getElementById('save-question-button');
+        const cancelEditButton = document.getElementById('cancel-edit-button');
+        const fetchImageButton = document.getElementById('fetch-image-button');
+
+        // --- Funções de Autenticação ---
+        function saveUsers() {
+            localStorage.setItem('quizUsers', JSON.stringify(users));
+        }
+
+        function saveQuestions() {
+            localStorage.setItem('quizQuestions', JSON.stringify(questions));
+        }
+
+        function showLoginForm() {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            formTitle.textContent = 'Acessar Quiz';
+        }
+
+        function showRegisterForm() {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            formTitle.textContent = 'Registrar Nova Conta';
+        }
+
+        loginButton.addEventListener('click', () => {
+            const username = loginUsernameInput.value;
+            const password = loginPasswordInput.value;
+
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                studentNameInput.value = username;
+                loginPopup.style.display = 'none';
+                mainContentWrapper.style.display = 'block';
+                contentLinkButton.style.display = 'inline-block'; // Mostra o botão de conteúdo
+                if (users[username].isAdmin) {
+                    const adminButton = document.createElement('button');
+                    adminButton.textContent = 'Acessar Painel Admin';
+                    adminButton.className = 'action-button';
+                    adminButton.id = 'admin-access-button';
+                    adminButton.style.marginTop = '20px';
+                    adminButton.addEventListener('click', showAdminPanel);
+                    document.getElementById('start-screen').insertBefore(adminButton, startQuizButton); // Adiciona antes do botão de iniciar quiz
+                }
+                alert('Login bem-sucedido!');
+            } else {
+                alert('Usuário ou senha inválidos.');
+            }
+        });
+
+        registerButton.addEventListener('click', () => {
+            const username = registerUsernameInput.value;
+            const password = registerPasswordInput.value;
+            const confirmPassword = registerPasswordConfirmInput.value;
+
+            if (username.length < 3) {
+                alert('O nome de usuário deve ter pelo menos 3 caracteres.');
+                return;
+            }
+            if (password.length < 3) {
+                alert('A senha deve ter pelo menos 3 caracteres.');
+                return;
+            }
+            if (password !== confirmPassword) {
+                alert('As senhas não coincidem.');
+                return;
+            }
+            if (users[username]) {
+                alert('Nome de usuário já existe. Escolha outro.');
+                return;
+            }
+
+            users[username] = { password: password, isAdmin: false };
+            saveUsers();
+            alert('Registro bem-sucedido! Faça login para continuar.');
+            showLoginForm();
+            registerUsernameInput.value = '';
+            registerPasswordInput.value = '';
+            registerPasswordConfirmInput.value = '';
+        });
+
+        showRegisterButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            showRegisterForm();
+        });
+
+        showLoginButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginForm();
+        });
+
+        // --- Funções do Quiz ---
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            userAnswers = Array(questions.length).fill(null);
+            quizStartTime = Date.now();
+            quizDiv.style.display = 'block';
+            document.getElementById('start-screen').style.display = 'none';
+            reportSection.style.display = 'none'; // Esconde o relatório se visível
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex < 0) {
+                currentQuestionIndex = 0;
+            } else if (currentQuestionIndex >= questions.length) {
+                currentQuestionIndex = questions.length - 1;
+            }
+
+            const question = questions[currentQuestionIndex];
+            questionText.innerHTML = `
+                ${question.image ? `<img src="${question.image}" alt="Imagem da Pergunta" />` : ''}
+                ${currentQuestionIndex + 1}. ${question.question}
+                <span class="attempt-count">(Tentativas: ${userAnswers[currentQuestionIndex] ? userAnswers[currentQuestionIndex].attempts : 0})</span>
+            `;
+            optionsContainer.innerHTML = '';
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'option-button';
+                button.onclick = () => selectOption(option);
+                optionsContainer.appendChild(button);
+
+                // Se o usuário já respondeu, marque a opção selecionada
+                if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].answer === option) {
+                    button.classList.add('selected');
+                }
+            });
+
+            prevButton.disabled = currentQuestionIndex === 0;
+            nextButton.textContent = currentQuestionIndex === questions.length - 1 ? 'Finalizar Quiz' : 'Próxima';
+        }
+
+        function selectOption(selectedOption) {
+            // Incrementa as tentativas, se não houver resposta prévia ou se for a primeira vez
+            const currentAttempts = userAnswers[currentQuestionIndex] ? userAnswers[currentQuestionIndex].attempts + 1 : 1;
+
+            userAnswers[currentQuestionIndex] = {
+                answer: selectedOption,
+                isCorrect: selectedOption === questions[currentQuestionIndex].answer,
+                attempts: currentAttempts // Armazena o número de tentativas
+            };
+
+            // Remove a seleção de todos os botões e adiciona ao selecionado
+            Array.from(optionsContainer.children).forEach(button => {
+                button.classList.remove('selected');
+                if (button.textContent === selectedOption) {
+                    button.classList.add('selected');
+                }
+            });
+
+            // Atualiza o contador de tentativas na tela
+            questionText.querySelector('.attempt-count').textContent = `(Tentativas: ${currentAttempts})`;
+        }
+
+        nextButton.addEventListener('click', () => {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                // Finalizar Quiz
+                endQuiz();
+            }
+        });
+
+        prevButton.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        });
+
+        function endQuiz() {
+            const quizEndTime = Date.now();
+            const timeTakenSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+            let score = 0;
+            let correctCountByTopic = {}; // Mudou para topic
+            let totalCountByTopic = {}; // Mudou para topic
+
+            questions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                if (userAnswer && userAnswer.isCorrect) {
+                    score++;
+                }
+
+                // Inicializar contadores por tópico
+                if (!totalCountByTopic[q.topic]) { // Acessa q.topic
+                    totalCountByTopic[q.topic] = 0;
+                    correctCountByTopic[q.topic] = 0;
+                }
+                totalCountByTopic[q.topic]++;
+                if (userAnswer && userAnswer.isCorrect) {
+                    correctCountByTopic[q.topic]++;
+                }
+            });
+
+            const average = questions.length > 0 ? (score / questions.length * 100).toFixed(2) : 0;
+
+            reportStudentName.textContent = studentNameInput.value;
+            reportTimeTaken.textContent = timeTakenSeconds;
+            reportScore.textContent = score;
+            reportTotalQuestions.textContent = questions.length;
+            reportAverage.textContent = average;
+
+            renderCharts(score, questions.length, correctCountByTopic, totalCountByTopic); // Passa os dados de tópico
+            renderDetailedResults();
+
+            quizDiv.style.display = 'none';
+            reportSection.style.display = 'block';
+        }
+
+        function renderCharts(score, totalQuestions, correctCountByTopic, totalCountByTopic) { // Recebe dados de tópico
+            // Destrói o gráfico anterior se existir
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            if (currentTopicChart) { // Usa currentTopicChart
+                currentTopicChart.destroy();
+            }
+
+            // Gráfico Geral de Acertos e Erros
+            const ctx = document.getElementById('report-canvas').getContext('2d');
+            currentChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Acertos', 'Erros'],
+                    datasets: [{
+                        data: [score, totalQuestions - score],
+                        backgroundColor: ['#4CAF50', '#F44336'],
+                        borderColor: ['#ffffff', '#ffffff'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Acertos vs. Erros',
+                            font: {
+                                size: 18
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                    const percentage = ((value / total) * 100).toFixed(2) + '%';
+                                    return `${label}: ${value} (${percentage})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico por Tópico de Conhecimento
+            const topicLabels = Object.keys(totalCountByTopic); // Usa topic
+            const topicPercentages = topicLabels.map(topic => {
+                const correct = correctCountByTopic[topic];
+                const total = totalCountByTopic[topic];
+                return total > 0 ? ((correct / total) * 100).toFixed(2) : 0;
+            });
+
+            const topicCtx = document.getElementById('area-report-canvas').getContext('2d'); // Renomeado para 'topic-report-canvas' para clareza
+            currentTopicChart = new Chart(topicCtx, { // Usa currentTopicChart
+                type: 'bar',
+                data: {
+                    labels: topicLabels,
+                    datasets: [{
+                        label: '% de Acerto por Tópico',
+                        data: topicPercentages,
+                        backgroundColor: '#4285f4', // Azul
+                        borderColor: '#1a237e',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Desempenho por Tópico de Conhecimento',
+                            font: {
+                                size: 18
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Porcentagem de Acerto (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tópico de Conhecimento'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDetailedResults() {
+            detailedResults.innerHTML = '<h3>Resultados Detalhados:</h3>';
+            questions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const questionResultDiv = document.createElement('div');
+                questionResultDiv.className = 'question-result';
+
+                let statusText = '';
+                let statusClass = '';
+                let userAnswerText = 'Não respondida';
+                let attemptsText = '';
+
+                if (userAnswer) {
+                    statusText = userAnswer.isCorrect ? 'Correta' : 'Incorreta';
+                    statusClass = userAnswer.isCorrect ? 'correct-q' : 'wrong-q';
+                    userAnswerText = `Sua resposta: <span class="user-answer">${userAnswer.answer}</span>`;
+                    attemptsText = `<span class="attempt-count-report">Tentativas: ${userAnswer.attempts}</span>`;
+                } else {
+                    statusClass = 'not-answered-q';
+                }
+
+                questionResultDiv.classList.add(statusClass);
+
+                questionResultDiv.innerHTML = `
+                    <p class="q-text"><strong>${index + 1}. ${q.question}</strong></p>
+                    <p>${userAnswerText} ${attemptsText}</p>
+                    <p>Resposta correta: <span class="correct-answer">${q.answer}</span></p>
+                    <p>Status: <span class="${userAnswer && userAnswer.isCorrect ? 'status-correct' : 'status-incorrect'}">${statusText}</span></p>
+                `;
+                detailedResults.appendChild(questionResultDiv);
+            });
+        }
+
+
+        startQuizButton.addEventListener('click', startQuiz);
+        restartButtonReport.addEventListener('click', () => {
+            reportSection.style.display = 'none';
+            document.getElementById('start-screen').style.display = 'block';
+        });
+
+        // --- Funções de Exportação ---
+        exportPdfButton.addEventListener('click', exportQuizReportToPdf);
+
+        async function exportQuizReportToPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFont('helvetica');
+            doc.setFontSize(22);
+            doc.text("Relatório do Quiz de Sistemas Operacionais", 105, 20, null, null, "center");
+
+            doc.setFontSize(12);
+            doc.text(`Aluno(a): ${reportStudentName.textContent}`, 15, 35);
+            doc.text(`Tempo Total: ${reportTimeTaken.textContent} segundos`, 15, 42);
+            doc.text(`Pontuação: ${reportScore.textContent} / ${reportTotalQuestions.textContent} (${reportAverage.textContent}%)`, 15, 49);
+
+            // Adicionar gráficos como imagens
+            const canvas = document.getElementById('report-canvas');
+            const topicCanvas = document.getElementById('area-report-canvas'); // Referência correta
+
+            const addChartToPdf = async (chartCanvas, x, y, width, height) => {
+                const imgData = chartCanvas.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', x, y, width, height);
+            };
+
+            // Ajustar posições dos gráficos para caber na página
+            const chartWidth = 90;
+            const chartHeight = 70;
+            await addChartToPdf(canvas, 15, 60, chartWidth, chartHeight);
+            await addChartToPdf(topicCanvas, 105, 60, chartWidth, chartHeight); // Usa topicCanvas
+
+            doc.setFontSize(16);
+            doc.text("Resultados Detalhados:", 15, 145);
+
+            // Preparar resultados detalhados para PDF
+            detailedResults.classList.add('pdf-mode'); // Adiciona classe para otimização CSS
+            const originalDetailedResultsHtml = detailedResults.innerHTML; // Salva o HTML original
+
+            // Renderiza os resultados detalhados de forma mais compacta para PDF
+            let pdfDetailedResultsHtml = '<ul>';
+            questions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const statusText = userAnswer && userAnswer.isCorrect ? 'Correta' : 'Incorreta';
+                const statusColor = userAnswer && userAnswer.isCorrect ? 'color: #4CAF50;' : 'color: #F44336;';
+                const userAnswerText = userAnswer ? `<span class="user-answer-pdf">${userAnswer.answer}</span>` : 'Não respondida';
+                const attemptsText = userAnswer ? ` (Tentativas: ${userAnswer.attempts})` : '';
+
+                pdfDetailedResultsHtml += `
+                    <li>
+                        <span class="q-num">${index + 1}.</span> <span class="q-text">${q.question}</span><br>
+                        Sua resposta: ${userAnswerText}${attemptsText}<br>
+                        Resposta correta: <span class="correct-answer-pdf">${q.answer}</span><br>
+                        Status: <span style="${statusColor}">${statusText}</span>
+                    </li><br>
+                `;
+            });
+            pdfDetailedResultsHtml += '</ul>';
+            detailedResults.innerHTML = pdfDetailedResultsHtml; // Temporariamente altera o HTML para renderização no PDF
+
+            // Capturar o HTML renderizado dos resultados detalhados
+            html2canvas(detailedResults, {
+                scale: 2, // Melhorar a qualidade do texto
+                useCORS: true // Essencial para imagens externas
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 190; // Largura A4 - margens
+                const pageHeight = doc.internal.pageSize.height;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+
+                let position = 155; // Posição inicial após os gráficos
+
+                doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight - position;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight + 10; // 10mm de margem no topo
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                doc.save('Relatorio_Quiz_Sistemas_Operacionais.pdf');
+
+                // Restaurar o HTML original e remover a classe
+                detailedResults.innerHTML = originalDetailedResultsHtml;
+                detailedResults.classList.remove('pdf-mode');
+            }).catch(error => {
+                console.error("Erro ao gerar PDF com html2canvas:", error);
+                alert("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes.");
+                // Em caso de erro, restaurar o HTML original
+                detailedResults.innerHTML = originalDetailedResultsHtml;
+                detailedResults.classList.remove('pdf-mode');
+            });
+        }
+
+        exportSheetsButton.addEventListener('click', () => {
+            alert('Funcionalidade "Exportar para Planilhas Google" ainda não implementada.');
+        });
+
+        nextActivityButton.addEventListener('click', () => {
+            alert('Funcionalidade "Próxima Atividade" ainda não implementada.');
+        });
+
+        // --- Funções do Painel Administrativo ---
+        function showAdminPanel() {
+            if (!currentUser || !users[currentUser].isAdmin) {
+                alert('Acesso negado. Apenas administradores podem acessar esta seção.');
+                return;
+            }
+            mainContentWrapper.style.display = 'none';
+            adminPanel.style.display = 'flex';
+            renderQuestionsList();
+        }
+
+        closeAdminPanelButton.addEventListener('click', () => {
+            adminPanel.style.display = 'none';
+            mainContentWrapper.style.display = 'block';
+        });
+
+        function renderQuestionsList() {
+            questionsList.innerHTML = '';
+            questions.forEach(q => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong>ID: ${q.id} | Tópico: ${q.topic}</strong>
+                    <span><strong>Pergunta:</strong> ${q.question}</span>
+                    <span><strong>Opções:</strong> ${q.options.join('; ')}</span>
+                    <span><strong>Resposta Correta:</strong> ${q.answer}</span>
+                    ${q.image ? `<span><strong>URL Imagem:</strong> <a href="${q.image}" target="_blank">Ver Imagem</a></span>` : ''}
+                    <div class="actions">
+                        <button class="edit-btn" data-id="${q.id}">Editar</button>
+                        <button class="delete-btn" data-id="${q.id}">Excluir</button>
+                    </div>
+                `;
+                questionsList.appendChild(li);
+            });
+
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const questionId = parseInt(e.target.dataset.id);
+                    editQuestion(questionId);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const questionId = parseInt(e.target.dataset.id);
+                    deleteQuestion(questionId);
+                });
+            });
+        }
+
+        addQuestionButton.addEventListener('click', () => {
+            editQuestion(-1); // -1 indica nova pergunta
+        });
+
+        function editQuestion(id) {
+            editQuestionModal.style.display = 'flex';
+            let questionToEdit = {
+                id: null,
+                topic: 'Processos', // Padrão para o primeiro tópico
+                question: '',
+                options: ['', '', '', ''],
+                answer: '',
+                image: ''
+            };
+
+            if (id !== -1) {
+                questionToEdit = questions.find(q => q.id === id);
+                editModalTitle.textContent = 'Editar Pergunta';
+            } else {
+                editModalTitle.textContent = 'Adicionar Nova Pergunta';
+            }
+
+            editQuestionId.value = questionToEdit.id;
+            editQuestionTopic.value = questionToEdit.topic; // Define o tópico
+            editQuestionText.value = questionToEdit.question;
+            editQuestionImage.value = questionToEdit.image;
+            editOption1.value = questionToEdit.options[0] || '';
+            editOption2.value = questionToEdit.options[1] || '';
+            editOption3.value = questionToEdit.options[2] || '';
+            editOption4.value = questionToEdit.options[3] || '';
+
+            // Popula as opções do select de tópico
+            const topics = [
+                "Processos",
+                "Threads",
+                "Comunicação interprocessos (IPC)",
+                "Escalonamento",
+                "Uso direto de memória",
+                "Abstração de memória: espaço de endereçamento",
+                "Memória virtual",
+                "Algoritmos de substituição de páginas"
+            ];
+            editQuestionTopic.innerHTML = '';
+            topics.forEach(t => {
+                const optionElement = document.createElement('option');
+                optionElement.value = t;
+                optionElement.textContent = t;
+                editQuestionTopic.appendChild(optionElement);
+            });
+            editQuestionTopic.value = questionToEdit.topic; // Garante que o tópico correto seja selecionado
+
+            updateCorrectAnswerOptions();
+            editCorrectAnswer.value = questionToEdit.answer;
+        }
+
+        // Atualiza as opções do select de resposta correta
+        function updateCorrectAnswerOptions() {
+            editCorrectAnswer.innerHTML = '';
+            const options = [editOption1.value, editOption2.value, editOption3.value, editOption4.value].filter(opt => opt.trim() !== '');
+            options.forEach(opt => {
+                const optionElement = document.createElement('option');
+                optionElement.value = opt;
+                optionElement.textContent = opt;
+                editCorrectAnswer.appendChild(optionElement);
+            });
+        }
+
+        // Listener para atualizar as opções de resposta correta enquanto o usuário digita
+        [editOption1, editOption2, editOption3, editOption4].forEach(input => {
+            input.addEventListener('input', updateCorrectAnswerOptions);
+        });
+
+        saveQuestionButton.addEventListener('click', () => {
+            const id = parseInt(editQuestionId.value);
+            const topic = editQuestionTopic.value; // Pega o tópico
+            const questionTextValue = editQuestionText.value.trim();
+            const imageURL = editQuestionImage.value.trim();
+            const options = [
+                editOption1.value.trim(),
+                editOption2.value.trim(),
+                editOption3.value.trim(),
+                editOption4.value.trim()
+            ].filter(opt => opt !== ''); // Filtra opções vazias
+
+            const correctAnswer = editCorrectAnswer.value.trim();
+
+            if (!questionTextValue || options.length < 2 || !correctAnswer) {
+                alert('Por favor, preencha a pergunta, pelo menos duas opções e selecione a resposta correta.');
+                return;
+            }
+
+            // Garante que a resposta correta seja uma das opções válidas
+            if (!options.includes(correctAnswer)) {
+                alert('A resposta correta deve ser uma das opções fornecidas.');
+                return;
+            }
+
+            if (id === -1) { // Nova pergunta
+                const newId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
+                questions.push({
+                    id: newId,
+                    topic: topic,
+                    question: questionTextValue,
+                    options: options,
+                    answer: correctAnswer,
+                    image: imageURL
+                });
+            } else { // Editar pergunta existente
+                const index = questions.findIndex(q => q.id === id);
+                if (index !== -1) {
+                    questions[index] = {
+                        id: id,
+                        topic: topic,
+                        question: questionTextValue,
+                        options: options,
+                        answer: correctAnswer,
+                        image: imageURL
+                    };
+                }
+            }
+            saveQuestions();
+            renderQuestionsList();
+            editQuestionModal.style.display = 'none';
+        });
+
+        cancelEditButton.addEventListener('click', () => {
+            editQuestionModal.style.display = 'none';
+        });
+
+        function deleteQuestion(id) {
+            if (confirm(`Tem certeza que deseja excluir a pergunta ID ${id}?`)) {
+                questions = questions.filter(q => q.id !== id);
+                saveQuestions();
+                renderQuestionsList();
+                alert('Pergunta excluída com sucesso!');
+            }
+        }
+
+        // --- Funcionalidade de Buscar Imagem ---
+        fetchImageButton.addEventListener('click', async () => {
+            const query = editQuestionText.value.trim();
+            if (query) {
+                try {
+                    const imageUrl = await simulateImageSearch(query);
+                    if (imageUrl) {
+                        editQuestionImage.value = imageUrl;
+                        alert('Imagem encontrada e URL preenchida!');
+                    } else {
+                        alert('Nenhuma imagem relevante encontrada para esta pergunta.');
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar imagem:", error);
+                    alert('Erro ao buscar imagem. Tente novamente mais tarde.');
+                }
+            } else {
+                alert('Por favor, digite o texto da pergunta para buscar uma imagem.');
+            }
+        });
+
+        async function simulateImageSearch(query) {
+            const keywords = query.toLowerCase().split(' ').filter(word => word.length > 2).slice(0, 5); // Pega até 5 palavras-chave
+            const baseQuery = keywords.length > 0 ? keywords.join(',') : 'operating,system,computer'; // Fallback se query for muito curta
+            
+            // Adiciona termos genéricos para garantir alguma imagem, mesmo que a pergunta seja muito específica
+            const genericTerms = ['technology', 'programming', 'abstract', 'data'];
+            const finalQuery = `${baseQuery},${genericTerms[Math.floor(Math.random() * genericTerms.length)]}`;
+            
+            return `https://source.unsplash.com/random/400x300/?${finalQuery}`;
+        }
+    </script>
+</body>
+</html>
