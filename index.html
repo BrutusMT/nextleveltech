@@ -734,7 +734,7 @@
             <h2>Pronto para testar seus conhecimentos?</h2>
             <p>Seu nome será preenchido automaticamente com seu usuário de login.</p>
             <input type="text" id="student-name-input" placeholder="Nome do Aluno(a)" readonly>
-            <a href="https://example.com/seu-conteudo-teorico" target="_blank" id="content-link-button" class="action-button" style="display: none;">Acessar Conteúdo Teórico</a>
+            <a href="https://gerencia-de-processos-ce3vlhn.gamma.site/" target="_blank" id="content-link-button" class="action-button" style="display: none;">Acessar Conteúdo Teórico</a>
             <button id="start-quiz-button" class="action-button">Iniciar Quiz</button>
         </div>
 
@@ -800,10 +800,9 @@
                     <option value="Threads">Threads</option>
                     <option value="Comunicação interprocessos (IPC)">Comunicação interprocessos (IPC)</option>
                     <option value="Escalonamento">Escalonamento</option>
-                    <option value="Uso direto de memória">Uso direto de memória</option>
-                    <option value="Abstração de memória: espaço de endereçamento">Abstração de memória: espaço de endereçamento</option>
-                    <option value="Memória virtual">Memória virtual</option>
-                    <option value="Algoritmos de substituição de páginas">Algoritmos de substituição de páginas</option>
+                    <option value="Gerência de Memória">Gerência de Memória</option>
+                    <option value="Memória Virtual">Memória Virtual</option>
+                    <option value="Algoritmos de Substituição de Páginas">Algoritmos de Substituição de Páginas</option>
                 </select>
             </div>
             <div class="form-group">
@@ -836,45 +835,53 @@
     </div>
 
     <script>
-const initialQuestions = [
-    // --- Gerência de Processos: Definição e Estrutura Fundamental ---
-    { id: 1, topic: "Processos", question: "Se um programa entra em um loop infinito, qual 'estado' do processo ele provavelmente estará ocupando predominantemente, e qual a implicação para o sistema operacional?", options: ["Novo; ocupando espaço em disco excessivo.", "Bloqueado; esperando por uma entrada/saída.", "Em Execução; monopolizando a CPU e prejudicando a multiprogramação.", "Terminado; liberando todos os recursos."], answer: "Em Execução; monopolizando a CPU e prejudicando a multiprogramação.", image: "https://source.unsplash.com/random/400x300/?infinite,loop,CPU,monopoly" },
-    { id: 2, topic: "Processos", question: "Explique a importância da 'compreensão da estrutura de um processo' para um desenvolvedor de software de sistema. Quais seriam as consequências de ignorá-la?", options: ["Apenas para saber o PID do processo.", "É vital para otimizar o uso de recursos e garantir a estabilidade; ignorar pode levar a vazamentos de memória e falhas de aplicação.", "Serve apenas para depuração em produção.", "Não há consequências significativas."], answer: "É vital para otimizar o uso de recursos e garantir a estabilidade; ignorar pode levar a vazamentos de memória e falhas de aplicação.", image: "https://source.unsplash.com/random/400x300/?software,developer,stability,system" },
-    { id: 3, topic: "Processos", question: "Qual a diferença fundamental entre um processo no estado 'Pronto' e um processo no estado 'Bloqueado'?", options: ["Pronto está aguardando CPU, Bloqueado está aguardando um evento (E/S, recurso).", "Pronto está em execução, Bloqueado está pronto para execução.", "Pronto já terminou sua execução, Bloqueado está sendo criado.", "Pronto está com erro, Bloqueado está correto."], answer: "Pronto está aguardando CPU, Bloqueado está aguardando um evento (E/S, recurso).", image: "https://source.unsplash.com/random/400x300/?process,ready,blocked,state" },
+        const initialQuestions = [
+            // --- Gerência de Processos (3 questões) ---
+            { id: 1, topic: "Processos", question: "Se um programa entra em um loop infinito, qual 'estado' do processo ele provavelmente estará ocupando predominantemente, e qual a implicação para o sistema operacional?", options: ["Novo; ocupando espaço em disco excessivo.", "Bloqueado; esperando por uma entrada/saída.", "Em Execução; monopolizando a CPU e prejudicando a multiprogramação.", "Terminado; liberando todos os recursos."], answer: "Em Execução; monopolizando a CPU e prejudicando a multiprogramação.", image: "https://source.unsplash.com/random/400x300/?infinite,loop,CPU,monopoly" },
+            { id: 2, topic: "Processos", question: "Explique a importância da 'compreensão da estrutura de um processo' para um desenvolvedor de software de sistema. Quais seriam as consequências de ignorá-la?", options: ["Apenas para saber o PID do processo.", "É vital para otimizar o uso de recursos e garantir a estabilidade; ignorar pode levar a vazamentos de memória e falhas de aplicação.", "Serve apenas para depuração em produção.", "Não há consequências significativas."], answer: "É vital para otimizar o uso de recursos e garantir a estabilidade; ignorar pode levar a vazamentos de memória e falhas de aplicação.", image: "https://source.unsplash.com/random/400x300/?software,developer,stability,system" },
+            { id: 3, topic: "Processos", question: "Qual a diferença fundamental entre um processo no estado 'Pronto' e um processo no estado 'Bloqueado'?", options: ["Pronto está aguardando CPU, Bloqueado está aguardando um evento (E/S, recurso).", "Pronto está em execução, Bloqueado está pronto para execução.", "Pronto já terminou sua execução, Bloqueado está sendo criado.", "Pronto está com erro, Bloqueado está correto."], answer: "Pronto está aguardando CPU, Bloqueado está aguardando um evento (E/S, recurso).", image: "https://source.unsplash.com/random/400x300/?process,ready,blocked,state" },
 
-    // --- Threads: Potencializando a Execução Paralela ---
-    { id: 4, topic: "Threads", question: "Como o compartilhamento do 'mesmo espaço de endereço' por threads dentro de um processo impacta o desempenho e a complexidade do desenvolvimento?", options: ["Aumenta o isolamento e simplifica a comunicação, mas reduz o desempenho.", "Permite comunicação eficiente via memória compartilhada e menor sobrecarga, mas introduz desafios de sincronização.", "Não tem impacto no desempenho, apenas na segurança.", "Força cada thread a ter sua própria cópia dos dados."], answer: "Permite comunicação eficiente via memória compartilhada e menor sobrecarga, mas introduz desafios de sincronização.", image: "https://source.unsplash.com/random/400x300/?shared,memory,threads,synchronization" },
-    { id: 5, topic: "Threads", question: "Um sistema multi-core se beneficia mais da utilização de threads ou de múltiplos processos independentes para uma única aplicação intensiva em computação? Justifique.", options: ["Múltiplos processos, pois oferecem isolamento completo.", "Threads, devido ao menor overhead na criação e troca de contexto, e compartilhamento eficiente de dados.", "Não há diferença, o desempenho é o mesmo.", "Nenhum dos dois, o benefício é mínimo."], answer: "Threads, devido ao menor overhead na criação e troca de contexto, e compartilhamento eficiente de dados.", image: "https://source.unsplash.com/random/400x300/?multi-core,threads,performance,concurrency" },
-    { id: 6, topic: "Threads", question: "Qual o principal desafio de programação ao se utilizar múltiplas threads que acessam dados compartilhados?", options: ["Aumento da latência de rede.", "Condições de corrida e necessidade de mecanismos de sincronização para garantir a integridade dos dados.", "Dificuldade em gerenciar o tempo de execução.", "Excesso de consumo de memória RAM."], answer: "Condições de corrida e necessidade de mecanismos de sincronização para garantir a integridade dos dados.", image: "https://source.unsplash.com/random/400x300/?race,condition,synchronization,threads" },
+            // --- Threads (3 questões) ---
+            { id: 4, topic: "Threads", question: "Como o compartilhamento do 'mesmo espaço de endereço' por threads dentro de um processo impacta o desempenho e a complexidade do desenvolvimento?", options: ["Aumenta o isolamento e simplifica a comunicação, mas reduz o desempenho.", "Permite comunicação eficiente via memória compartilhada e menor sobrecarga, mas introduz desafios de sincronização.", "Não tem impacto no desempenho, apenas na segurança.", "Força cada thread a ter sua própria cópia dos dados."], answer: "Permite comunicação eficiente via memória compartilhada e menor sobrecarga, mas introduz desafios de sincronização.", image: "https://source.unsplash.com/random/400x300/?shared,memory,threads,synchronization" },
+            { id: 5, topic: "Threads", question: "Um sistema multi-core se beneficia mais da utilização de threads ou de múltiplos processos independentes para uma única aplicação intensiva em computação? Justifique.", options: ["Múltiplos processos, pois oferecem isolamento completo.", "Threads, devido ao menor overhead na criação e troca de contexto, e compartilhamento eficiente de dados.", "Não há diferença, o desempenho é o mesmo.", "Nenhum dos dois, o benefício é mínimo."], answer: "Threads, devido ao menor overhead na criação e troca de contexto, e compartilhamento eficiente de dados.", image: "https://source.unsplash.com/random/400x300/?multi-core,threads,performance,concurrency" },
+            { id: 6, topic: "Threads", question: "Qual o principal desafio de programação ao se utilizar múltiplas threads que acessam dados compartilhados?", options: ["Aumento da latência de rede.", "Condições de corrida e necessidade de mecanismos de sincronização para garantir a integridade dos dados.", "Dificuldade em gerenciar o tempo de execução.", "Excesso de consumo de memória RAM."], answer: "Condições de corrida e necessidade de mecanismos de sincronização para garantir a integridade dos dados.", image: "https://source.unsplash.com/random/400x300/?race,condition,synchronization,threads" },
 
-    // --- Comunicação Interprocessos (IPC): O Diálogo no Sistema ---
-    { id: 7, topic: "Comunicação interprocessos (IPC)", question: "Compare 'Pipes' e 'Memória Compartilhada' em termos de complexidade de implementação e velocidade de comunicação. Qual é mais adequado para alta vazão de dados e por quê?", options: ["Pipes são mais complexos e lentos; Memória Compartilhada é mais simples e rápida, ideal para alta vazão.", "Pipes são mais simples e lentos; Memória Compartilhada é mais complexa e rápida, ideal para alta vazão por acesso direto.", "Ambos têm a mesma complexidade e velocidade.", "Pipes são unidirecionais, Memória Compartilhada é bidirecional, mas igualmente rápida."], answer: "Pipes são mais simples e lentos; Memória Compartilhada é mais complexa e rápida, ideal para alta vazão por acesso direto.", image: "https://source.unsplash.com/random/400x300/?IPC,pipes,shared,memory,speed" },
-    { id: 8, topic: "Comunicação interprocessos (IPC)", question: "Por que a sincronização é crucial ao usar Memória Compartilhada para IPC, e quais problemas podem surgir sem ela?", options: ["Para criptografar os dados.", "Para evitar condições de corrida, garantindo a integridade dos dados; sem ela, dados podem ser corrompidos ou inconsistentes.", "Para acelerar a comunicação.", "Para reduzir o consumo de memória."], answer: "Para evitar condições de corrida, garantindo a integridade dos dados; sem ela, dados podem ser corrompidos ou inconsistentes.", image: "https://source.unsplash.com/random/400x300/?synchronization,data,integrity,IPC" },
-    { id: 9, topic: "Comunicação interprocessos (IPC)", question: "Em um cenário onde múltiplos processos precisam trocar mensagens assíncronas e que podem ser persistentes, qual mecanismo IPC seria mais adequado e por quê?", options: ["Pipes, por serem simples.", "Memória Compartilhada, por ser rápida.", "Filas de Mensagens, pois permitem assincronicidade e persistência das mensagens.", "Sinais, por serem leves."], answer: "Filas de Mensagens, pois permitem assincronicidade e persistência das mensagens.", image: "https://source.unsplash.com/random/400x300/?message,queue,asynchronous,persistence" },
+            // --- Comunicação Interprocessos (IPC) (4 questões) ---
+            { id: 7, topic: "Comunicação interprocessos (IPC)", question: "Compare 'Pipes' e 'Memória Compartilhada' em termos de complexidade de implementação e velocidade de comunicação. Qual é mais adequado para alta vazão de dados e por quê?", options: ["Pipes são mais complexos e lentos; Memória Compartilhada é mais simples e rápida, ideal para alta vazão.", "Pipes são mais simples e lentos; Memória Compartilhada é mais complexa e rápida, ideal para alta vazão por acesso direto.", "Ambos têm a mesma complexidade e velocidade.", "Pipes são unidirecionais, Memória Compartilhada é bidirecional, mas igualmente rápida."], answer: "Pipes são mais simples e lentos; Memória Compartilhada é mais complexa e rápida, ideal para alta vazão por acesso direto.", image: "https://source.unsplash.com/random/400x300/?IPC,pipes,shared,memory,speed" },
+            { id: 8, topic: "Comunicação interprocessos (IPC)", question: "Por que a sincronização é crucial ao usar Memória Compartilhada para IPC, e quais problemas podem surgir sem ela?", options: ["Para criptografar os dados.", "Para evitar condições de corrida, garantindo a integridade dos dados; sem ela, dados podem ser corrompidos ou inconsistentes.", "Para acelerar a comunicação.", "Para reduzir o consumo de memória."], answer: "Para evitar condições de corrida, garantindo a integridade dos dados; sem ela, dados podem ser corrompidos ou inconsistentes.", image: "https://source.unsplash.com/random/400x300/?synchronization,data,integrity,IPC" },
+            { id: 9, topic: "Comunicação interprocessos (IPC)", question: "Em um cenário onde múltiplos processos precisam trocar mensagens assíncronas e que podem ser persistentes, qual mecanismo IPC seria mais adequado e por quê?", options: ["Pipes, por serem simples.", "Memória Compartilhada, por ser rápida.", "Filas de Mensagens, pois permitem assincronicidade e persistência das mensagens.", "Sinais, por serem leves."], answer: "Filas de Mensagens, pois permitem assincronicidade e persistência das mensagens.", image: "https://source.unsplash.com/random/400x300/?message,queue,asynchronous,persistence" },
+            { id: 10, topic: "Comunicação interprocessos (IPC)", question: "Descreva um caso de uso prático onde o mecanismo de 'Sinais' (Signals) seria a forma mais eficiente de comunicação IPC no Linux/Unix.", options: ["Para transferir grandes volumes de dados entre servidores.", "Para notificar um processo sobre a ocorrência de um evento assíncrono, como interrupção (Ctrl+C) ou término de um processo filho.", "Para compartilhar uma base de dados entre múltiplas aplicações.", "Para comunicação bidirecional contínua de áudio."], answer: "Para notificar um processo sobre a ocorrência de um evento assíncrono, como interrupção (Ctrl+C) ou término de um processo filho.", image: "https://source.unsplash.com/random/400x300/?linux,unix,signals,IPC" },
 
-    // --- Escalonamento de Processos: A Arte de Gerenciar o Tempo ---
-    { id: 10, topic: "Escalonamento", question: "Considere um sistema com carga de trabalho mista (tarefas interativas e batch). Qual política de escalonamento seria mais adequada para garantir boa responsividade ao usuário, e por quê?", options: ["FIFO, pois é simples.", "Round-Robin ou Prioridades, pois garantem que tarefas interativas recebam atenção rapidamente.", "Apenas Prioridades fixas, sem Round-Robin.", "SJF (Shortest Job First), pois minimiza o tempo de espera."], answer: "Round-Robin ou Prioridades, pois garantem que tarefas interativas recebam atenção rapidamente.", image: "https://source.unsplash.com/random/400x300/?scheduling,responsiveness,interactive,batch" },
-    { id: 11, topic: "Escalonamento", question: "O que é 'preempção' no contexto do escalonamento, e por que ela é fundamental para sistemas operacionais modernos?", options: ["É a capacidade de um processo terminar sua própria execução.", "É a interrupção forçada de um processo em execução pelo escalonador para permitir que outro processo execute, essencial para multiprogramação e responsividade.", "É a priorização de processos longos.", "É a forma como um processo requisita mais tempo de CPU."], answer: "É a interrupção forçada de um processo em execução pelo escalonador para permitir que outro processo execute, essencial para multiprogramação e responsividade.", image: "https://source.unsplash.com/random/400x300/?preemption,scheduler,multiprogramming" },
-    { id: 12, topic: "Escalonamento", question: "Em um sistema de tempo real rígido, qual característica do escalonamento é mais crítica: justiça, vazão ou previsibilidade no tempo de resposta?", options: ["Justiça, para que todos os processos recebam tempo igual.", "Vazão, para processar o máximo de tarefas.", "Previsibilidade no tempo de resposta, pois falhas podem ter consequências catastróficas.", "Baixo overhead do escalonador."], answer: "Previsibilidade no tempo de resposta, pois falhas podem ter consequências catastróficas.", image: "https://source.unsplash.com/random/400x300/?real-time,scheduling,predictability,critical" },
+            // --- Escalonamento de Processos (4 questões) ---
+            { id: 11, topic: "Escalonamento", question: "Considere um sistema com carga de trabalho mista (tarefas interativas e batch). Qual política de escalonamento seria mais adequada para garantir boa responsividade ao usuário, e por quê?", options: ["FIFO, pois é simples.", "Round-Robin ou Prioridades, pois garantem que tarefas interativas recebam atenção rapidamente.", "Apenas Prioridades fixas, sem Round-Robin.", "SJF (Shortest Job First), pois minimiza o tempo de espera."], answer: "Round-Robin ou Prioridades, pois garantem que tarefas interativas recebam atenção rapidamente.", image: "https://source.unsplash.com/random/400x300/?scheduling,responsiveness,interactive,batch" },
+            { id: 12, topic: "Escalonamento", question: "O que é 'preempção' no contexto do escalonamento, e por que ela é fundamental para sistemas operacionais modernos?", options: ["É a capacidade de um processo terminar sua própria execução.", "É a interrupção forçada de um processo em execução pelo escalonador para permitir que outro processo execute, essencial para multiprogramação e responsividade.", "É a priorização de processos longos.", "É a forma como um processo requisita mais tempo de CPU."], answer: "É a interrupção forçada de um processo em execução pelo escalonador para permitir que outro processo execute, essencial para multiprogramação e responsividade.", image: "https://source.unsplash.com/random/400x300/?preemption,scheduler,multiprogramming" },
+            { id: 13, topic: "Escalonamento", question: "Em um sistema de tempo real rígido, qual característica do escalonamento é mais crítica: justiça, vazão ou previsibilidade no tempo de resposta?", options: ["Justiça, para que todos os processos recebam tempo igual.", "Vazão, para processar o máximo de tarefas.", "Previsibilidade no tempo de resposta, pois falhas podem ter consequências catastróficas.", "Baixo overhead do escalonador."], answer: "Previsibilidade no tempo de resposta, pois falhas podem ter consequências catastróficas.", image: "https://source.unsplash.com/random/400x300/?real-time,scheduling,predictability,critical" },
+            { id: 14, topic: "Escalonamento", question: "Qual a desvantagem principal de uma política de escalonamento baseada puramente em 'Prioridades' sem envelhecimento (aging)?", options: ["Aumenta o throughput do sistema.", "Pode levar à inanição (starvation) de processos de baixa prioridade, que nunca são executados.", "Garante a justiça entre todos os processos.", "Simplifica a implementação do escalonador."], answer: "Pode levar à inanição (starvation) de processos de baixa prioridade, que nunca são executados.", image: "https://source.unsplash.com/random/400x300/?starvation,priority,scheduling,aging" },
 
-    // --- Gerência de Memória: Uso Direto e Básico ---
-    { id: 13, topic: "Uso direto de memória", question: "Se um processo tenta acessar uma região de memória que não foi alocada a ele em um sistema de uso direto de memória, qual é o resultado típico e por que o SO atua como 'guardião'?", options: ["O sistema ignora o acesso.", "O processo obtém acesso a dados de outro processo, ou ocorre uma falha de segmentação, pois o SO deve proteger a integridade da memória.", "O processo solicita mais memória automaticamente.", "O sistema operacional reinicia o processo."], answer: "O processo obtém acesso a dados de outro processo, ou ocorre uma falha de segmentação, pois o SO deve proteger a integridade da memória.", image: "https://source.unsplash.com/random/400x300/?memory,access,violation,segmentation,fault" },
-    { id: 14, topic: "Uso direto de memória", question: "Qual a desvantagem principal do 'Uso Direto de Memória' em um ambiente multiprogramado e como a fragmentação de memória se manifesta nesse modelo?", options: ["Apenas a complexidade de implementação.", "Problemas de segurança e fragmentação externa (espaços livres não contíguos), dificultando a alocação de blocos grandes.", "A lentidão no acesso à memória.", "O uso excessivo da CPU."], answer: "Problemas de segurança e fragmentação externa (espaços livres não contíguos), dificultando a alocação de blocos grandes.", image: "https://source.unsplash.com/random/400x300/?memory,fragmentation,multiprogramming,security" },
+            // --- Gerência de Memória (6 questões, incluindo uso direto e abstração) ---
+            { id: 15, topic: "Gerência de Memória", question: "Se um processo tenta acessar uma região de memória que não foi alocada a ele em um sistema de uso direto de memória, qual é o resultado típico e por que o SO atua como 'guardião'?", options: ["O sistema ignora o acesso.", "O processo obtém acesso a dados de outro processo, ou ocorre uma falha de segmentação, pois o SO deve proteger a integridade da memória.", "O processo solicita mais memória automaticamente.", "O sistema operacional reinicia o processo."], answer: "O processo obtém acesso a dados de outro processo, ou ocorre uma falha de segmentação, pois o SO deve proteger a integridade da memória.", image: "https://source.unsplash.com/random/400x300/?memory,access,violation,segmentation,fault" },
+            { id: 16, topic: "Gerência de Memória", question: "Qual a desvantagem principal do 'Uso Direto de Memória' em um ambiente multiprogramado e como a fragmentação de memória se manifesta nesse modelo?", options: ["Apenas a complexidade de implementação.", "Problemas de segurança e fragmentação externa (espaços livres não contíguos), dificultando a alocação de blocos grandes.", "A lentidão no acesso à memória.", "O uso excessivo da CPU."], answer: "Problemas de segurança e fragmentação externa (espaços livres não contíguos), dificultando a alocação de blocos grandes.", image: "https://source.unsplash.com/random/400x300/?memory,fragmentation,multiprogramming,security" },
+            { id: 17, topic: "Gerência de Memória", question: "Explique como o 'espaço de endereçamento lógico' contribui para a segurança e isolamento entre processos em um ambiente multiprogramado.", options: ["Ele aumenta a velocidade da CPU.", "Ele impede que um processo acesse diretamente a memória física de outro, garantindo isolamento e prevenindo falhas maliciosas ou acidentais.", "Ele duplica a memória RAM para cada processo.", "Ele torna a depuração de código mais difícil."], answer: "Ele impede que um processo acesse diretamente a memória física de outro, garantindo isolamento e prevenindo falhas maliciosas ou acidentais.", image: "https://source.unsplash.com/random/400x300/?memory,abstraction,isolation,security" },
+            { id: 18, topic: "Gerência de Memória", question: "Qual o papel da 'unidade de gerenciamento de memória (MMU)' no mapeamento de endereços lógicos para físicos, e por que essa tradução é transparente para o processo?", options: ["A MMU apenas armazena dados.", "A MMU realiza a tradução de endereços em hardware, e é transparente para o processo para simplificar a programação e manter o isolamento.", "A MMU gerencia a conexão de rede.", "A tradução é manual e feita pelo programador."], answer: "A MMU realiza a tradução de endereços em hardware, e é transparente para o processo para simplificar a programação e manter o isolamento.", image: "https://source.unsplash.com/random/400x300/?MMU,memory,translation,hardware" },
+            { id: 19, topic: "Gerência de Memória", question: "No contexto da abstração de memória, o que é 'fragmentação interna' e como ela difere da fragmentação externa?", options: ["Fragmentação interna ocorre em SSDs; externa em HDDs.", "Interna é espaço desperdiçado dentro de um bloco alocado (devido a alocação em blocos fixos); externa são lacunas entre blocos alocados.", "Fragmentação interna é apenas um problema teórico; externa é real.", "São termos sinônimos."], answer: "Interna é espaço desperdiçado dentro de um bloco alocado (devido a alocação em blocos fixos); externa são lacunas entre blocos alocados.", image: "https://source.unsplash.com/random/400x300/?internal,external,fragmentation,memory" },
+            { id: 20, topic: "Gerência de Memória", question: "Como o 'relocamento' de memória, facilitado pela abstração, ajuda na multiprogramação?", options: ["Impede a execução de múltiplos programas.", "Permite que programas sejam carregados em qualquer área livre da memória física, independentemente de onde foram compilados, otimizando o uso do espaço.", "Exige que programas sejam reescritos para cada execução.", "Causa a interrupção constante de processos."], answer: "Permite que programas sejam carregados em qualquer área livre da memória física, independentemente de onde foram compilados, otimizando o uso do espaço.", image: "https://source.unsplash.com/random/400x300/?memory,relocation,multiprogramming" },
 
-    // --- Abstração de Memória: O Espaço de Endereçamento ---
-    { id: 15, topic: "Abstração de memória: espaço de endereçamento", question: "Explique como o 'espaço de endereçamento lógico' contribui para a segurança e isolamento entre processos em um ambiente multiprogramado.", options: ["Ele aumenta a velocidade da CPU.", "Ele impede que um processo acesse diretamente a memória física de outro, garantindo isolamento e prevenindo falhas maliciosas ou acidentais.", "Ele duplica a memória RAM para cada processo.", "Ele torna a depuração de código mais difícil."], answer: "Ele impede que um processo acesse diretamente a memória física de outro, garantindo isolamento e prevenindo falhas maliciosas ou acidentais.", image: "https://source.unsplash.com/random/400x300/?memory,abstraction,isolation,security" },
-    { id: 16, topic: "Abstração de memória: espaço de endereçamento", question: "Qual o papel da 'unidade de gerenciamento de memória (MMU)' no mapeamento de endereços lógicos para físicos, e por que essa tradução é transparente para o processo?", options: ["A MMU apenas armazena dados.", "A MMU realiza a tradução de endereços em hardware, e é transparente para o processo para simplificar a programação e manter o isolamento.", "A MMU gerencia a conexão de rede.", "A tradução é manual e feita pelo programador."], answer: "A MMU realiza a tradução de endereços em hardware, e é transparente para o processo para simplificar a programação e manter o isolamento.", image: "https://source.unsplash.com/random/400x300/?MMU,memory,translation,hardware" },
 
-    // --- Memória Virtual: Além dos Limites Físicos ---
-    { id: 17, topic: "Memória virtual", question: "Qual a principal vantagem da 'Memória Virtual' para a execução de programas maiores que a RAM disponível, e como isso impacta a experiência do usuário?", options: ["Permite que programas rodem mais rápido que a CPU.", "Permite carregar apenas as partes necessárias do programa na RAM, usando o disco para o restante, melhorando a capacidade de execução e multitarefa.", "Isso não é possível, a RAM é o limite.", "Causa lentidão excessiva e falhas frequentes."], answer: "Permite carregar apenas as partes necessárias do programa na RAM, usando o disco para o restante, melhorando a capacidade de execução e multitarefa.", image: "https://source.unsplash.com/random/400x300/?virtual,memory,RAM,paging,performance" },
-    { id: 18, topic: "Memória virtual", question: "Explique o conceito de 'thrashing' na memória virtual e suas consequências para o desempenho do sistema.", options: ["É o aumento da velocidade do disco rígido.", "É quando o sistema passa a maior parte do tempo trocando páginas entre RAM e disco (swap), resultando em lentidão severa devido ao excesso de E/S.", "É uma técnica de otimização de cache.", "É a proteção contra acesso indevido à memória."], answer: "É quando o sistema passa a maior parte do tempo trocando páginas entre RAM e disco (swap), resultando em lentidão severa devido ao excesso de E/S.", image: "https://source.unsplash.com/random/400x300/?thrashing,paging,performance,degradation" },
-    { id: 19, topic: "Memória virtual", question: "Como a memória virtual contribui para o isolamento robusto entre processos, mesmo que eles compartilhem o mesmo hardware físico?", options: ["Não há isolamento, eles compartilham tudo.", "Cada processo possui seu próprio espaço de endereçamento lógico, que é mapeado de forma isolada para a memória física, protegendo a memória de um processo do acesso por outro.", "Apenas através de senhas de acesso.", "Usando criptografia em tempo real."], answer: "Cada processo possui seu próprio espaço de endereçamento lógico, que é mapeado de forma isolada para a memória física, protegendo a memória de um processo do acesso por outro.", image: "https://source.unsplash.com/random/400x300/?memory,isolation,virtual,processes" },
+            // --- Memória Virtual (5 questões) ---
+            { id: 21, topic: "Memória Virtual", question: "Qual a principal vantagem da 'Memória Virtual' para a execução de programas maiores que a RAM disponível, e como isso impacta a experiência do usuário?", options: ["Permite que programas rodem mais rápido que a CPU.", "Permite carregar apenas as partes necessárias do programa na RAM, usando o disco para o restante, melhorando a capacidade de execução e multitarefa.", "Isso não é possível, a RAM é o limite.", "Causa lentidão excessiva e falhas frequentes."], answer: "Permite carregar apenas as partes necessárias do programa na RAM, usando o disco para o restante, melhorando a capacidade de execução e multitarefa.", image: "https://source.unsplash.com/random/400x300/?virtual,memory,RAM,paging,performance" },
+            { id: 22, topic: "Memória Virtual", question: "Explique o conceito de 'thrashing' na memória virtual e suas consequências para o desempenho do sistema.", options: ["É o aumento da velocidade do disco rígido.", "É quando o sistema passa a maior parte do tempo trocando páginas entre RAM e disco (swap), resultando em lentidão severa devido ao excesso de E/S.", "É uma técnica de otimização de cache.", "É a proteção contra acesso indevido à memória."], answer: "É quando o sistema passa a maior parte do tempo trocando páginas entre RAM e disco (swap), resultando em lentidão severa devido ao excesso de E/S.", image: "https://source.unsplash.com/random/400x300/?thrashing,paging,performance,degradation" },
+            { id: 23, topic: "Memória Virtual", question: "Como a memória virtual contribui para o isolamento robusto entre processos, mesmo que eles compartilhem o mesmo hardware físico?", options: ["Não há isolamento, eles compartilham tudo.", "Cada processo possui seu próprio espaço de endereçamento lógico, que é mapeado de forma isolada para a memória física, protegendo a memória de um processo do acesso por outro.", "Apenas através de senhas de acesso.", "Usando criptografia em tempo real."], answer: "Cada processo possui seu próprio espaço de endereçamento lógico, que é mapeado de forma isolada para a memória física, protegendo a memória de um processo do acesso por outro.", image: "https://source.unsplash.com/random/400x300/?memory,isolation,virtual,processes" },
+            { id: 24, topic: "Memória Virtual", question: "Qual a relação entre 'paginações' e 'memória virtual', e o que acontece quando ocorre uma 'falta de página' (page fault)?", options: ["Paginação é um erro de hardware; falta de página é um bug de software.", "Paginação é a divisão da memória lógica em blocos; falta de página ocorre quando a página necessária não está na RAM, exigindo que ela seja carregada do disco.", "Paginação só existe em sistemas de tempo real; falta de página não afeta o desempenho.", "Paginação aumenta o consumo de RAM."], answer: "Paginação é a divisão da memória lógica em blocos; falta de página ocorre quando a página necessária não está na RAM, exigindo que ela seja carregada do disco.", image: "https://source.unsplash.com/random/400x300/?paging,page,fault,virtual,memory" },
+            { id: 25, topic: "Memória Virtual", question: "Por que a memória virtual é considerada uma tecnologia crucial para a multiprogramação moderna, além de permitir o uso de programas grandes?", options: ["Porque ela simplifica a programação assembly.", "Ela permite que múltiplos programas sejam executados simultaneamente de forma eficiente, mesmo com RAM limitada, oferecendo isolamento e proteção entre eles.", "Ela aumenta o custo de hardware.", "Ela só funciona em sistemas de núcleo único."], answer: "Ela permite que múltiplos programas sejam executados simultaneamente de forma eficiente, mesmo com RAM limitada, oferecendo isolamento e proteção entre eles.", image: "https://source.unsplash.com/random/400x300/?multiprogramming,modern,virtual,memory" },
 
-    // --- Algoritmos de Substituição de Páginas: Otimizando o Desempenho ---
-    { id: 20, topic: "Algoritmos de substituição de páginas", question: "Qual a diferença fundamental entre os algoritmos 'FIFO' e 'LRU' de substituição de páginas em termos de critério de remoção, e qual deles tende a ser mais eficiente na prática?", options: ["FIFO remove a página mais antiga; LRU remove a menos utilizada recentemente. LRU é geralmente mais eficiente.", "FIFO remove a menos utilizada; LRU remove a mais antiga. FIFO é mais eficiente.", "Ambos são baseados em prioridade. Não há diferença significativa na eficiência.", "FIFO é apenas para sistemas de tempo real, LRU é para sistemas desktop."], answer: "FIFO remove a página mais antiga; LRU remove a menos utilizada recentemente. LRU é geralmente mais eficiente.", image: "https://source.unsplash.com/random/400x300/?FIFO,LRU,page,replacement,efficiency" },
-    { id: 21, topic: "Algoritmos de substituição de páginas", question: "Por que o algoritmo 'Ótimo (OPT)' é impraticável de implementar em um sistema operacional real, apesar de ser o mais eficiente?", options: ["Porque ele exige uma CPU muito rápida.", "Porque ele requer conhecimento futuro sobre quais páginas serão referenciadas, o que é impossível em tempo real.", "Porque ele consome muita memória RAM.", "Porque é muito complexo de programar."], answer: "Porque ele requer conhecimento futuro sobre quais páginas serão referenciadas, o que é impossível em tempo real.", image: "https://source.unsplash.com/random/400x300/?optimal,algorithm,future,prediction" },
-    { id: 22, topic: "Algoritmos de substituição de páginas", question: "A 'Anomalia de Belady' é um fenômeno que ocorre em qual algoritmo de substituição de páginas e o que ela significa para o desempenho?", options: ["Apenas no LRU; significa que ele é ineficiente.", "No FIFO; significa que, paradoxalmente, aumentar o número de quadros de página pode *aumentar* o número de faltas de página.", "No OPT; significa que ele nunca atinge o ideal.", "Em todos os algoritmos; é um erro de hardware."], answer: "No FIFO; significa que, paradoxalmente, aumentar o número de quadros de página pode *aumentar* o número de faltas de página.", image: "https://source.unsplash.com/random/400x300/?Belady,anomaly,FIFO,page,faults" }
-];
+            // --- Algoritmos de Substituição de Páginas (5 questões) ---
+            { id: 26, topic: "Algoritmos de Substituição de Páginas", question: "Qual a diferença fundamental entre os algoritmos 'FIFO' e 'LRU' de substituição de páginas em termos de critério de remoção, e qual deles tende a ser mais eficiente na prática?", options: ["FIFO remove a página mais antiga; LRU remove a menos utilizada recentemente. LRU é geralmente mais eficiente.", "FIFO remove a menos utilizada; LRU remove a mais antiga. FIFO é mais eficiente.", "Ambos são baseados em prioridade. Não há diferença significativa na eficiência.", "FIFO é apenas para sistemas de tempo real, LRU é para sistemas desktop."], answer: "FIFO remove a página mais antiga; LRU remove a menos utilizada recentemente. LRU é geralmente mais eficiente.", image: "https://source.unsplash.com/random/400x300/?FIFO,LRU,page,replacement,efficiency" },
+            { id: 27, topic: "Algoritmos de Substituição de Páginas", question: "Por que o algoritmo 'Ótimo (OPT)' é impraticável de implementar em um sistema operacional real, apesar de ser o mais eficiente?", options: ["Porque ele exige uma CPU muito rápida.", "Porque ele requer conhecimento futuro sobre quais páginas serão referenciadas, o que é impossível em tempo real.", "Porque ele consome muita memória RAM.", "Porque é muito complexo de programar."], answer: "Porque ele requer conhecimento futuro sobre quais páginas serão referenciadas, o que é impossível em tempo real.", image: "https://source.unsplash.com/random/400x300/?optimal,algorithm,future,prediction" },
+            { id: 28, topic: "Algoritmos de Substituição de Páginas", question: "A 'Anomalia de Belady' é um fenômeno que ocorre em qual algoritmo de substituição de páginas e o que ela significa para o desempenho?", options: ["Apenas no LRU; significa que ele é ineficiente.", "No FIFO; significa que, paradoxalmente, aumentar o número de quadros de página pode *aumentar* o número de faltas de página.", "No OPT; significa que ele nunca atinge o ideal.", "Em todos os algoritmos; é um erro de hardware."], answer: "No FIFO; significa que, paradoxalmente, aumentar o número de quadros de página pode *aumentar* o número de faltas de página.", image: "https://source.unsplash.com/random/400x300/?Belady,anomaly,FIFO,page,faults" },
+            { id: 29, topic: "Algoritmos de Substituição de Páginas", question: "Qual a principal desvantagem do algoritmo FIFO para substituição de páginas em comparação com outros algoritmos como LRU?", options: ["Ele é muito lento.", "Sua performance pode ser ruim porque ele remove páginas antigas que ainda podem ser ativamente usadas, levando a mais faltas de página.", "Ele é muito complexo de implementar.", "Não tem desvantagens, é sempre o melhor."], answer: "Sua performance pode ser ruim porque ele remove páginas antigas que ainda podem ser ativamente usadas, levando a mais faltas de página.", image: "https://source.unsplash.com/random/400x300/?FIFO,disadvantage,performance" },
+            { id: 30, topic: "Algoritmos de Substituição de Páginas", question: "O que o algoritmo 'Clock' (ou Second Chance) busca otimizar, e como ele tenta se aproximar da eficiência do LRU sem o alto custo?", options: ["Minimizar o uso de CPU.", "Ele busca balancear a simplicidade do FIFO com a eficiência do LRU, usando um bit de referência para evitar remover páginas recentemente usadas.", "Ele apenas randomiza a escolha de páginas.", "Ele duplica todas as páginas na memória."], answer: "Ele busca balancear a simplicidade do FIFO com a eficiência do LRU, usando um bit de referência para evitar remover páginas recentemente usadas.", image: "https://source.unsplash.com/random/400x300/?clock,algorithm,LRU,efficiency" }
+        ];
+
         let questions = JSON.parse(localStorage.getItem('quizQuestions')) || initialQuestions;
         let users = JSON.parse(localStorage.getItem('quizUsers')) || {
             'admin': { password: 'admin', isAdmin: true },
@@ -882,12 +889,13 @@ const initialQuestions = [
         };
         let currentUser = null;
         let currentQuestionIndex = 0;
-        let userAnswers = [];
+        let userAnswers = []; // Armazena {answer: string, isCorrect: boolean, attempts: number}
         let quizStartTime;
-        let quizTimer;
+        let quizTimer; // Variável para o timer (não usada diretamente para exibir, mas pode ser usada para futuras funcionalidades)
         let currentChart = null; // Para destruir o gráfico anterior
         let currentTopicChart = null; // Para o gráfico de tópico
 
+        // Elementos DOM
         const loginPopup = document.getElementById('login-popup');
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
@@ -904,7 +912,7 @@ const initialQuestions = [
         const mainContentWrapper = document.getElementById('main-content-wrapper');
         const studentNameInput = document.getElementById('student-name-input');
         const startQuizButton = document.getElementById('start-quiz-button');
-        const contentLinkButton = document.getElementById('content-link-button'); // Novo botão de link
+        const contentLinkButton = document.getElementById('content-link-button');
         const quizDiv = document.getElementById('quiz');
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
@@ -928,7 +936,7 @@ const initialQuestions = [
         const editQuestionModal = document.getElementById('edit-question-modal');
         const editModalTitle = document.getElementById('edit-modal-title');
         const editQuestionId = document.getElementById('edit-question-id');
-        const editQuestionTopic = document.getElementById('edit-question-topic'); // Mudou de área para tópico
+        const editQuestionTopic = document.getElementById('edit-question-topic');
         const editQuestionText = document.getElementById('edit-question-text');
         const editQuestionImage = document.getElementById('edit-question-image');
         const editOption1 = document.getElementById('edit-option-1');
@@ -970,7 +978,7 @@ const initialQuestions = [
                 studentNameInput.value = username;
                 loginPopup.style.display = 'none';
                 mainContentWrapper.style.display = 'block';
-                contentLinkButton.style.display = 'inline-block'; // Mostra o botão de conteúdo
+                contentLinkButton.style.display = 'inline-block';
                 if (users[username].isAdmin) {
                     const adminButton = document.createElement('button');
                     adminButton.textContent = 'Acessar Painel Admin';
@@ -978,7 +986,7 @@ const initialQuestions = [
                     adminButton.id = 'admin-access-button';
                     adminButton.style.marginTop = '20px';
                     adminButton.addEventListener('click', showAdminPanel);
-                    document.getElementById('start-screen').insertBefore(adminButton, startQuizButton); // Adiciona antes do botão de iniciar quiz
+                    document.getElementById('start-screen').insertBefore(adminButton, startQuizButton);
                 }
                 alert('Login bem-sucedido!');
             } else {
@@ -1034,7 +1042,7 @@ const initialQuestions = [
             quizStartTime = Date.now();
             quizDiv.style.display = 'block';
             document.getElementById('start-screen').style.display = 'none';
-            reportSection.style.display = 'none'; // Esconde o relatório se visível
+            reportSection.style.display = 'none';
             loadQuestion();
         }
 
@@ -1060,7 +1068,6 @@ const initialQuestions = [
                 button.onclick = () => selectOption(option);
                 optionsContainer.appendChild(button);
 
-                // Se o usuário já respondeu, marque a opção selecionada
                 if (userAnswers[currentQuestionIndex] && userAnswers[currentQuestionIndex].answer === option) {
                     button.classList.add('selected');
                 }
@@ -1071,16 +1078,14 @@ const initialQuestions = [
         }
 
         function selectOption(selectedOption) {
-            // Incrementa as tentativas, se não houver resposta prévia ou se for a primeira vez
             const currentAttempts = userAnswers[currentQuestionIndex] ? userAnswers[currentQuestionIndex].attempts + 1 : 1;
 
             userAnswers[currentQuestionIndex] = {
                 answer: selectedOption,
                 isCorrect: selectedOption === questions[currentQuestionIndex].answer,
-                attempts: currentAttempts // Armazena o número de tentativas
+                attempts: currentAttempts
             };
 
-            // Remove a seleção de todos os botões e adiciona ao selecionado
             Array.from(optionsContainer.children).forEach(button => {
                 button.classList.remove('selected');
                 if (button.textContent === selectedOption) {
@@ -1088,16 +1093,20 @@ const initialQuestions = [
                 }
             });
 
-            // Atualiza o contador de tentativas na tela
             questionText.querySelector('.attempt-count').textContent = `(Tentativas: ${currentAttempts})`;
         }
 
         nextButton.addEventListener('click', () => {
+            // **VALIDAÇÃO: Exigir resposta**
+            if (userAnswers[currentQuestionIndex] === null) {
+                alert('Por favor, selecione uma resposta antes de prosseguir.');
+                return;
+            }
+
             if (currentQuestionIndex < questions.length - 1) {
                 currentQuestionIndex++;
                 loadQuestion();
             } else {
-                // Finalizar Quiz
                 endQuiz();
             }
         });
@@ -1110,11 +1119,24 @@ const initialQuestions = [
         });
 
         function endQuiz() {
+            // **VALIDAÇÃO FINAL: Exigir que todas as perguntas estejam respondidas**
+            const allAnswered = userAnswers.every(answer => answer !== null);
+            if (!allAnswered) {
+                alert('Você deve responder a todas as perguntas antes de finalizar o quiz. Use os botões "Anterior" e "Próxima" para navegar.');
+                // Opcional: Redirecionar para a primeira pergunta não respondida
+                const firstUnansweredIndex = userAnswers.findIndex(answer => answer === null);
+                if (firstUnansweredIndex !== -1) {
+                    currentQuestionIndex = firstUnansweredIndex;
+                    loadQuestion();
+                }
+                return;
+            }
+
             const quizEndTime = Date.now();
             const timeTakenSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
             let score = 0;
-            let correctCountByTopic = {}; // Mudou para topic
-            let totalCountByTopic = {}; // Mudou para topic
+            let correctCountByTopic = {};
+            let totalCountByTopic = {};
 
             questions.forEach((q, index) => {
                 const userAnswer = userAnswers[index];
@@ -1122,8 +1144,7 @@ const initialQuestions = [
                     score++;
                 }
 
-                // Inicializar contadores por tópico
-                if (!totalCountByTopic[q.topic]) { // Acessa q.topic
+                if (!totalCountByTopic[q.topic]) {
                     totalCountByTopic[q.topic] = 0;
                     correctCountByTopic[q.topic] = 0;
                 }
@@ -1141,23 +1162,21 @@ const initialQuestions = [
             reportTotalQuestions.textContent = questions.length;
             reportAverage.textContent = average;
 
-            renderCharts(score, questions.length, correctCountByTopic, totalCountByTopic); // Passa os dados de tópico
+            renderCharts(score, questions.length, correctCountByTopic, totalCountByTopic);
             renderDetailedResults();
 
             quizDiv.style.display = 'none';
             reportSection.style.display = 'block';
         }
 
-        function renderCharts(score, totalQuestions, correctCountByTopic, totalCountByTopic) { // Recebe dados de tópico
-            // Destrói o gráfico anterior se existir
+        function renderCharts(score, totalQuestions, correctCountByTopic, totalCountByTopic) {
             if (currentChart) {
                 currentChart.destroy();
             }
-            if (currentTopicChart) { // Usa currentTopicChart
+            if (currentTopicChart) {
                 currentTopicChart.destroy();
             }
 
-            // Gráfico Geral de Acertos e Erros
             const ctx = document.getElementById('report-canvas').getContext('2d');
             currentChart = new Chart(ctx, {
                 type: 'pie',
@@ -1195,23 +1214,22 @@ const initialQuestions = [
                 }
             });
 
-            // Gráfico por Tópico de Conhecimento
-            const topicLabels = Object.keys(totalCountByTopic); // Usa topic
+            const topicLabels = Object.keys(totalCountByTopic);
             const topicPercentages = topicLabels.map(topic => {
                 const correct = correctCountByTopic[topic];
                 const total = totalCountByTopic[topic];
                 return total > 0 ? ((correct / total) * 100).toFixed(2) : 0;
             });
 
-            const topicCtx = document.getElementById('area-report-canvas').getContext('2d'); // Renomeado para 'topic-report-canvas' para clareza
-            currentTopicChart = new Chart(topicCtx, { // Usa currentTopicChart
+            const topicCtx = document.getElementById('area-report-canvas').getContext('2d');
+            currentTopicChart = new Chart(topicCtx, {
                 type: 'bar',
                 data: {
                     labels: topicLabels,
                     datasets: [{
                         label: '% de Acerto por Tópico',
                         data: topicPercentages,
-                        backgroundColor: '#4285f4', // Azul
+                        backgroundColor: '#4285f4',
                         borderColor: '#1a237e',
                         borderWidth: 1
                     }]
@@ -1306,29 +1324,25 @@ const initialQuestions = [
             doc.text(`Tempo Total: ${reportTimeTaken.textContent} segundos`, 15, 42);
             doc.text(`Pontuação: ${reportScore.textContent} / ${reportTotalQuestions.textContent} (${reportAverage.textContent}%)`, 15, 49);
 
-            // Adicionar gráficos como imagens
             const canvas = document.getElementById('report-canvas');
-            const topicCanvas = document.getElementById('area-report-canvas'); // Referência correta
+            const topicCanvas = document.getElementById('area-report-canvas');
 
             const addChartToPdf = async (chartCanvas, x, y, width, height) => {
                 const imgData = chartCanvas.toDataURL('image/png');
                 doc.addImage(imgData, 'PNG', x, y, width, height);
             };
 
-            // Ajustar posições dos gráficos para caber na página
             const chartWidth = 90;
             const chartHeight = 70;
             await addChartToPdf(canvas, 15, 60, chartWidth, chartHeight);
-            await addChartToPdf(topicCanvas, 105, 60, chartWidth, chartHeight); // Usa topicCanvas
+            await addChartToPdf(topicCanvas, 105, 60, chartWidth, chartHeight);
 
             doc.setFontSize(16);
             doc.text("Resultados Detalhados:", 15, 145);
 
-            // Preparar resultados detalhados para PDF com escrita simples e concisa
-            detailedResults.classList.add('pdf-mode'); // Adiciona classe para otimização CSS
-            const originalDetailedResultsHtml = detailedResults.innerHTML; // Salva o HTML original
+            detailedResults.classList.add('pdf-mode');
+            const originalDetailedResultsHtml = detailedResults.innerHTML;
 
-            // Renderiza os resultados detalhados de forma mais compacta para PDF
             let pdfDetailedResultsHtml = '<ul>';
             questions.forEach((q, index) => {
                 const userAnswer = userAnswers[index];
@@ -1337,7 +1351,6 @@ const initialQuestions = [
                 const userAnswerContent = userAnswer ? `Sua resp: <span class="user-answer-pdf">${userAnswer.answer}</span>` : 'Não respondida';
                 const attemptsContent = userAnswer ? ` (Tentativas: ${userAnswer.attempts})` : '';
 
-                // Formato mais conciso em uma única linha por questão, se possível
                 pdfDetailedResultsHtml += `
                     <li>
                         <span class="q-num">${index + 1}.</span> <span class="q-text">${q.question}</span> |
@@ -1348,26 +1361,25 @@ const initialQuestions = [
                 `;
             });
             pdfDetailedResultsHtml += '</ul>';
-            detailedResults.innerHTML = pdfDetailedResultsHtml; // Temporariamente altera o HTML para renderização no PDF
+            detailedResults.innerHTML = pdfDetailedResultsHtml;
 
-            // Capturar o HTML renderizado dos resultados detalhados
             html2canvas(detailedResults, {
-                scale: 2, // Melhorar a qualidade do texto
-                useCORS: true // Essencial para imagens externas
+                scale: 2,
+                useCORS: true
             }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190; // Largura A4 - margens
+                const imgWidth = 190;
                 const pageHeight = doc.internal.pageSize.height;
                 const imgHeight = canvas.height * imgWidth / canvas.width;
                 let heightLeft = imgHeight;
 
-                let position = 155; // Posição inicial após os gráficos
+                let position = 155;
 
                 doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight - position;
 
                 while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight + 10; // 10mm de margem no topo
+                    position = heightLeft - imgHeight + 10;
                     doc.addPage();
                     doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
                     heightLeft -= pageHeight;
@@ -1375,13 +1387,11 @@ const initialQuestions = [
 
                 doc.save('Relatorio_Quiz_Sistemas_Operacionais.pdf');
 
-                // Restaurar o HTML original e remover a classe
                 detailedResults.innerHTML = originalDetailedResultsHtml;
                 detailedResults.classList.remove('pdf-mode');
             }).catch(error => {
                 console.error("Erro ao gerar PDF com html2canvas:", error);
                 alert("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes.");
-                // Em caso de erro, restaurar o HTML original
                 detailedResults.innerHTML = originalDetailedResultsHtml;
                 detailedResults.classList.remove('pdf-mode');
             });
@@ -1445,14 +1455,14 @@ const initialQuestions = [
         }
 
         addQuestionButton.addEventListener('click', () => {
-            editQuestion(-1); // -1 indica nova pergunta
+            editQuestion(-1);
         });
 
         function editQuestion(id) {
             editQuestionModal.style.display = 'flex';
             let questionToEdit = {
                 id: null,
-                topic: 'Processos', // Padrão para o primeiro tópico
+                topic: 'Processos',
                 question: '',
                 options: ['', '', '', ''],
                 answer: '',
@@ -1467,7 +1477,7 @@ const initialQuestions = [
             }
 
             editQuestionId.value = questionToEdit.id;
-            editQuestionTopic.value = questionToEdit.topic; // Define o tópico
+            editQuestionTopic.value = questionToEdit.topic;
             editQuestionText.value = questionToEdit.question;
             editQuestionImage.value = questionToEdit.image;
             editOption1.value = questionToEdit.options[0] || '';
@@ -1475,16 +1485,14 @@ const initialQuestions = [
             editOption3.value = questionToEdit.options[2] || '';
             editOption4.value = questionToEdit.options[3] || '';
 
-            // Popula as opções do select de tópico
             const topics = [
                 "Processos",
                 "Threads",
                 "Comunicação interprocessos (IPC)",
                 "Escalonamento",
-                "Uso direto de memória",
-                "Abstração de memória: espaço de endereçamento",
-                "Memória virtual",
-                "Algoritmos de substituição de páginas"
+                "Gerência de Memória", // Tópico unificado
+                "Memória Virtual",
+                "Algoritmos de Substituição de Páginas"
             ];
             editQuestionTopic.innerHTML = '';
             topics.forEach(t => {
@@ -1493,13 +1501,12 @@ const initialQuestions = [
                 optionElement.textContent = t;
                 editQuestionTopic.appendChild(optionElement);
             });
-            editQuestionTopic.value = questionToEdit.topic; // Garante que o tópico correto seja selecionado
+            editQuestionTopic.value = questionToEdit.topic;
 
             updateCorrectAnswerOptions();
             editCorrectAnswer.value = questionToEdit.answer;
         }
 
-        // Atualiza as opções do select de resposta correta
         function updateCorrectAnswerOptions() {
             editCorrectAnswer.innerHTML = '';
             const options = [editOption1.value, editOption2.value, editOption3.value, editOption4.value].filter(opt => opt.trim() !== '');
@@ -1511,14 +1518,13 @@ const initialQuestions = [
             });
         }
 
-        // Listener para atualizar as opções de resposta correta enquanto o usuário digita
         [editOption1, editOption2, editOption3, editOption4].forEach(input => {
             input.addEventListener('input', updateCorrectAnswerOptions);
         });
 
         saveQuestionButton.addEventListener('click', () => {
             const id = parseInt(editQuestionId.value);
-            const topic = editQuestionTopic.value; // Pega o tópico
+            const topic = editQuestionTopic.value;
             const questionTextValue = editQuestionText.value.trim();
             const imageURL = editQuestionImage.value.trim();
             const options = [
@@ -1526,7 +1532,7 @@ const initialQuestions = [
                 editOption2.value.trim(),
                 editOption3.value.trim(),
                 editOption4.value.trim()
-            ].filter(opt => opt !== ''); // Filtra opções vazias
+            ].filter(opt => opt !== '');
 
             const correctAnswer = editCorrectAnswer.value.trim();
 
@@ -1535,13 +1541,12 @@ const initialQuestions = [
                 return;
             }
 
-            // Garante que a resposta correta seja uma das opções válidas
             if (!options.includes(correctAnswer)) {
                 alert('A resposta correta deve ser uma das opções fornecidas.');
                 return;
             }
 
-            if (id === -1) { // Nova pergunta
+            if (id === -1) {
                 const newId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
                 questions.push({
                     id: newId,
@@ -1551,7 +1556,7 @@ const initialQuestions = [
                     answer: correctAnswer,
                     image: imageURL
                 });
-            } else { // Editar pergunta existente
+            } else {
                 const index = questions.findIndex(q => q.id === id);
                 if (index !== -1) {
                     questions[index] = {
@@ -1582,7 +1587,6 @@ const initialQuestions = [
             }
         }
 
-        // --- Funcionalidade de Buscar Imagem ---
         fetchImageButton.addEventListener('click', async () => {
             const query = editQuestionText.value.trim();
             if (query) {
@@ -1604,10 +1608,9 @@ const initialQuestions = [
         });
 
         async function simulateImageSearch(query) {
-            const keywords = query.toLowerCase().split(' ').filter(word => word.length > 2).slice(0, 5); // Pega até 5 palavras-chave
-            const baseQuery = keywords.length > 0 ? keywords.join(',') : 'operating,system,computer'; // Fallback se query for muito curta
+            const keywords = query.toLowerCase().split(' ').filter(word => word.length > 2).slice(0, 5);
+            const baseQuery = keywords.length > 0 ? keywords.join(',') : 'operating,system,computer';
 
-            // Adiciona termos genéricos para garantir alguma imagem, mesmo que a pergunta seja muito específica
             const genericTerms = ['technology', 'programming', 'abstract', 'data'];
             const finalQuery = `${baseQuery},${genericTerms[Math.floor(Math.random() * genericTerms.length)]}`;
 
