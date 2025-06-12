@@ -1,1211 +1,1262 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma de Provas</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>Sistema de Avaliação de Quiz</title>
     <style>
+        /* Estilos Base */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
             margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            background-color: #f3f4f6; /* Cor de fundo padrão */
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
         }
-        /* Estilos adicionais para spinner */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
         }
-        .animate-spin {
-            animation: spin 1s linear infinite;
+
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="number"],
+        .input-group input[type="password"],
+        .input-group textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .input-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus,
+        .input-group input[type="password"]:focus,
+        .input-group textarea:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .action-button:hover {
+            background-color: #0056b3;
+        }
+
+        .action-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .action-button.secondary {
+            background-color: #6c757d;
+        }
+
+        .action-button.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .action-button.danger {
+            background-color: #dc3545;
+        }
+
+        .action-button.danger:hover {
+            background-color: #c82333;
+        }
+
+        /* Estilos do Quiz */
+        #question-area {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        #question-area h3 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #34495e;
+        }
+
+        #options-container button {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+            padding: 15px 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        #options-container button:hover {
+            background-color: #e2e6ea;
+            border-color: #b8c1cb;
+        }
+
+        #options-container button.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        #options-container button.correct {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        #options-container button.incorrect {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        #feedback-message {
+            margin-top: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        #feedback-message.correct {
+            color: #28a745;
+        }
+
+        #feedback-message.incorrect {
+            color: #dc3545;
+        }
+
+        #timer, #current-score {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        #current-score {
+            color: #FF5722;
+        }
+        
+        /* Estilos para o cronômetro de penalidade */
+        #penalty-status {
+            font-size: 1.1em;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 5px;
+            color: black; 
+            padding: 8px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0; 
+            display: none; /* Inicia oculto */
+        }
+        #penalty-status.active {
+            color: white;
+            border-color: #dc3545; /* Borda vermelha */
+            background-color: #dc3545; /* Fundo vermelho */
+            display: block; /* Torna visível quando ativo */
+        }
+
+        /* Estilos do Relatório */
+        #report-area table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        #report-area th, #report-area td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        #report-area th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        /* Utilidades */
+        .hidden {
+            display: none;
+        }
+
+        .admin-only {
+            display: none;
+        }
+
+        body.admin-mode .admin-only {
+            display: block; /* Ou flex, conforme o caso do layout */
+        }
+
+        /* Gerenciamento de Perguntas */
+        #question-management-area .question-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fff;
+            margin-top: 15px;
+        }
+
+        .question-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .question-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .question-list-item .question-text {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        .question-list-item button {
+            padding: 5px 10px;
+            margin-left: 5px;
+            font-size: 0.9em;
+        }
+        .question-form .option-input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .question-form .option-input-group input[type="text"] {
+            flex-grow: 1;
+            margin-right: 5px;
+        }
+        .question-form .option-input-group input[type="radio"] {
+            margin-left: 5px;
+            min-width: 20px; /* Para melhor clique em telas pequenas */
+        }
+
+        /* Estilos para impressão (Exportar PDF) */
+        @media print {
+            body {
+                background-color: #fff;
+                color: #000;
+                padding: 0;
+                margin: 0;
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                max-width: none;
+            }
+            .section {
+                border: none;
+                background-color: #fff;
+                padding: 0;
+                margin-bottom: 10px;
+            }
+            /* Oculta tudo que não deve ser impresso */
+            #login-area,
+            #register-area,
+            #main-menu-area,
+            #quiz-area,
+            #question-management-area,
+            .button-group, /* Oculta todos os grupos de botões */
+            .hidden, /* Qualquer elemento que já está oculto */
+            .admin-only, /* Elementos de admin */
+            /* Botões específicos no relatório */
+            #export-pdf-button,
+            #back-to-menu-from-report
+             {
+                display: none !important;
+            }
+
+            /* Garante que a área de relatório seja visível para impressão */
+            #report-area {
+                display: block !important;
+                position: relative;
+                margin: 20px;
+            }
+
+            /* Estilos de tabela para impressão */
+            #report-area table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+            #report-area th, #report-area td {
+                border: 1px solid #999;
+                padding: 8px;
+                font-size: 0.9em;
+            }
+            #report-area th {
+                background-color: #e0e0e0;
+                color: #333;
+            }
+
+            /* Ajustes finos de texto */
+            h1, h2, h3 {
+                color: #000;
+                margin-top: 15px;
+                margin-bottom: 10px;
+            }
+            p {
+                margin-bottom: 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="app-container" class="min-h-screen">
-        <!-- Conteúdo será carregado aqui pelo JavaScript -->
+    <div class="container">
+        <div id="login-area" class="section">
+            <h1>Login</h1>
+            <div class="input-group">
+                <label for="username">Usuário:</label>
+                <input type="text" id="username" autocomplete="username">
+            </div>
+            <div class="input-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" autocomplete="current-password">
+            </div>
+            <div class="button-group">
+                <button id="login-button" class="action-button">Entrar</button>
+                <button id="show-register-button" class="action-button secondary">Registrar</button>
+            </div>
+        </div>
+
+        <div id="register-area" class="section hidden">
+            <h1>Registro de Novo Usuário</h1>
+            <div class="input-group">
+                <label for="new-username">Escolha um Usuário:</label>
+                <input type="text" id="new-username" autocomplete="new-username">
+            </div>
+            <div class="input-group">
+                <label for="new-password">Escolha uma Senha:</label>
+                <input type="password" id="new-password" autocomplete="new-password">
+            </div>
+            <div class="button-group">
+                <button id="register-user-button" class="action-button">Registrar</button>
+                <button id="back-to-login-button" class="action-button secondary">Voltar ao Login</button>
+            </div>
+        </div>
+
+        <div id="main-menu-area" class="section hidden">
+            <h1>Menu Principal</h1>
+            <div class="button-group">
+                <button id="start-quiz-button" class="action-button">Iniciar Quiz</button>
+                <button id="manage-questions-button" class="action-button secondary admin-only">Gerenciar Perguntas</button>
+                <button id="view-report-button" class="action-button secondary admin-only">Ver Relatório Individual</button>
+                <button id="export-general-report-button" class="action-button secondary admin-only">Exportar Relatório Geral (Excel)</button>
+                <button id="logout-button" class="action-button danger">Sair</button>
+            </div>
+        </div>
+
+        <div id="quiz-area" class="section hidden">
+            <h2 id="quiz-title">Quiz de Sistemas Operacionais</h2>
+            <div id="timer">Tempo: 0s</div>
+            <div id="current-score">Acertos: 0</div>
+            <div id="penalty-status">Tempo fora da prova: 0s</div>
+            <div id="question-area">
+                <h3 id="question-text"></h3>
+                <div id="options-container">
+                    </div>
+                <div id="feedback-message"></div>
+                <div class="button-group">
+                    <button id="submit-answer-button" class="action-button">Próxima Pergunta</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="report-area" class="section hidden">
+            <h2>Relatório do Quiz</h2>
+            <p><strong>Nome do Aluno:</strong> <span id="report-student-name"></span></p>
+            <p><strong>Acertos:</strong> <span id="report-score"></span> / <span id="report-total-questions"></span></p>
+            <p><strong>Porcentagem de Acerto:</strong> <span id="report-average"></span>%</p>
+            <p><strong>Tempo Total do Quiz (sem penalidades):</strong> <span id="report-time-taken"></span> segundos</p>
+            <p><strong>Penalidade por Respostas Erradas:</strong> <span id="report-wrong-answer-penalty-time"></span> segundos</p>
+            <p><strong>Penalidade por Perda de Foco:</strong> <span id="report-focus-penalty-time"></span> segundos</p>
+
+            <h3>Resultados Detalhados por Pergunta:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Pergunta</th>
+                        <th>Sua Resposta</th>
+                        <th>Resposta Correta</th>
+                        <th>Status</th>
+                        <th>Tempo na Questão (s)</th>
+                        <th>Penalidade de Foco (s)</th>
+                    </tr>
+                </thead>
+                <tbody id="detailed-results-body">
+                    </tbody>
+            </table>
+            <div class="button-group">
+                <button id="export-pdf-button" class="action-button secondary">Exportar para PDF (imprimir)</button> 
+                <button id="back-to-menu-from-report" class="action-button danger">Voltar ao Menu</button>
+            </div>
+        </div>
+
+        <div id="question-management-area" class="section hidden">
+            <h2>Gerenciar Perguntas</h2>
+
+            <h3>Adicionar Nova Pergunta</h3>
+            <div class="question-form">
+                <div class="input-group">
+                    <label for="new-question-text">Pergunta:</label>
+                    <textarea id="new-question-text" placeholder="Digite a pergunta"></textarea>
+                </div>
+                <div id="new-question-options-container">
+                    <label>Opções:</label>
+                    <div class="option-input-group">
+                        <input type="text" class="new-option-text" placeholder="Opção 1">
+                        <label>Correta?</label><input type="radio" name="correct-option" class="new-option-radio" value="0">
+                    </div>
+                    <div class="option-input-group">
+                        <input type="text" class="new-option-text" placeholder="Opção 2">
+                        <label>Correta?</label><input type="radio" name="correct-option" class="new-option-radio" value="1">
+                    </div>
+                    <div class="option-input-group">
+                        <input type="text" class="new-option-text" placeholder="Opção 3">
+                        <label>Correta?</label><input type="radio" name="correct-option" class="new-option-radio" value="2">
+                    </div>
+                    <div class="option-input-group">
+                        <input type="text" class="new-option-text" placeholder="Opção 4">
+                        <label>Correta?</label><input type="radio" name="correct-option" class="new-option-radio" value="3">
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="add-question-button" class="action-button">Adicionar Pergunta</button>
+                </div>
+            </div>
+
+            <h3>Perguntas Atuais</h3>
+            <div class="question-list" id="current-questions-list">
+                </div>
+            <div class="button-group">
+                <button id="back-to-menu-from-manage" class="action-button secondary">Voltar ao Menu</button>
+            </div>
+        </div>
     </div>
 
-    <script type="module">
-        // Importações do Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // --- Configurações Globais ---
+        const PENALTY_WRONG_ANSWER_SECONDS = 5;      // Penalidade em segundos por resposta errada
+        const FOCUS_PENALTY_PER_SECOND = 1;          // Penalidade em segundos por segundo fora de foco
+        const MIN_FOCUS_PENALTY_SECONDS = 3;         // Penalidade mínima de foco, mesmo para saídas rápidas
+        const QUIZ_FEEDBACK_DELAY_MS = 1500;         // Tempo em milissegundos para mostrar feedback antes da próxima pergunta
 
-        // Variáveis de estado encapsuladas em um objeto global
-        const appState = {
-            currentPage: 'login',
-            loggedInUserName: '',
-            loggedInUserType: 'aluno', // Valor inicial para o tipo de usuário no login
-            nameInput: '', // Adicionado para o input do nome no login
-            passwordInput: '', // Adicionado para o input da senha no login
-            firebaseApp: null,
-            db: null,
-            auth: null,
-            userId: null,
-            isAuthReady: false,
-            message: '', // Mensagens gerais
+        // --- Dados Iniciais (Perguntas e Usuários) ---
+        // Estas perguntas são o fallback se nada for salvo no localStorage.
+const initialQuestions = [
+    { question: "Qual sistema operacional é conhecido por seu kernel de código aberto?", options: ["Windows", "macOS", "Linux", "Android"], answer: "Linux" },
+    { question: "Qual empresa desenvolveu o sistema operacional Windows?", options: ["Apple", "Microsoft", "Google", "IBM"], answer: "Microsoft" },
+    { question: "Qual é o principal sistema operacional usado em iPhones?", options: ["Android", "iOS", "Windows Phone", "BlackBerry OS"], answer: "iOS" },
+    { question: "O que significa 'SO' na computação?", options: ["Sistema Operacional", "Software Online", "Servidor Obsoleto", "Segurança Operacional"], answer: "Sistema Operacional" },
+    { question: "Qual dos seguintes não é um tipo de sistema operacional?", options: ["Multitarefa", "Monousuário", "Tempo Real", "Aplicativo de Texto"], answer: "Aplicativo de Texto" },
+    { question: "Qual sistema operacional é amplamente usado em servidores web?", options: ["Windows", "macOS", "Linux", "Android"], answer: "Linux" },
+    { question: "O que é um kernel?", options: ["Um tipo de vírus", "O núcleo do sistema operacional", "Uma linguagem de programação", "Um processador"], answer: "O núcleo do sistema operacional" },
+    { question: "Qual é uma característica do sistema operacional de tempo real?", options: ["Interface gráfica avançada", "Respostas rápidas e previsíveis", "Compatibilidade com jogos", "Acesso offline"], answer: "Respostas rápidas e previsíveis" },
+    { question: "Qual sistema operacional é desenvolvido pela Apple?", options: ["Windows", "Android", "macOS", "Ubuntu"], answer: "macOS" },
+    { question: "Android é baseado em qual sistema operacional?", options: ["iOS", "Windows", "Linux", "DOS"], answer: "Linux" },
+    { question: "Qual foi um dos primeiros sistemas operacionais?", options: ["Windows 10", "macOS", "UNIX", "Android"], answer: "UNIX" },
+    { question: "Qual é a função de um sistema operacional?", options: ["Compilar código", "Gerenciar recursos do sistema", "Desenhar gráficos", "Enviar e-mails"], answer: "Gerenciar recursos do sistema" },
+    { question: "Qual empresa desenvolve o Android?", options: ["Apple", "Google", "Microsoft", "IBM"], answer: "Google" },
+    { question: "O que significa GUI?", options: ["Gerador de Unidade Interna", "Graphical User Interface", "Grupo de Usuários Interativo", "Gestor Universal de Interface"], answer: "Graphical User Interface" },
+    { question: "Qual sistema operacional usa arquivos .apk?", options: ["iOS", "Linux", "Android", "Windows"], answer: "Android" },
+    { question: "O Windows 11 é sucessor de qual versão?", options: ["Windows XP", "Windows 7", "Windows 10", "Windows Vista"], answer: "Windows 10" },
+    { question: "Qual comando Linux lista arquivos e pastas?", options: ["cd", "mkdir", "ls", "rm"], answer: "ls" },
+    { question: "O que é multitarefa?", options: ["Rodar múltiplos sistemas operacionais", "Rodar múltiplos programas simultaneamente", "Instalar múltiplos aplicativos", "Criar várias janelas"], answer: "Rodar múltiplos programas simultaneamente" },
+    { question: "Qual é um exemplo de sistema operacional de código fechado?", options: ["Linux", "macOS", "FreeBSD", "Debian"], answer: "macOS" },
+    { question: "O que é um sistema operacional embarcado?", options: ["Sistema para computadores de mesa", "Sistema para dispositivos móveis", "Sistema integrado em hardware específico", "Sistema para servidores"], answer: "Sistema integrado em hardware específico" },
+    { question: "Qual comando do Linux apaga arquivos?", options: ["rm", "del", "erase", "remove"], answer: "rm" },
+    { question: "Qual é uma distribuição do Linux?", options: ["Windows XP", "Fedora", "macOS", "Android"], answer: "Fedora" },
+    { question: "Qual sistema operacional usa o Terminal como interface principal?", options: ["Windows", "Android", "Linux (modo texto)", "iOS"], answer: "Linux (modo texto)" },
+    { question: "Qual é a principal linguagem usada no desenvolvimento do kernel Linux?", options: ["Java", "Python", "C", "Ruby"], answer: "C" },
+    { question: "Qual sistema operacional ficou conhecido por sua interface gráfica em janelas?", options: ["UNIX", "DOS", "Windows", "CP/M"], answer: "Windows" },
+    { question: "O que é um processo em um SO?", options: ["Um dispositivo físico", "Um programa em execução", "Um tipo de memória", "Uma atualização"], answer: "Um programa em execução" },
+    { question: "Qual é o principal sistema de arquivos usado pelo Windows?", options: ["ext4", "HFS+", "NTFS", "FAT16"], answer: "NTFS" },
+    { question: "Qual sistema de arquivos é comum em distribuições Linux?", options: ["NTFS", "FAT32", "ext4", "APFS"], answer: "ext4" },
+    { question: "O que é um driver de dispositivo?", options: ["Um software para jogos", "Um programa que controla hardware", "Um vírus", "Uma linguagem de programação"], answer: "Um programa que controla hardware" },
+    { question: "Qual é a função do gerenciador de arquivos?", options: ["Reproduzir vídeos", "Gerenciar pastas e arquivos", "Atualizar o sistema", "Proteger contra vírus"], answer: "Gerenciar pastas e arquivos" },
+    { question: "O que é a BIOS?", options: ["Sistema operacional", "Software antivírus", "Firmware de inicialização", "Interface gráfica"], answer: "Firmware de inicialização" },
+    { question: "Qual sistema operacional era comum em computadores antigos da IBM?", options: ["Windows 10", "DOS", "Android", "macOS"], answer: "DOS" },
+    { question: "Qual ferramenta permite o controle remoto de sistemas Linux?", options: ["SSH", "FTP", "HTTP", "SMTP"], answer: "SSH" },
+    { question: "O que é virtualização?", options: ["Usar arquivos compactados", "Executar sistemas em máquinas virtuais", "Proteger dados com senha", "Compactar software"], answer: "Executar sistemas em máquinas virtuais" },
+    { question: "Qual sistema operacional é mais usado em supercomputadores?", options: ["Windows", "macOS", "Linux", "Chrome OS"], answer: "Linux" },
+    { question: "O que é um sistema operacional monolítico?", options: ["Um que roda na nuvem", "Um com núcleo único e integrado", "Um com vários núcleos separados", "Sistema para celulares"], answer: "Um com núcleo único e integrado" },
+    { question: "O que é swap no Linux?", options: ["Sistema de backup", "Memória de troca", "Atualização de software", "Interface gráfica"], answer: "Memória de troca" },
+    { question: "Qual é uma vantagem do Linux?", options: ["Alta dependência de licença", "Código fechado", "Gratuito e personalizável", "Incompatibilidade com servidores"], answer: "Gratuito e personalizável" },
+    { question: "O que significa boot?", options: ["Instalar um SO", "Inicializar o sistema", "Formatar disco", "Encerrar processo"], answer: "Inicializar o sistema" },
+    { question: "Qual sistema operacional é usado no Raspberry Pi?", options: ["Windows 10", "Android", "Raspberry OS", "Chrome OS"], answer: "Raspberry OS" },
+    { question: "Qual sistema operacional tem o comando PowerShell?", options: ["macOS", "Linux", "Windows", "Android"], answer: "Windows" },
+    { question: "Qual é a principal interface do usuário no macOS?", options: ["Command Prompt", "Finder", "Terminal", "Nautilus"], answer: "Finder" },
+    { question: "Qual comando cria uma nova pasta no Linux?", options: ["mkdir", "cd", "touch", "mv"], answer: "mkdir" },
+    { question: "Qual é o principal sistema operacional da Google para notebooks?", options: ["Android", "Windows", "Chrome OS", "Linux Mint"], answer: "Chrome OS" },
+    { question: "Em qual camada do sistema o kernel opera?", options: ["Aplicação", "Usuário", "Hardware", "Núcleo"], answer: "Núcleo" }
+];
 
-            // Estado do painel do professor
-            activities: [
-                { id: 1, name: "Matemática - Unidade 1", status: "Ativa", llmGeneratedQuestions: [] },
-                { id: 2, name: "Português - Leitura", status: "Inativa", llmGeneratedQuestions: [] },
-            ],
-            teacherMessage: '', // Mensagens específicas do professor
-            confirmModal: { isOpen: false, activityId: null },
-            selectedActivityForLLM: null,
-            llmTopic: '',
-            llmQuestionType: 'multiple_choice',
-            isGenerating: false,
-            llmError: '',
-
-            // Estado do painel do aluno
-            studentActivities: [
-                { id: 101, name: "Matemática - Unidade 1", status: "Aberta", score: null },
-                { id: 102, name: "História - Revolução Francesa", status: "Concluída", score: 85 },
-                { id: 103, name: "Química - Tabela Periódica", status: "Prazo Esgotado", score: null },
-            ],
-            selectedActivity: null,
-            studentMessage: '', // Mensagens específicas do aluno
-            showExplainConcept: false,
-            conceptInput: '',
-            conceptExplanation: '',
-            isExplaining: false,
-            explainError: '',
+        // Usuários padrão. NOVOS usuários serão salvos no sessionStorage para persistência temporária.
+        // ATENÇÃO: Este sistema de login é APENAS para demonstração. Não é seguro para uso em produção.
+        let users = {
+            "professor": { password: "admin123", type: "professor" },
+            "aluno": { password: "aluno123", type: "aluno" }
         };
 
-        // Função principal de renderização
-        function render(componentRenderer) {
-            const appContainer = document.getElementById('app-container');
-            if (appContainer) {
-                appContainer.innerHTML = ''; // Limpa o conteúdo anterior
-                // Passa o objeto appState completo para o renderizador de componente
-                appContainer.innerHTML = componentRenderer(appState);
-                attachEventListeners(); // Re-anexa listeners após re-renderização
+        // --- Variáveis de Estado do Quiz ---
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let quizStartTime = 0;
+        let quizTimerInterval = null; // Timer geral do quiz (setInterval)
+        let totalTimeElapsed = 0;    // Tempo real decorrido no quiz (sem penalidades adicionadas)
+        let totalPenaltyWrongAnswer = 0;
+        let totalPenaltyFocusLoss = 0;
+        let userAnswers = [];        // Armazena detalhes de cada resposta para o relatório individual
+        let currentUser = null;
+        let currentUserType = null;
+
+        // Variáveis por Questão
+        let selectedOption = null;
+        let questionStartTime = 0;
+        let currentQuestionFocusPenalty = 0; // Penalidade de foco acumulada para a *questão atual*
+
+        // Variáveis de Controle de Foco (para o cronômetro vermelho)
+        let isQuizActive = false;    // Indica se o quiz está em andamento (e a penalidade pode ser aplicada)
+        let isPageHidden = false;    // Indica se a página está oculta (aba trocada, minimizada)
+        let hiddenStartTime = 0;     // Quando a página ficou oculta
+        let penaltyDisplayInterval = null; // Intervalo para o cronômetro de penalidade no display
+
+        // --- Seletores de Elementos HTML (Centralizados para Organização) ---
+        const els = {
+            loginArea: document.getElementById('login-area'),
+            usernameInput: document.getElementById('username'),
+            passwordInput: document.getElementById('password'),
+            loginButton: document.getElementById('login-button'),
+            showRegisterButton: document.getElementById('show-register-button'),
+
+            registerArea: document.getElementById('register-area'),
+            newUsernameInput: document.getElementById('new-username'),
+            newPasswordInput: document.getElementById('new-password'),
+            registerUserButton: document.getElementById('register-user-button'),
+            backToLoginButton: document.getElementById('back-to-login-button'),
+
+            mainMenuArea: document.getElementById('main-menu-area'),
+            startQuizButton: document.getElementById('start-quiz-button'),
+            manageQuestionsButton: document.getElementById('manage-questions-button'),
+            viewReportButton: document.getElementById('view-report-button'),
+            exportGeneralReportButton: document.getElementById('export-general-report-button'), 
+            logoutButton: document.getElementById('logout-button'),
+
+            quizArea: document.getElementById('quiz-area'),
+            questionText: document.getElementById('question-text'),
+            optionsContainer: document.getElementById('options-container'),
+            submitAnswerButton: document.getElementById('submit-answer-button'),
+            feedbackMessage: document.getElementById('feedback-message'),
+            timerDisplay: document.getElementById('timer'),
+            currentScoreDisplay: document.getElementById('current-score'),
+            penaltyStatusDisplay: document.getElementById('penalty-status'), // O cronômetro vermelho
+
+            reportArea: document.getElementById('report-area'),
+            reportStudentName: document.getElementById('report-student-name'),
+            reportScore: document.getElementById('report-score'),
+            reportTotalQuestions: document.getElementById('report-total-questions'),
+            reportAverage: document.getElementById('report-average'),
+            reportTimeTaken: document.getElementById('report-time-taken'),
+            reportWrongAnswerPenaltyTime: document.getElementById('report-wrong-answer-penalty-time'),
+            reportFocusPenaltyTime: document.getElementById('report-focus-penalty-time'),
+            detailedResultsBody: document.getElementById('detailed-results-body'),
+            exportPdfButton: document.getElementById('export-pdf-button'),
+            backToMenuFromReportButton: document.getElementById('back-to-menu-from-report'),
+
+            questionManagementArea: document.getElementById('question-management-area'),
+            newQuestionText: document.getElementById('new-question-text'),
+            newQuestionOptionsContainer: document.getElementById('new-question-options-container'),
+            addQuestionButton: document.getElementById('add-question-button'),
+            currentQuestionsList: document.getElementById('current-questions-list'),
+            backToMenuFromManageButton: document.getElementById('back-to-menu-from-manage')
+        };
+
+        // --- Funções de Utilitário e Navegação ---
+        /**
+         * Alterna a visibilidade das seções da aplicação.
+         * @param {string} sectionId - O ID da seção a ser mostrada.
+         */
+        function showSection(sectionId) {
+            const sections = [
+                els.loginArea, els.registerArea, els.mainMenuArea, 
+                els.quizArea, els.reportArea, els.questionManagementArea
+            ];
+            sections.forEach(section => section.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        /** Inicializa a aplicação ao carregar a página. */
+        function initializeApp() {
+            showSection('login-area');
+            loadQuestions();
+            loadUsers(); // Carrega usuários (do sessionStorage)
+            updateMainMenuVisibility();
+            // Adiciona listeners para detecção de perda de foco do navegador
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            window.addEventListener('blur', handleWindowBlur);
+            window.addEventListener('focus', handleWindowFocus);
+        }
+
+        /** Carrega as perguntas do localStorage ou usa as iniciais. */
+        function loadQuestions() {
+            const storedQuestions = localStorage.getItem('quizQuestions');
+            questions = storedQuestions ? JSON.parse(storedQuestions) : initialQuestions;
+        }
+
+        /** Salva as perguntas no localStorage. */
+        function saveQuestions() {
+            localStorage.setItem('quizQuestions', JSON.stringify(questions));
+        }
+        
+        /** Carrega usuários do sessionStorage (se existirem) e mescla com os padrões. */
+        function loadUsers() {
+            const storedUsers = sessionStorage.getItem('quizUsers');
+            if (storedUsers) {
+                // Mescla os usuários salvos no sessionStorage com os usuários padrão fixos.
+                // Isso permite que novos registros sejam persistidos temporariamente.
+                Object.assign(users, JSON.parse(storedUsers));
             }
         }
 
-        // Função para anexar todos os event listeners necessários para a página atual
-        function attachEventListeners() {
-            if (appState.currentPage === 'login') {
-                const loginButton = document.getElementById('login-button');
-                if (loginButton) {
-                    loginButton.onclick = handleLogin;
-                }
-                const nameInputElem = document.getElementById('name');
-                if (nameInputElem) {
-                    nameInputElem.oninput = (e) => { appState.nameInput = e.target.value; }; // Atualiza estado no input
-                    nameInputElem.onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
-                }
-                const passwordInputElem = document.getElementById('password');
-                if (passwordInputElem) {
-                    passwordInputElem.oninput = (e) => { appState.passwordInput = e.target.value; }; // Atualiza estado no input
-                    passwordInputElem.onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
-                }
-                document.querySelectorAll('input[name="userType"]').forEach(radio => {
-                    radio.onchange = (e) => {
-                        appState.selectedUserType = e.target.value;
-                        appState.passwordInput = ''; // Limpa senha ao mudar para aluno
-                        appState.message = ''; // Limpa mensagens de erro
-                        render(renderLoginPage); // Re-renderiza para mostrar/ocultar campo de senha
-                    };
-                });
-            } else if (appState.currentPage === 'teacher') {
-                const logoutButton = document.getElementById('logout-button');
-                if (logoutButton) {
-                    logoutButton.onclick = handleLogout;
-                }
-                const addActivityButton = document.getElementById('add-activity-button');
-                if (addActivityButton) {
-                    addActivityButton.onclick = handleAddActivity;
-                }
-                const newActivityNameInput = document.getElementById('new-activity-name');
-                if (newActivityNameInput) {
-                    newActivityNameInput.oninput = (e) => { appState.newActivityName = e.target.value; }; // Atualiza estado
-                }
-
-                const exportDataButton = document.getElementById('export-data-button');
-                if (exportDataButton) {
-                    exportDataButton.onclick = handleExportData;
-                }
-                document.querySelectorAll('.delete-activity-button').forEach(button => {
-                    button.onclick = (e) => handleDeleteActivity(parseInt(e.target.dataset.id));
-                });
-                document.querySelectorAll('.generate-llm-button').forEach(button => {
-                    button.onclick = (e) => {
-                        const activityId = parseInt(e.target.dataset.id);
-                        appState.selectedActivityForLLM = appState.activities.find(act => act.id === activityId);
-                        appState.llmTopic = ''; // Limpa o tópico ao selecionar nova atividade
-                        appState.llmQuestionType = 'multiple_choice';
-                        appState.llmError = '';
-                        render(renderTeacherDashboard);
-                    };
-                });
-                if (appState.confirmModal.isOpen) {
-                    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-                    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
-                    if (confirmDeleteBtn) confirmDeleteBtn.onclick = confirmDelete;
-                    if (cancelDeleteBtn) cancelDeleteBtn.onclick = cancelDelete;
-                }
-                // LLM specific event listeners
-                if (appState.selectedActivityForLLM) {
-                    const llmTopicInput = document.getElementById('llmTopic');
-                    if (llmTopicInput) llmTopicInput.oninput = (e) => { appState.llmTopic = e.target.value; }; // Atualiza estado
-                    const llmQuestionTypeSelect = document.getElementById('llmQuestionType');
-                    if (llmQuestionTypeSelect) llmQuestionTypeSelect.onchange = (e) => { appState.llmQuestionType = e.target.value; }; // Atualiza estado
-                    const generateQuestionsButton = document.getElementById('generate-questions-button');
-                    if (generateQuestionsButton) generateQuestionsButton.onclick = handleGenerateQuestions;
-                }
-
-            } else if (appState.currentPage === 'student') {
-                const logoutButton = document.getElementById('logout-button');
-                if (logoutButton) {
-                    logoutButton.onclick = handleLogout;
-                }
-                document.querySelectorAll('.start-activity-button').forEach(button => {
-                    button.onclick = (e) => handleStartActivity(parseInt(e.target.dataset.id));
-                });
-                const submitActivityButton = document.getElementById('submit-activity-button');
-                if (submitActivityButton) {
-                    submitActivityButton.onclick = handleSubmitActivity;
-                }
-                const exportPdfButton = document.getElementById('export-pdf-button');
-                if (exportPdfButton) {
-                    exportPdfButton.onclick = handleExportPDF;
-                }
-                const toggleExplainConceptButton = document.getElementById('toggle-explain-concept-button');
-                if (toggleExplainConceptButton) {
-                    toggleExplainConceptButton.onclick = () => {
-                        appState.showExplainConcept = !appState.showExplainConcept;
-                        appState.conceptInput = '';
-                        appState.conceptExplanation = '';
-                        appState.explainError = '';
-                        render(renderStudentDashboard);
-                    };
-                }
-                if (appState.showExplainConcept) {
-                    const conceptInputElem = document.getElementById('conceptInput');
-                    if (conceptInputElem) conceptInputElem.oninput = (e) => { appState.conceptInput = e.target.value; }; // Atualiza estado
-                    const explainConceptButton = document.getElementById('explain-concept-button');
-                    if (explainConceptButton) explainConceptButton.onclick = handleExplainConcept;
-                }
-            }
+        /** Salva usuários (apenas os registrados dinamicamente) no sessionStorage. */
+        function saveUsers() {
+            // Filtra os usuários fixos (professor/aluno) e salva apenas os registrados dinamicamente.
+            const usersToSave = Object.fromEntries(
+                Object.entries(users).filter(([username, userData]) => 
+                    username !== "professor" && username !== "aluno"
+                )
+            );
+            sessionStorage.setItem('quizUsers', JSON.stringify(usersToSave));
         }
 
-        // --- Renderização de Componentes HTML ---
-
-        function renderLoginPage(state) {
-            const { selectedUserType, nameInput, passwordInput, message, userId } = state;
-
-            let passwordFieldHtml = '';
-            if (selectedUserType === 'professor') {
-                passwordFieldHtml = `
-                    <div class="mb-4">
-                        <label htmlFor="password" class="block text-gray-700 text-sm font-bold mb-2 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key mr-1"><path d="m21.79 13.91-2.18 5.72a2 2 0 0 1-1.25 1.25l-5.72 2.18a2 2 0 0 1-2.58-1.57l-.37-1.12.98-2.56a2 2 0 0 0-1.57-2.58l-1.12-.37-2.56.98a2 2 0 0 0-2.58-1.57l-5.72-2.18a2 2 0 0 1-1.25-1.25l-2.18-5.72a2 2 0 0 1 1.57-2.58l1.12-.37 2.56.98a2 2 0 0 0 2.58-1.57l.37-1.12.98-2.56a2 2 0 0 0 2.58-1.57l5.72-2.18a2 2 0 0 1 1.25-1.25l5.72-2.18a2 2 0 0 1 2.58 1.57l.37 1.12-.98 2.56a2 2 0 0 0 1.57 2.58l1.12.37 2.56-.98a2 2 0 0 0 2.58 1.57Z"/></svg>
-                            Senha:
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                            placeholder="************"
-                            value="${passwordInput}"
-                        />
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-4 font-inter">
-                    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
-                        <h2 class="text-3xl font-extrabold text-center text-gray-900 mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book inline-block mr-2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                            Entrar na Plataforma de Provas
-                        </h2>
-                        ${message ? `
-                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
-                                <span class="block sm:inline">${message}</span>
-                            </div>
-                        ` : ''}
-                        <div class="mb-4">
-                            <label htmlFor="name" class="block text-gray-700 text-sm font-bold mb-2">
-                                ${selectedUserType === 'professor' ? 'Usuário do Professor:' : 'Seu Nome Completo:'}
-                            </label>
-                            <input
-                                type="text"
-                                id="name"
-                                class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                                placeholder="${selectedUserType === 'professor' ? 'Ex: professor' : 'Ex: João da Silva'}"
-                                value="${nameInput}"
-                            />
-                        </div>
-                        ${passwordFieldHtml}
-                        <div class="mb-6 flex justify-around">
-                            <label class="inline-flex items-center text-gray-700 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    class="form-radio h-5 w-5 text-indigo-600"
-                                    name="userType"
-                                    value="aluno"
-                                    ${selectedUserType === 'aluno' ? 'checked' : ''}
-                                />
-                                <span class="ml-2 font-medium">Sou Aluno</span>
-                            </label>
-                            <label class="inline-flex items-center text-gray-700 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    class="form-radio h-5 w-5 text-indigo-600"
-                                    name="userType"
-                                    value="professor"
-                                    ${selectedUserType === 'professor' ? 'checked' : ''}
-                                />
-                                <span class="ml-2 font-medium">Sou Professor</span>
-                            </label>
-                        </div>
-                        <button
-                            id="login-button"
-                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 transform hover:scale-105"
-                        >
-                            Entrar
-                        </button>
-                        <p class="text-center text-gray-500 text-xs mt-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user inline-block mr-1"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            ID do Usuário Firebase (para referência): ${userId || 'Carregando...'}
-                        </p>
-                    </div>
-                </div>
-            `;
+        /** Atualiza a visibilidade dos botões do menu principal com base no tipo de usuário logado. */
+        function updateMainMenuVisibility() {
+            document.body.classList.toggle('admin-mode', currentUserType === 'professor');
         }
 
-        function renderTeacherDashboard(state) {
-            const { loggedInUserName, teacherMessage, activities, newActivityName, confirmModal,
-                    selectedActivityForLLM, llmTopic, llmQuestionType, isGenerating, llmError } = state;
+        // --- Lógica de Autenticação (Login e Registro) ---
+        els.loginButton.addEventListener('click', () => {
+            const username = els.usernameInput.value.trim();
+            const password = els.passwordInput.value.trim();
 
-            let llmQuestionsSectionHtml = '';
-            if (!selectedActivityForLLM) {
-                llmQuestionsSectionHtml = `
-                    <p class="text-gray-600">
-                        Selecione uma atividade na lista acima clicando em "Gerar IA" para começar a gerar questões.
-                    </p>
-                `;
+            if (!username || !password) {
+                alert("Por favor, preencha o usuário e a senha.");
+                return;
+            }
+
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                currentUserType = users[username].type;
+                alert(`Bem-vindo(a), ${currentUser}!`);
+                showSection('main-menu-area');
+                els.usernameInput.value = '';
+                els.passwordInput.value = '';
+                updateMainMenuVisibility();
             } else {
-                let generatedQuestionsListHtml = '';
-                if (selectedActivityForLLM.llmGeneratedQuestions.length > 0) {
-                    generatedQuestionsListHtml = `
-                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Questões Geradas para esta Atividade:</h3>
-                            <ul class="list-disc pl-5 text-gray-700">
-                                ${selectedActivityForLLM.llmGeneratedQuestions.map((q, index) => `
-                                    <li key="${index}" class="mb-4 p-2 bg-gray-100 rounded-md">
-                                        <p class="font-bold text-base mb-1">${q.questionText}</p>
-                                        ${q.type === 'multiple_choice' ? `
-                                            <ul class="list-alpha ml-4">
-                                                ${q.options.map((option, optIndex) => `
-                                                    <li class="${option === q.correctAnswer ? 'text-green-700 font-semibold' : ''}">
-                                                        ${String.fromCharCode(97 + optIndex)}. ${option}
-                                                        ${option === q.correctAnswer ? ' (Correta)' : ''}
-                                                    </li>
-                                                `).join('')}
-                                            </ul>
-                                        ` : ''}
-                                        ${q.type === 'true_false' ? `
-                                            <p><span class="font-semibold">Resposta:</span> ${q.correctAnswer}</p>
-                                        ` : ''}
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                    `;
-                }
-                llmQuestionsSectionHtml = `
-                    <div class="border border-gray-200 p-4 rounded-lg">
-                        <p class="text-indigo-700 font-semibold mb-4">
-                            Gerando questões para: <span class="font-bold">${selectedActivityForLLM.name}</span>
-                        </p>
-                        ${llmError ? `
-                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
-                                <span class="block sm:inline">${llmError}</span>
-                            </div>
-                        ` : ''}
-                        <div class="mb-4">
-                            <label htmlFor="llmTopic" class="block text-gray-700 text-sm font-bold mb-2">
-                                Tópico para as Questões:
-                            </label>
-                            <input
-                                type="text"
-                                id="llmTopic"
-                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                                placeholder="Ex: Mitose e Meiose"
-                                value="${llmTopic}"
-                            />
-                        </div>
-                        <div class="mb-4">
-                            <label htmlFor="llmQuestionType" class="block text-gray-700 text-sm font-bold mb-2">
-                                Tipo de Questão:
-                            </label>
-                            <select
-                                id="llmQuestionType"
-                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                                value="${llmQuestionType}"
-                            >
-                                <option value="multiple_choice">Múltipla Escolha</option>
-                                <option value="true_false">Verdadeiro/Falso</option>
-                            </select>
-                        </div>
-                        <button
-                            id="generate-questions-button"
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center justify-center ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}"
-                            ${isGenerating ? 'disabled' : ''}
-                        >
-                            ${isGenerating ? `
-                                <svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ` : `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lightbulb mr-2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 3c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/><path d="M11 17h2"/><path d="M12 14v8"/></svg>
-                            `}
-                            ${isGenerating ? 'Gerando...' : 'Gerar Questões'}
-                        </button>
-                        ${generatedQuestionsListHtml}
-                    </div>
-                `;
-            }
-
-            let confirmModalHtml = '';
-            if (confirmModal.isOpen) {
-                confirmModalHtml = `
-                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div class="bg-white p-6 rounded-lg shadow-xl text-center">
-                            <p class="text-lg font-semibold mb-4">Tem certeza que deseja remover esta atividade?</p>
-                            <div class="flex justify-center gap-4">
-                                <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                                    Confirmar
-                                </button>
-                                <button id="cancel-delete-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200">
-                                    Cancelar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="min-h-screen bg-gray-100 p-8 font-inter">
-                    <header class="bg-white shadow rounded-xl p-6 mb-8 flex justify-between items-center">
-                        <h1 class="text-3xl font-extrabold text-gray-900">
-                            Painel do Professor - Bem-vindo(a), ${loggedInUserName}!
-                        </h1>
-                        <button
-                            id="logout-button"
-                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out mr-1"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="17 17 22 12 17 7"/><line x1="22" x2="10" y1="12" y2="12"/></svg>
-                            Sair
-                        </button>
-                    </header>
-
-                    ${teacherMessage ? `
-                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md relative mb-4" role="alert">
-                            <span class="block sm:inline">${teacherMessage}</span>
-                        </div>
-                    ` : ''}
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book mr-2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                                Gerenciamento de Atividades
-                            </h2>
-                            <div class="flex mb-4">
-                                <input
-                                    type="text"
-                                    id="new-activity-name"
-                                    class="flex-grow shadow appearance-none border rounded-l-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
-                                    placeholder="Nome da nova atividade"
-                                    value="${newActivityName}"
-                                />
-                                <button
-                                    id="add-activity-button"
-                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-r-lg shadow-md transition duration-200 flex items-center"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus mr-1"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                                    Adicionar
-                                </button>
-                            </div>
-                            <ul class="divide-y divide-gray-200">
-                                ${activities.map(activity => `
-                                    <li class="py-3 flex justify-between items-center">
-                                        <div class="flex-grow">
-                                            <span class="text-lg text-gray-700">${activity.name} (<span class="font-semibold">${activity.status}</span>)</span>
-                                            ${activity.llmGeneratedQuestions && activity.llmGeneratedQuestions.length > 0 ? `
-                                                <p class="text-sm text-gray-500 mt-1">
-                                                    (${activity.llmGeneratedQuestions.length} questões de IA adicionadas)
-                                                </p>
-                                            ` : ''}
-                                        </div>
-                                        <div class="flex items-center space-x-2">
-                                            <button
-                                                data-id="${activity.id}"
-                                                class="generate-llm-button bg-purple-500 hover:bg-purple-600 text-white font-bold py-1 px-3 rounded-lg shadow-sm transition duration-200 flex items-center text-sm"
-                                                title="Selecionar para gerar questões com IA"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles mr-1"><path d="M9.9 10.95 7 14l3.05 3.05L14 20l3.05-3.05L20 14l-3.05-3.05L14 7l-3.05 3.05Z"/><path d="M5.5 8.5 3 12l2.5 3.5L8 12l-2.5-3.5Z"/><path d="M17.5 1.5 14 4l3.5 2.5L21 4l-3.5-2.5Z"/></svg>
-                                                Gerar IA
-                                            </button>
-                                            <button
-                                                data-id="${activity.id}"
-                                                class="delete-activity-button bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg shadow-sm transition duration-200 flex items-center"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minus mr-1"><path d="M5 12h14"/></svg>
-                                                Remover
-                                            </button>
-                                        </div>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bar-chart mr-2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-                                Desempenho e Relatórios
-                            </h2>
-                            <p class="text-gray-600 mb-4">
-                                Aqui você veria gráficos de desempenho dos alunos e o progresso geral.
-                                Para uma implementação completa, seria necessário um componente de gráficos (ex: Recharts) e dados reais do Firestore.
-                            </p>
-                            <button
-                                id="export-data-button"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="10" y1="12" y2="12"/></svg>
-                                Exportar Dados (TXT para Excel)
-                            </button>
-                            <p class="text-gray-500 text-sm mt-4">
-                                A exportação real exigiria dados de um banco de dados (ex: Firestore) e uma lógica de back-end para processar os arquivos.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lightbulb mr-2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 3c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/><path d="M11 17h2"/><path d="M12 14v8"/></svg>
-                            ✨ Gerar Questões com IA
-                        </h2>
-                        ${llmQuestionsSectionHtml}
-                    </div>
-                    ${confirmModalHtml}
-                </div>
-            `;
-        }
-
-        function renderStudentDashboard(state) {
-            const { loggedInUserName, studentActivities, selectedActivity, studentMessage,
-                    showExplainConcept, conceptInput, conceptExplanation, isExplaining, explainError } = state;
-
-            let activityInProgressHtml = '';
-            if (selectedActivity) {
-                activityInProgressHtml = `
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4">
-                            Realizando Atividade: ${selectedActivity.name}
-                        </h2>
-                        <p class="text-gray-700 mb-6">
-                            (Esta é uma simulação de uma prova. Em uma aplicação real, aqui apareceriam as questões e opções de resposta.)
-                            <br />
-                            <br />
-                            **Questão 1:** Qual a capital do Brasil?
-                            <br />
-                            <label class="block mt-2"><input type="radio" name="q1" value="Rio de Janeiro" class="mr-2" /> Rio de Janeiro</label>
-                            <label class="block"><input type="radio" name="q1" value="Brasília" class="mr-2" /> Brasília</label>
-                            <label class="block"><input type="radio" name="q1" value="São Paulo" class="mr-2" /> São Paulo</label>
-                            <br/>
-                            **Questão 2:** O que é um algorítimo?
-                            <br/>
-                            <textarea class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" rows="4" placeholder="Sua resposta dissertativa..."></textarea>
-                        </p>
-                        <button
-                            id="submit-activity-button"
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text mr-2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-                            Finalizar Atividade
-                        </button>
-                    </div>
-                `;
-            }
-
-            let explainConceptSectionHtml = '';
-            let explanationContentHtml = '';
-            if (showExplainConcept) {
-                if (conceptExplanation) {
-                    explanationContentHtml = `
-                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Explicação:</h3>
-                            <p class="text-gray-700 whitespace-pre-wrap">${conceptExplanation}</p>
-                        </div>
-                    `;
-                }
-                explainConceptSectionHtml = `
-                    <div class="border border-gray-200 p-4 rounded-lg">
-                        ${explainError ? `
-                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
-                                <span class="block sm:inline">${explainError}</span>
-                            </div>
-                        ` : ''}
-                        <div class="mb-4">
-                            <label htmlFor="conceptInput" class="block text-gray-700 text-sm font-bold mb-2">
-                                Conceito para Explicar:
-                            </label>
-                            <input
-                                type="text"
-                                id="conceptInput"
-                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"
-                                placeholder="Ex: Fotossíntese"
-                                value="${conceptInput}"
-                            />
-                        </div>
-                        <button
-                            id="explain-concept-button"
-                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center justify-center ${isExplaining ? 'opacity-50 cursor-not-allowed' : ''}"
-                            ${isExplaining ? 'disabled' : ''}
-                        >
-                            ${isExplaining ? `
-                                <svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ` : `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            `}
-                            ${isExplaining ? 'Explicando...' : 'Explicar Conceito'}
-                        </button>
-                        ${explanationContentHtml}
-                    </div>
-                `;
-            }
-
-
-            return `
-                <div class="min-h-screen bg-gray-100 p-8 font-inter">
-                    <header class="bg-white shadow rounded-xl p-6 mb-8 flex justify-between items-center">
-                        <h1 class="text-3xl font-extrabold text-gray-900">
-                            Painel do Aluno - Bem-vindo(a), ${loggedInUserName}!
-                        </h1>
-                        <button
-                            id="logout-button"
-                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out mr-1"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="17 17 22 12 17 7"/><line x1="22" x2="10" y1="12" y2="12"/></svg>
-                            Sair
-                        </button>
-                    </header>
-
-                    ${studentMessage ? `
-                        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-md relative mb-4" role="alert">
-                            <span class="block sm:inline">${studentMessage}</span>
-                        </div>
-                    ` : ''}
-
-                    ${selectedActivity ? activityInProgressHtml : `
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div class="bg-white rounded-xl shadow-lg p-6">
-                                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book mr-2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                                    Minhas Avaliações
-                                </h2>
-                                <ul class="divide-y divide-gray-200">
-                                    ${studentActivities.map(activity => `
-                                        <li class="py-3 flex justify-between items-center">
-                                            <span class="text-lg text-gray-700">
-                                                ${activity.name} -
-                                                <span class="ml-2 font-semibold ${activity.status === 'Aberta' ? 'text-green-600' : activity.status === 'Concluída' ? 'text-blue-600' : 'text-red-600'}">
-                                                    ${activity.status}
-                                                </span>
-                                                ${activity.score !== null ? `<span class="ml-2 text-gray-500"> (Nota: ${activity.score})</span>` : ''}
-                                            </span>
-                                            ${activity.status === 'Aberta' ? `
-                                                <button
-                                                    data-id="${activity.id}"
-                                                    class="start-activity-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded-lg shadow-sm transition duration-200"
-                                                >
-                                                    Iniciar
-                                                </button>
-                                            ` : ''}
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-
-                            <div class="bg-white rounded-xl shadow-lg p-6">
-                                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bar-chart mr-2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-                                    Meus Gráficos de Desempenho
-                                </h2>
-                                <p class="text-gray-600 mb-4">
-                                    Aqui você veria gráficos personalizados do seu desempenho ao longo do tempo.
-                                    Para uma implementação completa, seria necessário um componente de gráficos (ex: Recharts) e dados reais do Firestore.
-                                </p>
-                                <button
-                                    id="export-pdf-button"
-                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="10" y1="12" y2="12"/></svg>
-                                    Exportar Relatório (PDF)
-                                </button>
-                                <p class="text-gray-500 text-sm mt-4">
-                                    A geração de PDF real exigiria dados de um banco de dados (ex: Firestore) e uma lógica de back-end ou biblioteca robusta para formatar e gerar o arquivo.
-                                </p>
-                            </div>
-                        </div>
-                    `}
-
-                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            ✨ Explicar Conceito com IA
-                        </h2>
-                        <button
-                            id="toggle-explain-concept-button"
-                            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 mb-4"
-                        >
-                            ${showExplainConcept ? 'Ocultar Ferramenta' : 'Abrir Explicador de Conceitos'}
-                        </button>
-
-                        ${showExplainConcept ? `
-                            <div class="border border-gray-200 p-4 rounded-lg">
-                                ${explainError ? `
-                                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
-                                        <span class="block sm:inline">${explainError}</span>
-                                    </div>
-                                ` : ''}
-                                <div class="mb-4">
-                                    <label htmlFor="conceptInput" class="block text-gray-700 text-sm font-bold mb-2">
-                                        Conceito para Explicar:
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="conceptInput"
-                                        class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"
-                                        placeholder="Ex: Fotossíntese"
-                                        value="${conceptInput}"
-                                    />
-                                </div>
-                                <button
-                                    id="explain-concept-button"
-                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center justify-center ${isExplaining ? 'opacity-50 cursor-not-allowed' : ''}"
-                                    ${isExplaining ? 'disabled' : ''}
-                                >
-                                    ${isExplaining ? `
-                                        <svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    ` : `
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                    `}
-                                    ${isExplaining ? 'Explicando...' : 'Explicar Conceito'}
-                                </button>
-                                ${conceptExplanation ? `
-                                    <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Explicação:</h3>
-                                        <p class="text-gray-700 whitespace-pre-wrap">${conceptExplanation}</p>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        // --- Lógica da Aplicação ---
-
-        // Função para lidar com o login
-        async function handleLogin() {
-            const nameInputElem = document.getElementById('name');
-            const passwordInputElem = document.getElementById('password');
-
-            appState.nameInput = nameInputElem ? nameInputElem.value.trim() : '';
-            appState.passwordInput = passwordInputElem ? passwordInputElem.value : '';
-
-            if (appState.nameInput === '') {
-                appState.message = 'Por favor, insira seu nome de usuário.';
-                render(renderLoginPage);
-                return;
-            }
-
-            if (appState.selectedUserType === 'professor') {
-                if (appState.nameInput.toLowerCase() === 'professor' && appState.passwordInput === 'senha123') {
-                    appState.loggedInUserName = appState.nameInput;
-                    appState.loggedInUserType = 'professor';
-                    appState.currentPage = 'teacher';
-                    appState.message = '';
-                    localStorage.setItem('platform_is_professor_logged_in', 'true');
-                    localStorage.setItem('platform_professor_username', appState.nameInput);
-                } else {
-                    appState.message = 'Nome de usuário ou senha do professor incorretos.';
-                    render(renderLoginPage);
-                    return;
-                }
-            } else { // Aluno
-                appState.loggedInUserName = appState.nameInput;
-                appState.loggedInUserType = 'aluno';
-                appState.currentPage = 'student';
-                appState.message = '';
-                localStorage.setItem('platform_user_name', appState.nameInput);
-                localStorage.setItem('platform_user_type', 'aluno');
-            }
-
-            // --- Firestore: Registrar evento de login ---
-            if (appState.db && appState.userId && appState.isAuthReady) {
-                try {
-                    const logCollectionRef = collection(appState.db, `artifacts/${__app_id}/public/data/login_logout_logs`);
-                    await addDoc(logCollectionRef, {
-                        userId: appState.userId,
-                        userName: appState.loggedInUserName,
-                        userType: appState.loggedInUserType,
-                        timestamp: new Date(),
-                        eventType: 'login'
-                    });
-                    console.log("Evento de login registrado no Firestore.");
-                } catch (e) {
-                    console.error("Erro ao registrar evento de login no Firestore:", e);
-                }
-            } else {
-                console.warn("Firestore não está pronto para registrar o login.");
-            }
-            render(appState.currentPage === 'teacher' ? renderTeacherDashboard : renderStudentDashboard);
-        }
-
-        // Função para lidar com o logout
-        async function handleLogout() {
-            // --- Firestore: Registrar evento de logout ---
-            if (appState.db && appState.userId && appState.isAuthReady) {
-                try {
-                    const logCollectionRef = collection(appState.db, `artifacts/${__app_id}/public/data/login_logout_logs`);
-                    await addDoc(logCollectionRef, {
-                        userId: appState.userId,
-                        userName: appState.loggedInUserName,
-                        userType: appState.loggedInUserType,
-                        timestamp: new Date(),
-                        eventType: 'logout'
-                    });
-                    console.log("Evento de logout registrado no Firestore.");
-                } catch (e) {
-                    console.error("Erro ao registrar evento de logout no Firestore:", e);
-                }
-            }
-
-            // Limpa o localStorage
-            localStorage.removeItem('platform_user_name');
-            localStorage.removeItem('platform_user_type');
-            localStorage.removeItem('platform_is_professor_logged_in');
-            localStorage.removeItem('platform_professor_username');
-
-            appState.currentPage = 'login';
-            appState.loggedInUserName = '';
-            appState.loggedInUserType = 'aluno'; // Reset para padrão
-            appState.nameInput = ''; // Limpa input de login
-            appState.passwordInput = ''; // Limpa input de senha
-            appState.message = '';
-            appState.teacherMessage = '';
-            appState.studentMessage = '';
-            appState.selectedActivityForLLM = null;
-            appState.selectedActivity = null;
-            render(renderLoginPage);
-        }
-
-        // --- Funções do Painel do Professor ---
-        function handleAddActivity() {
-            const newActivityNameInput = document.getElementById('new-activity-name');
-            const name = newActivityNameInput ? newActivityNameInput.value.trim() : '';
-
-            if (name === '') {
-                appState.teacherMessage = 'O nome da atividade não pode ser vazio.';
-                render(renderTeacherDashboard);
-                return;
-            }
-            const newActivity = {
-                id: appState.activities.length + 1,
-                name: name,
-                status: "Ativa",
-                llmGeneratedQuestions: [],
-            };
-            appState.activities = [...appState.activities, newActivity];
-            appState.newActivityName = '';
-            appState.teacherMessage = 'Atividade adicionada com sucesso!';
-
-            // --- Firestore: Adicionar nova atividade ---
-            if (appState.db && appState.userId && appState.isAuthReady) {
-                try {
-                    const teacherActivitiesRef = collection(appState.db, `artifacts/${__app_id}/users/${appState.userId}/teacher_activities`);
-                    addDoc(teacherActivitiesRef, {
-                        name: newActivity.name,
-                        status: newActivity.status,
-                        createdAt: new Date(),
-                        llmGeneratedQuestions: [],
-                    });
-                    console.log("Atividade adicionada ao Firestore.");
-                } catch (e) {
-                    console.error("Erro ao adicionar atividade ao Firestore:", e);
-                }
-            }
-            render(renderTeacherDashboard);
-        }
-
-        function handleDeleteActivity(id) {
-            appState.confirmModal = { isOpen: true, activityId: id };
-            render(renderTeacherDashboard);
-        }
-
-        function confirmDelete() {
-            appState.activities = appState.activities.filter(activity => activity.id !== appState.confirmModal.activityId);
-            appState.teacherMessage = 'Atividade removida com sucesso!';
-            if (appState.selectedActivityForLLM && appState.selectedActivityForLLM.id === appState.confirmModal.activityId) {
-                appState.selectedActivityForLLM = null;
-                appState.llmTopic = '';
-                appState.llmQuestionType = 'multiple_choice';
-            }
-            appState.confirmModal = { isOpen: false, activityId: null };
-
-            // --- Firestore: Remover atividade ---
-            if (appState.db && appState.userId && appState.isAuthReady) {
-                console.log("Lógica para remover atividade do Firestore seria implementada aqui.");
-            }
-            render(renderTeacherDashboard);
-        }
-
-        function cancelDelete() {
-            appState.confirmModal = { isOpen: false, activityId: null };
-            render(renderTeacherDashboard);
-        }
-
-        function handleExportData() {
-            const loginLogoutData = [
-                "timestamp,nome_usuario,tipo_usuario,evento",
-                `${new Date().toISOString()},${appState.loggedInUserName},${appState.loggedInUserType},export_request`
-            ].join('\n');
-
-            const activityResultsData = [
-                "atividade,aluno,nota,data_avaliacao",
-                `Exemplo Atividade 1,${appState.loggedInUserName},90,${new Date().toLocaleDateString()}`
-            ].join('\n');
-
-            // Download Login/Logout logs
-            const loginBlob = new Blob([loginLogoutData], { type: 'text/csv;charset=utf-8;' });
-            const loginLink = document.createElement('a');
-            loginLink.href = URL.createObjectURL(loginBlob);
-            loginLink.setAttribute('download', `registros_acesso_${new Date().toISOString().split('T')[0]}.txt`);
-            document.body.appendChild(loginLink);
-            loginLink.click();
-            document.body.removeChild(loginLink);
-
-            // Download Activity Results
-            const resultsBlob = new Blob([activityResultsData], { type: 'text/csv;charset=utf-8;' });
-            const resultsLink = document.createElement('a');
-            resultsLink.href = URL.createObjectURL(resultsBlob);
-            resultsLink.setAttribute('download', `resultados_atividades_${new Date().toISOString().split('T')[0]}.txt`);
-            document.body.appendChild(resultsLink);
-            resultsLink.click();
-            document.body.removeChild(resultsLink);
-
-            appState.teacherMessage = 'Dados exportados com sucesso! (Verifique seus downloads)';
-            console.log("Lógica de exportação de dados para Excel/TXT simulada. Em uma app real, buscaria do Firestore.");
-            render(renderTeacherDashboard);
-        }
-
-        // --- Funções do LLM para Professor ---
-        async function handleGenerateQuestions() {
-            if (!appState.selectedActivityForLLM) {
-                appState.llmError = 'Por favor, selecione uma atividade antes de gerar questões.';
-                render(renderTeacherDashboard);
-                return;
-            }
-            if (!appState.llmTopic.trim()) {
-                appState.llmError = 'Por favor, digite um tópico para gerar as questões.';
-                render(renderTeacherDashboard);
-                return;
-            }
-
-            appState.isGenerating = true;
-            appState.llmError = '';
-            render(renderTeacherDashboard); // Renderiza para mostrar o spinner
-
-            try {
-                const prompt = `Gere 3 questões em formato JSON sobre o tópico: "${appState.llmTopic}".
-                Cada questão deve ser um objeto com as seguintes propriedades:
-                - "questionText": string (o enunciado da questão)
-                - "type": string ("multiple_choice" ou "true_false")
-                - "options": array de strings (apenas para type "multiple_choice", com 4 opções)
-                - "correctAnswer": string (a resposta correta, que deve ser uma das opções para múltipla escolha ou "Verdadeiro"/"Falso" para verdadeiro/falso).
-                Retorne um array de objetos JSON.`;
-
-                let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "ARRAY",
-                            items: {
-                                type: "OBJECT",
-                                properties: {
-                                    "questionText": { "type": "STRING" },
-                                    "type": { "type": "STRING", "enum": ["multiple_choice", "true_false"] },
-                                    "options": {
-                                        "type": "ARRAY",
-                                        "items": { "type": "STRING" }
-                                    },
-                                    "correctAnswer": { "type": "STRING" }
-                                },
-                                "required": ["questionText", "type", "correctAnswer"]
-                            }
-                        }
-                    }
-                };
-                const apiKey = ""; // Canvas fornecerá a chave API em runtime
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const jsonText = result.candidates[0].content.parts[0].text;
-                    const newQuestions = JSON.parse(jsonText); // Agora parseamos como JSON
-
-                    appState.activities = appState.activities.map(activity =>
-                        activity.id === appState.selectedActivityForLLM.id
-                            ? { ...activity, llmGeneratedQuestions: [...activity.llmGeneratedQuestions, ...newQuestions] }
-                            : activity
-                    );
-                    appState.teacherMessage = `Questões geradas e adicionadas à atividade "${appState.selectedActivityForLLM.name}"!`;
-                    appState.llmTopic = '';
-                    // Atualiza appState.selectedActivityForLLM para refletir as novas questões
-                    appState.selectedActivityForLLM = appState.activities.find(act => act.id === appState.selectedActivityForLLM.id);
-                } else {
-                    appState.llmError = 'Não foi possível gerar questões. A resposta da IA não estava no formato esperado. Tente novamente.';
-                    console.error("Estrutura de resposta inesperada:", result);
-                }
-            } catch (error) {
-                appState.llmError = `Erro ao conectar com a API Gemini. Por favor, verifique sua conexão com a internet e tente novamente. Detalhes: ${error.message}`;
-                console.error("Erro ao chamar Gemini API ou parsear JSON:", error);
-            } finally {
-                appState.isGenerating = false;
-                render(renderTeacherDashboard); // Renderiza novamente com o resultado ou erro
-            }
-        }
-
-
-        // --- Funções do Painel do Aluno ---
-        function handleStartActivity(id) {
-            const activity = appState.studentActivities.find(act => act.id === id);
-            if (activity && activity.status === 'Aberta') {
-                appState.selectedActivity = activity;
-                appState.studentMessage = '';
-
-                // --- Firestore: Registrar início da atividade ---
-                if (appState.db && appState.userId && appState.isAuthReady) {
-                    try {
-                        const studentProgressRef = collection(appState.db, `artifacts/${__app_id}/users/${appState.userId}/student_progress`);
-                        addDoc(studentProgressRef, {
-                            activityId: activity.id,
-                            activityName: activity.name,
-                            status: 'in_progress',
-                            startedAt: new Date(),
-                        });
-                        console.log("Início da atividade registrado no Firestore.");
-                    } catch (e) {
-                        console.error("Erro ao registrar início da atividade no Firestore:", e);
-                    }
-                }
-            } else {
-                appState.studentMessage = `Esta atividade está ${activity.status}. Não pode ser iniciada.`;
-            }
-            render(renderStudentDashboard);
-        }
-
-        function handleSubmitActivity() {
-            if (appState.selectedActivity) {
-                const score = Math.floor(Math.random() * 101);
-                appState.studentActivities = appState.studentActivities.map(act =>
-                    act.id === appState.selectedActivity.id ? { ...act, status: 'Concluída', score: score } : act
-                );
-                appState.studentMessage = `Atividade "${appState.selectedActivity.name}" concluída! Sua nota: ${score}`;
-                appState.selectedActivity = null;
-
-                // --- Firestore: Salvar resultado da atividade ---
-                if (appState.db && appState.userId && appState.isAuthReady) {
-                    try {
-                        const studentResultsRef = collection(appState.db, `artifacts/${__app_id}/users/${appState.userId}/student_results`);
-                        addDoc(studentResultsRef, {
-                            activityId: appState.selectedActivity.id,
-                            activityName: appState.selectedActivity.name,
-                            score: score,
-                            completedAt: new Date(),
-                        });
-                        console.log("Resultado da atividade salvo no Firestore.");
-                    } catch (e) {
-                        console.error("Erro ao salvar resultado da atividade no Firestore:", e);
-                    }
-                }
-            }
-            render(renderStudentDashboard);
-        }
-
-        function handleExportPDF() {
-            const reportContent = `
-                Relatório de Desempenho - ${appState.loggedInUserName}
-
-                ---
-
-                Suas Notas:
-                ${appState.studentActivities.map(act => `${act.name}: ${act.score !== null ? act.score : 'N/A'}`).join('\n')}
-
-                ---
-
-                Gráficos de Desempenho:
-                (Nesta demonstração, os gráficos seriam gerados aqui visualmente com uma biblioteca como Recharts)
-
-                ---
-                Gerado em: ${new Date().toLocaleDateString()}
-            `;
-
-            const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', `relatorio_desempenho_${appState.loggedInUserName.replace(/\s/g, '_')}.txt`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            appState.studentMessage = 'Relatório PDF gerado com sucesso! (Verifique seus downloads)';
-            console.log("Lógica de exportação de PDF simulada com TXT. Em uma app real, buscaria do Firestore.");
-            render(renderStudentDashboard);
-        }
-
-        // --- Funções do LLM para Aluno ---
-        async function handleExplainConcept() {
-            if (!appState.conceptInput.trim()) {
-                appState.explainError = 'Por favor, digite um conceito para explicação.';
-                render(renderStudentDashboard);
-                return;
-            }
-            appState.isExplaining = true;
-            appState.conceptExplanation = '';
-            appState.explainError = '';
-            render(renderStudentDashboard); // Renderiza para mostrar o spinner
-
-            try {
-                const prompt = `Explique o conceito de "${appState.conceptInput}" de forma concisa e clara.`;
-
-                let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                const payload = { contents: chatHistory };
-                const apiKey = ""; // Canvas fornecerá a chave API em runtime
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    appState.conceptExplanation = result.candidates[0].content.parts[0].text;
-                } else {
-                    appState.explainError = 'Não foi possível obter a explicação. A resposta da IA não estava no formato esperado. Tente novamente.';
-                    console.error("Estrutura de resposta inesperada:", result);
-                }
-            } catch (error) {
-                appState.explainError = `Erro ao conectar com a API Gemini. Por favor, verifique sua conexão com a internet e tente novamente. Detalhes: ${error.message}`;
-                console.error("Erro ao chamar Gemini API:", error);
-            } finally {
-                appState.isExplaining = false;
-                render(renderStudentDashboard); // Renderiza novamente com o resultado ou erro
-            }
-        }
-
-
-        // --- Inicialização do Firebase ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-
-                appState.firebaseApp = initializeApp(firebaseConfig);
-                appState.db = getFirestore(appState.firebaseApp);
-                appState.auth = getAuth(appState.firebaseApp);
-
-                onAuthStateChanged(appState.auth, async (user) => {
-                    if (user) {
-                        appState.userId = user.uid;
-                    } else {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            try {
-                                await signInWithCustomToken(appState.auth, __initial_auth_token);
-                            } catch (error) {
-                                console.error("Erro ao fazer login com token personalizado:", error);
-                                await signInAnonymously(appState.auth);
-                            }
-                        } else {
-                            await signInAnonymously(appState.auth);
-                        }
-                    }
-                    appState.isAuthReady = true;
-
-                    // --- Verificar localStorage para auto-login ---
-                    const storedUserName = localStorage.getItem('platform_user_name');
-                    const storedUserType = localStorage.getItem('platform_user_type');
-                    const isProfessorStored = localStorage.getItem('platform_is_professor_logged_in') === 'true';
-                    const storedProfessorUsername = localStorage.getItem('platform_professor_username');
-
-                    if (isProfessorStored && storedProfessorUsername) {
-                        appState.loggedInUserName = storedProfessorUsername;
-                        appState.loggedInUserType = 'professor';
-                        appState.currentPage = 'teacher';
-                    } else if (storedUserName && storedUserType === 'aluno') {
-                        appState.loggedInUserName = storedUserName;
-                        appState.loggedInUserType = 'aluno';
-                        appState.currentPage = 'student';
-                    } else {
-                        appState.currentPage = 'login'; // Ninguém logado, vai para a tela de login
-                    }
-
-                    // Renderiza a página apropriada
-                    if (appState.currentPage === 'teacher') {
-                        render(renderTeacherDashboard);
-                    } else if (appState.currentPage === 'student') {
-                        render(renderStudentDashboard);
-                    } else {
-                        render(renderLoginPage);
-                    }
-                });
-            } catch (error) {
-                console.error("Erro ao inicializar Firebase:", error);
-                appState.message = "Erro ao inicializar o aplicativo. Por favor, tente novamente.";
-                render(renderLoginPage); // Garante que a página de login seja exibida com a mensagem de erro
+                alert("Usuário ou senha incorretos!");
             }
         });
 
+        els.logoutButton.addEventListener('click', () => {
+            currentUser = null;
+            currentUserType = null;
+            isQuizActive = false; // Desativa a penalidade ao sair
+            isPageHidden = false; // Reseta o estado de visibilidade
+            stopPenaltyDisplayTimer(); // Garante que o cronômetro vermelho pare
+            showSection('login-area');
+            alert("Você foi desconectado(a).");
+            updateMainMenuVisibility();
+        });
+
+        els.showRegisterButton.addEventListener('click', () => {
+            showSection('register-area');
+            els.newUsernameInput.value = '';
+            els.newPasswordInput.value = '';
+        });
+
+        els.backToLoginButton.addEventListener('click', () => showSection('login-area'));
+
+        els.registerUserButton.addEventListener('click', () => {
+            const newUsername = els.newUsernameInput.value.trim();
+            const newPassword = els.newPasswordInput.value.trim();
+
+            if (!newUsername || !newPassword) {
+                alert("Por favor, preencha o nome de usuário e a senha para registro.");
+                return;
+            }
+            if (newPassword.length < 3) { // Exemplo de validação de senha
+                alert("A senha deve ter no mínimo 3 caracteres.");
+                return;
+            }
+
+            if (users[newUsername]) {
+                alert(`O usuário '${newUsername}' já existe. Por favor, escolha outro nome de usuário.`);
+                return;
+            }
+            
+            // Adiciona o novo usuário com o tipo 'aluno' por padrão
+            users[newUsername] = { password: newPassword, type: "aluno" };
+            saveUsers(); // Salva os usuários (incluindo o novo) no sessionStorage
+            
+            alert(`Usuário '${newUsername}' registrado com sucesso! Você já pode fazer login.`);
+            showSection('login-area'); // Volta para a tela de login
+            els.usernameInput.value = newUsername; // Preenche o campo de login
+            els.passwordInput.value = ''; // Limpa a senha
+        });
+
+        // --- Lógica do Quiz ---
+        els.startQuizButton.addEventListener('click', () => {
+            // Resetar variáveis de estado para um novo quiz
+            currentQuestionIndex = 0;
+            score = 0;
+            totalTimeElapsed = 0;
+            totalPenaltyWrongAnswer = 0;
+            totalPenaltyFocusLoss = 0;
+            userAnswers = []; // Limpa histórico de respostas
+            quizStartTime = Date.now();
+            
+            // Limpa qualquer timer de quiz anterior e inicia um novo
+            clearInterval(quizTimerInterval);
+            quizTimerInterval = setInterval(updateQuizTimer, 1000);
+            
+            // Resetar UI do quiz
+            els.submitAnswerButton.textContent = 'Próxima Pergunta';
+            els.feedbackMessage.textContent = '';
+            els.submitAnswerButton.disabled = false;
+
+            // Ativar sistema de penalidade ao iniciar o quiz para alunos
+            isQuizActive = (currentUserType === 'aluno');
+            isPageHidden = false; // Começa como visível
+            stopPenaltyDisplayTimer(); // Garante que o display de penalidade não esteja ativo inicialmente
+            
+            showSection('quiz-area');
+            loadQuestion();
+            updateQuizTimer(); // Atualiza a exibição do tempo imediatamente
+        });
+
+        /** Atualiza o timer do quiz na tela. */
+        function updateQuizTimer() {
+            totalTimeElapsed = Math.floor((Date.now() - quizStartTime) / 1000);
+            els.timerDisplay.textContent = `Tempo: ${totalTimeElapsed}s`;
+            els.currentScoreDisplay.textContent = `Acertos: ${score}`;
+        }
+
+        /** Carrega a próxima pergunta na interface do quiz. */
+        function loadQuestion() {
+            // Limpa feedback e seleção da pergunta anterior
+            els.feedbackMessage.textContent = '';
+            els.feedbackMessage.className = ''; // Remove classes de estilo
+            selectedOption = null;
+            currentQuestionFocusPenalty = 0; // Zera a penalidade de foco para a *nova* questão
+
+            if (currentQuestionIndex < questions.length) {
+                const q = questions[currentQuestionIndex];
+                // Usar textContent para prevenir XSS
+                els.questionText.textContent = q.question; 
+                els.optionsContainer.innerHTML = ''; // Limpa opções anteriores
+
+                q.options.forEach((option) => {
+                    const button = document.createElement('button');
+                    // Usar textContent para prevenir XSS
+                    button.textContent = option; 
+                    button.onclick = () => selectOption(button, option);
+                    els.optionsContainer.appendChild(button);
+                });
+                els.submitAnswerButton.disabled = false; // Reabilita o botão para a nova pergunta
+                questionStartTime = Date.now(); // Marca o início do tempo para esta pergunta
+            } else {
+                // Fim do quiz: para timers e exibe o relatório
+                clearInterval(quizTimerInterval);
+                isQuizActive = false; // Desativa a penalidade ao finalizar o quiz
+                isPageHidden = false; // Reseta estado de visibilidade
+                stopPenaltyDisplayTimer(); // Garante que o cronômetro vermelho pare e suma
+
+                // SALVA O RESULTADO DO QUIZ NO ARMAZENAMENTO GERAL
+                saveQuizResult({
+                    studentName: currentUser,
+                    score: score,
+                    totalQuestions: questions.length,
+                    averagePercentage: parseFloat(((score / questions.length) * 100).toFixed(2)),
+                    totalTimeSeconds: totalTimeElapsed,
+                    penaltyWrongAnswerSeconds: totalPenaltyWrongAnswer,
+                    penaltyFocusLossSeconds: totalPenaltyFocusLoss,
+                    detailedResults: userAnswers,
+                    timestamp: new Date().toLocaleString() // Adiciona um timestamp
+                });
+
+                showReport({ // Passa os dados do quiz atual para o relatório individual
+                    studentName: currentUser,
+                    score: score,
+                    totalQuestions: questions.length,
+                    averagePercentage: parseFloat(((score / questions.length) * 100).toFixed(2)),
+                    totalTimeSeconds: totalTimeElapsed,
+                    penaltyWrongAnswerSeconds: totalPenaltyWrongAnswer,
+                    penaltyFocusLossSeconds: totalPenaltyFocusLoss,
+                    detailedResults: userAnswers,
+                    timestamp: new Date().toLocaleString()
+                }); 
+            }
+        }
+
+        /**
+         * Seleciona uma opção de resposta visualmente.
+         * @param {HTMLButtonElement} button - O botão da opção clicado.
+         * @param {string} optionValue - O texto da opção selecionada.
+         */
+        function selectOption(button, optionValue) {
+            // Remove a classe 'selected' de todos os botões de opção
+            Array.from(els.optionsContainer.children).forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            // Adiciona a classe 'selected' ao botão clicado
+            button.classList.add('selected');
+            selectedOption = optionValue;
+        }
+
+        els.submitAnswerButton.addEventListener('click', () => {
+            if (!selectedOption) {
+                alert("Por favor, selecione uma resposta antes de continuar.");
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex];
+            const isCorrect = (selectedOption === currentQuestion.answer);
+            // O tempo gasto na questão agora inclui a penalidade de foco acumulada para ela
+            const timeTakenForQuestion = Math.floor((Date.now() - questionStartTime) / 1000) + currentQuestionFocusPenalty;
+
+            // Armazenar detalhes da resposta para o relatório
+            userAnswers.push({
+                questionNum: currentQuestionIndex + 1,
+                questionText: currentQuestion.question,
+                userAnswer: selectedOption,
+                correctAnswer: currentQuestion.answer,
+                isCorrect: isCorrect,
+                timeTaken: timeTakenForQuestion, // Tempo real gasto nesta questão + penalidade de foco
+                focusPenalty: currentQuestionFocusPenalty // Penalidade de foco específica para esta questão
+            });
+
+            if (isCorrect) {
+                score++;
+                els.feedbackMessage.textContent = "Correto!";
+                els.feedbackMessage.classList.add('correct');
+            } else {
+                els.feedbackMessage.textContent = `Incorreto! A resposta correta era: "${currentQuestion.answer}"`;
+                els.feedbackMessage.classList.add('incorrect');
+                totalPenaltyWrongAnswer += PENALTY_WRONG_ANSWER_SECONDS; // Penalidade global por resposta errada
+            }
+
+            // Desabilita botões de opção e atualiza visual
+            Array.from(els.optionsContainer.children).forEach(btn => {
+                btn.disabled = true; // Desabilita todos os botões de opção
+                if (btn.textContent === currentQuestion.answer) {
+                    btn.classList.add('correct');
+                } else if (btn.textContent === selectedOption && !isCorrect) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            els.submitAnswerButton.textContent = 'Próxima Pergunta';
+            els.submitAnswerButton.disabled = true; // Desabilita o botão "Próxima Pergunta" temporariamente
+
+            currentQuestionIndex++;
+            // Pequeno atraso para o usuário ver o feedback antes de carregar a próxima pergunta
+            setTimeout(() => {
+                loadQuestion();
+            }, QUIZ_FEEDBACK_DELAY_MS);
+        });
+
+        // --- Lógica do Relatório Individual ---
+        els.viewReportButton.addEventListener('click', () => {
+            if (currentUserType !== 'professor') {
+                alert('Acesso negado. Apenas professores podem ver o relatório individual (o último quiz realizado).');
+                return;
+            }
+            // Para professores, o relatório individual exibirá o último quiz salvo globalmente
+            const allQuizResults = loadAllQuizResults();
+            if (allQuizResults.length > 0) {
+                 // Mostra o último quiz registrado
+                showReport(allQuizResults[allResults.length - 1]);
+            } else {
+                alert('Nenhum relatório de quiz disponível para visualização.');
+                showSection('main-menu-area');
+            }
+        });
+
+        /** * Gera e exibe o relatório de um quiz específico.
+         * @param {Object} quizData - Os dados de um quiz concluído.
+         */
+        function showReport(quizData) {
+            showSection('report-area');
+            els.reportStudentName.textContent = quizData.studentName || 'N/A';
+            els.reportScore.textContent = quizData.score;
+            els.reportTotalQuestions.textContent = quizData.totalQuestions;
+
+            els.reportAverage.textContent = quizData.averagePercentage;
+
+            els.reportTimeTaken.textContent = quizData.totalTimeSeconds;
+            els.reportWrongAnswerPenaltyTime.textContent = quizData.penaltyWrongAnswerSeconds;
+            els.reportFocusPenaltyTime.textContent = quizData.penaltyFocusLossSeconds;
+
+            els.detailedResultsBody.innerHTML = ''; // Limpa resultados anteriores
+            quizData.detailedResults.forEach((answer, index) => {
+                const row = els.detailedResultsBody.insertRow();
+                row.insertCell().textContent = answer.questionNum;
+                row.insertCell().textContent = answer.questionText;
+                row.insertCell().textContent = answer.userAnswer;
+                row.insertCell().textContent = answer.correctAnswer;
+                row.insertCell().textContent = answer.isCorrect ? 'Correta' : 'Incorreta';
+                row.insertCell().textContent = answer.timeTaken;
+                row.insertCell().textContent = answer.focusPenalty;
+            });
+        }
+
+        els.backToMenuFromReportButton.addEventListener('click', () => showSection('main-menu-area'));
+
+        // --- Armazenamento e Exportação de Relatórios GERAIS (Para Professor) ---
+
+        /** * Carrega todos os resultados de quiz salvos no localStorage.
+         * @returns {Array<Object>} Uma array de objetos de relatório de quiz.
+         */
+        function loadAllQuizResults() {
+            const storedResults = localStorage.getItem('allQuizResults');
+            return storedResults ? JSON.parse(storedResults) : [];
+        }
+
+        /** * Salva um único resultado de quiz no armazenamento geral.
+         * @param {Object} quizResult - O objeto do relatório de um quiz concluído.
+         */
+        function saveQuizResult(quizResult) {
+            const allResults = loadAllQuizResults();
+            allResults.push(quizResult);
+            localStorage.setItem('allQuizResults', JSON.stringify(allResults));
+            console.log(`Relatório do quiz de ${quizResult.studentName} salvo. Total de relatórios: ${allResults.length}`);
+        }
+        
+        // Listener para o novo botão de exportar relatório geral
+        els.exportGeneralReportButton.addEventListener('click', exportGeneralReportToCsv);
+
+        /**
+         * Exporta um relatório consolidado de todos os quizzes para um arquivo CSV.
+         */
+        function exportGeneralReportToCsv() {
+            if (currentUserType !== 'professor') {
+                alert('Acesso negado. Apenas professores podem exportar o relatório geral.');
+                return;
+            }
+
+            const allQuizResults = loadAllQuizResults();
+
+            if (allQuizResults.length === 0) {
+                alert('Nenhum relatório de quiz disponível para exportação.');
+                return;
+            }
+
+            let csvContent = '';
+
+            // Cabeçalho CSV (campos gerais do quiz)
+            const generalHeaders = [
+                "Data/Hora", "Nome do Aluno", "Acertos", "Total de Perguntas", 
+                "Porcentagem de Acerto", "Tempo Total do Quiz (s)", 
+                "Penalidade Respostas Erradas (s)", "Penalidade Perda Foco (s)"
+            ];
+            csvContent += generalHeaders.join(';') + '\n'; // Usa ponto e vírgula como delimitador para Excel
+
+            // Adiciona as linhas gerais de cada quiz
+            allQuizResults.forEach(quiz => {
+                const row = [
+                    quiz.timestamp,
+                    quiz.studentName,
+                    quiz.score,
+                    quiz.totalQuestions,
+                    quiz.averagePercentage,
+                    quiz.totalTimeSeconds,
+                    quiz.penaltyWrongAnswerSeconds,
+                    quiz.penaltyFocusLossSeconds
+                ].map(item => `"${String(item).replace(/"/g, '""')}"`); // Escapa aspas duplas e envolve em aspas
+                csvContent += row.join(';') + '\n';
+            });
+
+            // Adiciona uma linha em branco para separar os detalhes
+            csvContent += '\n';
+
+            // Adiciona o cabeçalho para os detalhes das perguntas
+            const detailHeaders = [
+                "Nome do Aluno (Detalhe)", "Pergunta #", "Pergunta", "Sua Resposta", 
+                "Resposta Correta", "Status", "Tempo na Questão (s)", "Penalidade Foco (s)"
+            ];
+            csvContent += detailHeaders.join(';') + '\n';
+
+            // Adiciona as linhas detalhadas de cada pergunta de CADA quiz
+            allQuizResults.forEach(quiz => {
+                quiz.detailedResults.forEach(detail => {
+                    const row = [
+                        quiz.studentName, // Repete o nome do aluno para cada detalhe
+                        detail.questionNum,
+                        detail.questionText,
+                        detail.userAnswer,
+                        detail.correctAnswer,
+                        detail.isCorrect ? 'Correta' : 'Incorreta',
+                        detail.timeTaken,
+                        detail.focusPenalty
+                    ].map(item => `"${String(item).replace(/"/g, '""')}"`);
+                    csvContent += row.join(';') + '\n';
+                });
+            });
+
+            // Cria um Blob e dispara o download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const date = new Date();
+            const filename = `relatorio_geral_quizzes_${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url); // Libera o objeto URL
+            
+            alert('Relatório geral exportado com sucesso para um arquivo Excel (CSV)!');
+        }
+
+
+        // --- Lógica de Gerenciamento de Perguntas (Apenas para Professor) ---
+        els.manageQuestionsButton.addEventListener('click', () => {
+            if (currentUserType !== 'professor') {
+                alert('Acesso negado. Apenas professores podem gerenciar perguntas.');
+                return;
+            }
+            showSection('question-management-area');
+            renderQuestionsList(); // Atualiza a lista de perguntas ao entrar
+        });
+
+        /** Renderiza a lista de perguntas para gerenciamento. */
+        function renderQuestionsList() {
+            els.currentQuestionsList.innerHTML = '';
+            if (questions.length === 0) {
+                els.currentQuestionsList.textContent = 'Nenhuma pergunta cadastrada.';
+                return;
+            }
+            questions.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.classList.add('question-list-item');
+                item.innerHTML = `
+                    <span class="question-text">${index + 1}. ${q.question}</span>
+                    <div>
+                        <button class="action-button danger" onclick="deleteQuestion(${index})">Excluir</button>
+                    </div>
+                `;
+                els.currentQuestionsList.appendChild(item);
+            });
+        }
+
+        els.addQuestionButton.addEventListener('click', () => {
+            const questionTextValue = els.newQuestionText.value.trim();
+            const optionInputs = els.newQuestionOptionsContainer.querySelectorAll('.new-option-text');
+            const radioInputs = els.newQuestionOptionsContainer.querySelectorAll('.new-option-radio');
+
+            const options = [];
+            let correctAnswer = null;
+
+            optionInputs.forEach((input, index) => {
+                const optionValue = input.value.trim();
+                if (optionValue) { // Apenas adiciona opções não vazias
+                    options.push(optionValue);
+                    if (radioInputs[index] && radioInputs[index].checked) {
+                        correctAnswer = optionValue; // Pega o texto da opção selecionada como resposta correta
+                    }
+                }
+            });
+
+            if (!questionTextValue) {
+                alert("Por favor, digite o texto da pergunta.");
+                return;
+            }
+            if (options.length < 2) {
+                alert("Por favor, forneça pelo menos duas opções de resposta.");
+                return;
+            }
+            if (!correctAnswer) {
+                alert("Por favor, selecione uma resposta correta.");
+                return;
+            }
+
+            questions.push({
+                question: questionTextValue,
+                options: options,
+                answer: correctAnswer
+            });
+
+            saveQuestions();
+            renderQuestionsList();
+            alert("Pergunta adicionada com sucesso!");
+
+            // Limpar formulário após adicionar
+            els.newQuestionText.value = '';
+            optionInputs.forEach(input => input.value = '');
+            radioInputs.forEach(radio => radio.checked = false);
+        });
+
+        /**
+         * Exclui uma pergunta da lista.
+         * @param {number} index - O índice da pergunta a ser excluída.
+         */
+        function deleteQuestion(index) {
+            if (confirm(`Tem certeza que deseja excluir a pergunta "${questions[index].question}"?`)) {
+                questions.splice(index, 1); // Remove a pergunta pelo índice
+                saveQuestions();
+                renderQuestionsList();
+                alert("Pergunta excluída com sucesso!");
+            }
+        }
+
+        els.backToMenuFromManageButton.addEventListener('click', () => showSection('main-menu-area'));
+
+        // --- Funções de Controle de Foco/Visibilidade e Penalidade ---
+        /** Inicia o cronômetro visual de penalidade (vermelho). */
+        function startPenaltyDisplayTimer() {
+            clearInterval(penaltyDisplayInterval); // Garante que apenas um timer esteja rodando
+            els.penaltyStatusDisplay.classList.add('active'); // Ativa o estilo vermelho
+            penaltyDisplayInterval = setInterval(() => {
+                // Atualiza o display apenas se a página estiver oculta e o quiz ativo
+                if (isPageHidden && isQuizActive) {
+                    const timeHiddenNow = Math.floor((Date.now() - hiddenStartTime) / 1000);
+                    // Garante que a penalidade mostrada no display seja sempre no mínimo MIN_FOCUS_PENALTY_SECONDS
+                    const displayPenalty = Math.max(MIN_FOCUS_PENALTY_SECONDS, timeHiddenNow * FOCUS_PENALTY_PER_SECOND);
+                    els.penaltyStatusDisplay.textContent = `Tempo fora da prova: ${displayPenalty}s`;
+                }
+            }, 500); // Atualiza a cada 0.5 segundos
+        }
+
+        /** Para o cronômetro visual de penalidade e o oculta. */
+        function stopPenaltyDisplayTimer() {
+            clearInterval(penaltyDisplayInterval);
+            els.penaltyStatusDisplay.classList.remove('active'); // Remove o estilo vermelho
+            els.penaltyStatusDisplay.textContent = 'Tempo fora da prova: 0s'; // Reseta o texto
+        }
+
+        /** Lida com as mudanças de visibilidade da página (aba trocada/minimizada). */
+        function handleVisibilityChange() {
+            if (!isQuizActive) return; // Só aplica penalidade se o quiz estiver ativo
+
+            if (document.hidden) {
+                // A página foi minimizada ou a aba foi trocada
+                isPageHidden = true;
+                hiddenStartTime = Date.now(); // Marca o início da ocultação
+                startPenaltyDisplayTimer();
+                console.warn("Página oculta (document.hidden): Penalidade de foco ativada.");
+            } else {
+                // A página voltou a ser visível
+                if (isPageHidden) { // Aplica a penalidade se realmente estava oculta
+                    const timeHidden = Math.floor((Date.now() - hiddenStartTime) / 1000);
+                    const calculatedPenalty = Math.max(MIN_FOCUS_PENALTY_SECONDS, timeHidden * FOCUS_PENALTY_PER_SECOND);
+                    currentQuestionFocusPenalty += calculatedPenalty; // Adiciona à penalidade da questão atual
+                    totalPenaltyFocusLoss += calculatedPenalty; // Adiciona à penalidade total de foco
+                    console.log(`Página visível novamente. Tempo oculto: ${timeHidden}s. Penalidade aplicada à questão atual: ${calculatedPenalty}s.`);
+                }
+                isPageHidden = false; // Reseta o estado
+                stopPenaltyDisplayTimer();
+            }
+        }
+
+        /** Lida com a perda de foco da janela (ex: Alt+Tab, clique fora da janela). */
+        function handleWindowBlur() {
+            // Se o quiz não está ativo ou a página já está oculta (document.hidden), não faz nada.
+            // O document.hidden já foi capturado por handleVisibilityChange.
+            if (!isQuizActive || document.hidden) return; 
+            
+            isPageHidden = true;
+            hiddenStartTime = Date.now();
+            startPenaltyDisplayTimer();
+            console.warn("Janela perdeu o foco (window.blur): Penalidade de foco ativada.");
+        }
+
+        /** Lida com o ganho de foco da janela. */
+        function handleWindowFocus() {
+            // Se o quiz não está ativo ou a página não estava marcada como oculta, não faz nada.
+            if (!isQuizActive || !isPageHidden) return; 
+
+            const timeBlurred = Math.floor((Date.now() - hiddenStartTime) / 1000);
+            const calculatedPenalty = Math.max(MIN_FOCUS_PENALTY_SECONDS, timeBlurred * FOCUS_PENALTY_PER_SECOND);
+            currentQuestionFocusPenalty += calculatedPenalty; // Adiciona à penalidade da questão atual
+            totalPenaltyFocusLoss += calculatedPenalty; // Adiciona à penalidade total de foco
+            console.log(`Janela recuperou o foco. Tempo fora de foco: ${timeBlurred}s. Penalidade aplicada à questão atual: ${calculatedPenalty}s.`);
+            
+            isPageHidden = false; // Reseta o estado
+            stopPenaltyDisplayTimer();
+        }
+
+        // --- Inicialização da Aplicação ---
+        initializeApp();
     </script>
 </body>
 </html>
