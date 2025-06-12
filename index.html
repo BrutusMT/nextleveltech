@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lanchonete Delícias! - Pedidos</title>
+    <!-- Inclui o Tailwind CSS via CDN (acessível globalmente) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuração da fonte Inter do Google Fonts (acessível globalmente) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFDFD; /* Um branco muito suave */
+        }
+        /* Estilos personalizados para o botão de WhatsApp */
+        .whatsapp-button {
+            background: linear-gradient(to right, #25D366, #128C7E); /* Gradiente de verde do WhatsApp */
+            transition: all 0.3s ease;
+        }
+        .whatsapp-button:hover {
+            transform: translateY(-2px); /* Efeito de elevação ao passar o mouse */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25); /* Sombra mais forte no hover */
+        }
+        /* Estilos para o ícone de WhatsApp SVG */
+        .whatsapp-icon {
+            width: 28px; /* Ícone um pouco maior */
+            height: 28px;
+            fill: currentColor; /* Usa a cor do texto pai */
+        }
+        /* Sombra e transição para os cards de produtos */
+        .product-card {
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+        }
+        /* Estilos para o destaque dos preços */
+        .price-highlight {
+            animation: bounceIn 1s ease-out; /* Adiciona uma animação sutil */
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        /* Estilo para esconder elementos */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-yellow-100 to-red-100">
+
+    <!-- Container principal com card-like styling para o modo de pedido -->
+    <div id="orderPanel" class="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-10 w-full max-w-lg mx-auto border-4 border-white transform scale-100 transition-transform duration-500">
+        <h1 class="text-5xl sm:text-6xl font-extrabold text-center mb-8 mt-4 leading-tight">
+            <span class="text-red-700 drop-shadow-lg">Lanchonete</span>
+            <span class="text-yellow-600 drop-shadow-lg">Delícias!</span>
+        </h1>
+
+        <p class="text-center text-gray-700 mb-10 text-xl sm:text-2xl font-medium">
+            Seu sabor favorito, a um clique de distância!
+        </p>
+
+        <!-- Imagem de família no piquenique -->
+        <div class="mb-10 text-center">
+            <!-- Imagem fixada no código. Altere o 'src' para sua imagem. -->
+            <img id="picnicImage" src="https://placehold.co/600x300/F08080/FFFFFF?text=Familia+no+Piquenique" alt="Família no Piquenique" class="w-full h-auto rounded-xl shadow-lg border-2 border-white mx-auto transition-transform duration-300 hover:scale-102" onerror="this.onerror=null; this.src='https://placehold.co/600x300/CCCCCC/000000?text=Imagem+Nao+Disponivel';">
+            <p class="text-gray-600 text-sm mt-2">Momentos deliciosos com nossos lanches!</p>
+        </div>
+
+        <!-- Seção do Cachorro Quente -->
+        <div class="mb-8 product-card p-6 bg-yellow-50 rounded-2xl border-4 border-yellow-300 transform rotate-1 transition-transform">
+            <div class="flex items-center mb-4">
+                <!-- Imagem do Cachorro Quente -->
+                <!-- Imagem fixada no código. Altere o 'src' para sua imagem. -->
+                <img id="hotDogImage" src="https://placehold.co/90x90/FFD700/000000?text=Hot+Dog" alt="Cachorro Quente" class="rounded-full mr-4 shadow-lg border-2 border-white" onerror="this.onerror=null; this.src='https://placehold.co/90x90/CCCCCC/000000?text=Hot+Dog';">
+                <div>
+                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Cachorro Quente Clássico</h2>
+                    <p class="text-gray-700 text-lg sm:text-xl">Pão, salsicha, molho especial, maionese, ketchup, mostarda, batata palha.</p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-4">
+                <span class="text-4xl font-extrabold text-red-600 price-highlight">R$ 12,00</span>
+                <input
+                    type="number"
+                    id="hotDogQuantity"
+                    value="0"
+                    min="0"
+                    class="w-28 p-3 border-4 border-yellow-500 rounded-lg text-center text-3xl font-bold text-gray-800 focus:outline-none focus:ring-4 focus:ring-yellow-600 transition-all duration-300 bg-yellow-100"
+                    aria-label="Quantidade de Cachorro Quente"
+                >
+            </div>
+        </div>
+
+        <!-- Seção da Batata com Calabresa -->
+        <div class="mb-10 product-card p-6 bg-red-50 rounded-2xl border-4 border-red-300 transform -rotate-1 transition-transform">
+            <div class="flex items-center mb-4">
+                <!-- Imagem da Batata com Calabresa -->
+                <!-- Imagem fixada no código. Altere o 'src' para sua imagem. -->
+                <img id="sausagePotatoImage" src="https://placehold.co/90x90/DC143C/FFFFFF?text=Batata" alt="Batata com Calabresa" class="rounded-full mr-4 shadow-lg border-2 border-white" onerror="this.onerror=null; this.src='https://placehold.co/90x90/CCCCCC/000000?text=Batata';">
+                <div>
+                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Batata com Calabresa</h2>
+                    <p class="text-gray-700 text-lg sm:text-xl">Batata frita crocante com pedaços suculentos de calabresa defumada.</p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-4">
+                <span class="text-4xl font-extrabold text-red-600 price-highlight">R$ 18,00</span>
+                <input
+                    type="number"
+                    id="sausagePotatoQuantity"
+                    value="0"
+                    min="0"
+                    class="w-28 p-3 border-4 border-red-500 rounded-lg text-center text-3xl font-bold text-gray-800 focus:outline-none focus:ring-4 focus:ring-red-600 transition-all duration-300 bg-red-100"
+                    aria-label="Quantidade de Batata com Calabresa"
+                >
+            </div>
+        </div>
+
+        <!-- Detalhes da Entrega -->
+        <div class="mb-8 p-6 bg-blue-50 rounded-2xl border-4 border-blue-300">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 text-center">Detalhes da Entrega</h2>
+            <div class="mb-4">
+                <label for="deliveryAddress" class="block text-gray-700 text-lg font-bold mb-2">Endereço de Entrega:</label>
+                <textarea
+                    id="deliveryAddress"
+                    rows="3"
+                    class="w-full p-3 border-2 border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                    placeholder="Rua, número, bairro, complemento (opcional)..."
+                    aria-label="Endereço de Entrega"
+                ></textarea>
+            </div>
+            <div class="mb-4 text-center">
+                <button
+                    id="getLocationButton"
+                    class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center"
+                >
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.727A8 8 0 0116 18a8 8 0 01-6.727-2.343m13.454-1.353a1.5 1.5 0 00-2.008 0l-.822.822m-13.454 0a1.5 1.5 0 01-2.008 0l-.822-.822m13.454 0L17.657 16.727m0 0a8 8 0 01-6.727-2.343M12 18a8 8 0 00-6.727-2.343M12 12v.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 100-8 4 4 0 000 8z"></path></svg>
+                    Enviar Localização Atual
+                </button>
+                <div id="locationStatusMessage" class="mt-2 text-sm text-gray-600 italic hidden"></div>
+            </div>
+        </div>
+
+        <!-- Botão para Fazer Pedido no WhatsApp -->
+        <button
+            id="orderButton"
+            class="whatsapp-button flex items-center justify-center w-full px-8 py-4 text-2xl sm:text-3xl font-bold text-white rounded-full shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-400 transition-all duration-300 transform hover:scale-105"
+            aria-label="Fazer Pedido no WhatsApp"
+        >
+            <svg class="whatsapp-icon mr-3" viewBox="0 0 24 24">
+                <path d="M12.04 2C7.03 2 3 6.03 3 11.04c0 1.95.61 3.79 1.66 5.38L3.2 21.6c-.19.45-.04.96.34 1.25.17.13.37.2.57.2.28 0 .56-.11.76-.3L8.6 20.3a9.05 9.05 0 0 0 3.44.74c5.01 0 9.04-4.03 9.04-9.04S17.05 2 12.04 2zM17 15.15c-.11.2-.4.29-.64.21-.23-.08-1.07-.46-1.28-.66-.2-.2-.35-.29-.5-.29-.15 0-.3.08-.44.17-.14.09-.38.29-.49.4-.12.1-.23.11-.42.06-.2-.05-1.12-.41-2.13-1.31-1.37-1.2-2.29-2.5-2.56-2.9-.27-.4-.28-.59-.28-.75 0-.15.11-.24.18-.36.07-.12.16-.29.24-.41.08-.12.1-.2.15-.29.05-.09.02-.17-.04-.26-.06-.09-.56-1.35-.77-1.84-.2-.49-.4-.42-.56-.43-.16-.01-.35-.01-.5-.01-.15 0-.4.06-.6.3-.2.25-.75.76-.75 1.84s.77 2.13.88 2.29c.1.16 1.41 2.15 3.42 3.01.76.32 1.37.52 1.84.66.7.2 1.05.17 1.43.1.37-.07 1.07-.44 1.22-.64.15-.2.15-.37.1-.46-.05-.1-.18-.16-.38-.25z"/>
+            </svg>
+            Fazer Pedido no WhatsApp
+        </button>
+
+        <!-- Caixa de mensagem para feedback (erro/sucesso) -->
+        <div id="messageBox" class="mt-8 p-4 bg-blue-100 border border-blue-400 text-blue-800 rounded-lg text-center text-lg hidden" role="alert">
+            <!-- Mensagens serão inseridas aqui via JavaScript -->
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos do painel de pedidos
+            const hotDogQuantityInput = document.getElementById('hotDogQuantity');
+            const sausagePotatoQuantityInput = document.getElementById('sausagePotatoQuantity');
+            const orderButton = document.getElementById('orderButton');
+            const messageBox = document.getElementById('messageBox');
+            const deliveryAddressInput = document.getElementById('deliveryAddress');
+            const getLocationButton = document.getElementById('getLocationButton');
+            const locationStatusMessage = document.getElementById('locationStatusMessage');
+
+            // Variável para armazenar o link da localização
+            let currentGeolocationLink = '';
+
+            // Configurações
+            const whatsappNumber = '5511999998888'; // Substitua pelo seu número de telefone do WhatsApp
+
+            // Função para exibir mensagens na caixa de mensagem principal
+            function showMessage(box, message, type = 'info') {
+                box.textContent = message;
+                box.classList.remove('hidden', 'bg-blue-100', 'bg-green-100', 'bg-red-100', 'text-blue-800', 'text-green-800', 'text-red-800', 'border-blue-400', 'border-green-400', 'border-red-400');
+                box.classList.add('block'); // Garante que a caixa seja visível
+
+                if (type === 'info') {
+                    box.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-400');
+                } else if (type === 'success') {
+                    box.classList.add('bg-green-100', 'text-green-800', 'border-green-400');
+                } else if (type === 'error') {
+                    box.classList.add('bg-red-100', 'text-red-800', 'border-red-400');
+                }
+
+                setTimeout(() => {
+                    box.classList.add('hidden');
+                }, 5000);
+            }
+
+            // Função para obter a localização atual do usuário
+            getLocationButton.addEventListener('click', () => {
+                locationStatusMessage.classList.remove('hidden');
+                locationStatusMessage.textContent = 'Obtendo sua localização...';
+                locationStatusMessage.classList.remove('text-red-600', 'text-green-600');
+                locationStatusMessage.classList.add('text-gray-600');
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            currentGeolocationLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+                            locationStatusMessage.textContent = 'Localização obtida com sucesso!';
+                            locationStatusMessage.classList.remove('text-gray-600', 'text-red-600');
+                            locationStatusMessage.classList.add('text-green-600');
+                            showMessage(messageBox, "Localização capturada e pronta para envio!", "success");
+                        },
+                        (error) => {
+                            console.error("Erro ao obter localização:", error);
+                            currentGeolocationLink = ''; // Limpa a localização se houver erro
+                            let errorMessage = 'Erro ao obter localização. ';
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMessage += "Permissão negada. Por favor, permita o acesso à localização.";
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMessage += "Localização indisponível.";
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMessage += "Tempo limite excedido ao tentar obter a localização.";
+                                    break;
+                                default:
+                                    errorMessage += "Erro desconhecido.";
+                                    break;
+                            }
+                            locationStatusMessage.textContent = errorMessage;
+                            locationStatusMessage.classList.remove('text-gray-600', 'text-green-600');
+                            locationStatusMessage.classList.add('text-red-600');
+                            showMessage(messageBox, errorMessage, "error");
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Opções de alta precisão
+                    );
+                } else {
+                    locationStatusMessage.textContent = 'Geolocalização não é suportada por este navegador.';
+                    locationStatusMessage.classList.remove('text-gray-600', 'text-green-600');
+                    locationStatusMessage.classList.add('text-red-600');
+                    showMessage(messageBox, "Seu navegador não suporta geolocalização.", "error");
+                }
+            });
+
+            // Evento para o botão de pedido do WhatsApp
+            orderButton.addEventListener('click', () => {
+                const hotDogQuantity = parseInt(hotDogQuantityInput.value);
+                const sausagePotatoQuantity = parseInt(sausagePotatoQuantityInput.value);
+                const deliveryAddress = deliveryAddressInput.value.trim(); // Pega o endereço digitado e remove espaços em branco
+
+                let message = "Ola! Gostaria de fazer o seguinte pedido:\n\n";
+                let total = 0;
+
+                if (hotDogQuantity > 0) {
+                    message += `${hotDogQuantity}x Cachorro Quente Classico (R$ 12,00)\n`;
+                    total += hotDogQuantity * 12.00;
+                }
+                if (sausagePotatoQuantity > 0) {
+                    message += `${sausagePotatoQuantity}x Batata com Calabresa (R$ 18,00)\n`;
+                    total += sausagePotatoQuantity * 18.00;
+                }
+
+                if (total === 0) {
+                    showMessage(messageBox, "Por favor, selecione a quantidade de pelo menos um item para fazer o pedido.", "info");
+                    return;
+                }
+
+                message += `\nTotal: R$ ${total.toFixed(2).replace('.', ',')}\n\n`;
+
+                // Adiciona o endereço e/ou localização ao pedido
+                if (deliveryAddress) {
+                    message += `Endereco para entrega: ${deliveryAddress}\n`;
+                }
+                if (currentGeolocationLink) {
+                    message += `Localizacao: ${currentGeolocationLink}\n`;
+                }
+
+                if (!deliveryAddress && !currentGeolocationLink) {
+                    showMessage(messageBox, "Por favor, digite um endereco OU clique em 'Enviar Localizacao Atual' para a entrega.", "error");
+                    return;
+                }
+
+
+                message += "\nAguardando confirmacao do pedido!";
+
+                // Substitua '+556599544343' pelo seu número de telefone do WhatsApp
+                const whatsappUrl = `https://wa.me/${+556599544343}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+
+                showMessage(messageBox, "Seu pedido foi gerado para o WhatsApp! Prepare-se para saborear!", "success");
+            });
+        });
+    </script>
+</body>
+</html>
