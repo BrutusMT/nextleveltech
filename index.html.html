@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Provas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f3f4f6; /* Cor de fundo padrão */
+        }
+        /* Estilos adicionais para spinner */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container" class="min-h-screen">
+        <!-- Conteúdo será carregado aqui pelo JavaScript -->
+    </div>
+
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variáveis de estado encapsuladas em um objeto global
+        const appState = {
+            currentPage: 'login',
+            loggedInUserName: '',
+            loggedInUserType: 'aluno', // Valor inicial para o tipo de usuário no login
+            nameInput: '', // Adicionado para o input do nome no login
+            passwordInput: '', // Adicionado para o input da senha no login
+            firebaseApp: null,
+            db: null,
+            auth: null,
+            userId: null,
+            isAuthReady: false,
+            message: '', // Mensagens gerais
+
+            // Estado do painel do professor
+            activities: [
+                { id: 1, name: "Matemática - Unidade 1", status: "Ativa", llmGeneratedQuestions: [] },
+                { id: 2, name: "Português - Leitura", status: "Inativa", llmGeneratedQuestions: [] },
+            ],
+            teacherMessage: '', // Mensagens específicas do professor
+            confirmModal: { isOpen: false, activityId: null },
+            selectedActivityForLLM: null,
+            llmTopic: '',
+            llmQuestionType: 'multiple_choice',
+            isGenerating: false,
+            llmError: '',
+
+            // Estado do painel do aluno
+            studentActivities: [
+                { id: 101, name: "Matemática - Unidade 1", status: "Aberta", score: null },
+                { id: 102, name: "História - Revolução Francesa", status: "Concluída", score: 85 },
+                { id: 103, name: "Química - Tabela Periódica", status: "Prazo Esgotado", score: null },
+            ],
+            selectedActivity: null,
+            studentMessage: '', // Mensagens específicas do aluno
+            showExplainConcept: false,
+            conceptInput: '',
+            conceptExplanation: '',
+            isExplaining: false,
+            explainError: '',
+        };
+
+        // Função principal de renderização
+        function render(componentRenderer) {
+            const appContainer = document.getElementById('app-container');
+            if (appContainer) {
+                appContainer.innerHTML = ''; // Limpa o conteúdo anterior
+                // Passa o objeto appState completo para o renderizador de componente
+                appContainer.innerHTML = componentRenderer(appState);
+                attachEventListeners(); // Re-anexa listeners após re-renderização
+            }
+        }
+
+        // Função para anexar todos os event listeners necessários para a página atual
+        function attachEventListeners() {
+            if (appState.currentPage === 'login') {
+                const loginButton = document.getElementById('login-button');
+                if (loginButton) {
+                    loginButton.onclick = handleLogin;
+                }
+                const nameInputElem = document.getElementById('name');
+                if (nameInputElem) {
+                    nameInputElem.oninput = (e) => { appState.nameInput = e.target.value; }; // Atualiza estado no input
+                    nameInputElem.onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
+                }
+                const passwordInputElem = document.getElementById('password');
+                if (passwordInputElem) {
+                    passwordInputElem.oninput = (e) => { appState.passwordInput = e.target.value; }; // Atualiza estado no input
+                    passwordInputElem.onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
+                }
+                document.querySelectorAll('input[name="userType"]').forEach(radio => {
+                    radio.onchange = (e) => {
+                        appState.selectedUserType = e.target.value;
+                        appState.passwordInput = ''; // Limpa senha ao mudar para aluno
+                        appState.message = ''; // Limpa mensagens de erro
+                        render(renderLoginPage); // Re-renderiza para mostrar/ocultar campo de senha
+                    };
+                });
+            } else if (appState.currentPage === 'teacher') {
+                const logoutButton = document.getElementById('logout-button');
+                if (logoutButton) {
+                    logoutButton.onclick = handleLogout;
+                }
+                const addActivityButton = document.getElementById('add-activity-button');
+                if (addActivityButton) {
+                    addActivityButton.onclick = handleAddActivity;
+                }
+                const newActivityNameInput = document.getElementById('new-activity-name');
+                if (newActivityNameInput) {
+                    newActivityNameInput.oninput = (e) => { appState.newActivityName = e.target.value; }; // Atualiza estado
+                }
+
+                const exportDataButton = document.getElementById('export-data-button');
+                if (exportDataButton) {
+                    exportDataButton.onclick = handleExportData;
+                }
+                document.querySelectorAll('.delete-activity-button').forEach(button => {
+                    button.onclick = (e) => handleDeleteActivity(parseInt(e.target.dataset.id));
+                });
+                document.querySelectorAll('.generate-llm-button').forEach(button => {
+                    button.onclick = (e) => {
+                        const activityId = parseInt(e.target.dataset.id);
+                        appState.selectedActivityForLLM = appState.activities.find(act => act.id === activityId);
+                        appState.llmTopic = ''; // Limpa o tópico ao selecionar nova atividade
+                        appState.llmQuestionType = 'multiple_choice';
+                        appState.llmError = '';
+                        render(renderTeacherDashboard);
+                    };
+                });
+                if (appState.confirmModal.isOpen) {
+                    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+                    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+                    if (confirmDeleteBtn) confirmDeleteBtn.onclick = confirmDelete;
+                    if (cancelDeleteBtn) cancelDeleteBtn.onclick = cancelDelete;
+                }
+                // LLM specific event listeners
+                if (appState.selectedActivityForLLM) {
+                    const llmTopicInput = document.getElementById('llmTopic');
+                    if (llmTopicInput) llmTopicInput.oninput = (e) => { appState.llmTopic = e.target.value; }; // Atualiza estado
+                    const llmQuestionTypeSelect = document.getElementById('llmQuestionType');
+                    if (llmQuestionTypeSelect) llmQuestionTypeSelect.onchange = (e) => { appState.llmQuestionType = e.target.value; }; // Atualiza estado
+                    const generateQuestionsButton = document.getElementById('generate-questions-button');
+                    if (generateQuestionsButton) generateQuestionsButton.onclick = handleGenerateQuestions;
+                }
+
+            } else if (appState.currentPage === 'student') {
+                const logoutButton = document.getElementById('logout-button');
+                if (logoutButton) {
+                    logoutButton.onclick = handleLogout;
+                }
+                document.querySelectorAll('.start-activity-button').forEach(button => {
+                    button.onclick = (e) => handleStartActivity(parseInt(e.target.dataset.id));
+                });
+                const submitActivityButton = document.getElementById('submit-activity-button');
+                if (submitActivityButton) {
+                    submitActivityButton.onclick = handleSubmitActivity;
+                }
+                const exportPdfButton = document.getElementById('export-pdf-button');
+                if (exportPdfButton) {
+                    exportPdfButton.onclick = handleExportPDF;
+                }
+                const toggleExplainConceptButton = document.getElementById('toggle-explain-concept-button');
+                if (toggleExplainConceptButton) {
+                    toggleExplainConceptButton.onclick = () => {
+                        appState.showExplainConcept = !appState.showExplainConcept;
+                        appState.conceptInput = '';
+                        appState.conceptExplanation = '';
+                        appState.explainError = '';
+                        render(renderStudentDashboard);
+                    };
+                }
+                if (appState.showExplainConcept) {
+                    const conceptInputElem = document.getElementById('conceptInput');
+                    if (conceptInputElem) conceptInputElem.oninput = (e) => { appState.conceptInput = e.target.value; }; // Atualiza estado
+                    const explainConceptButton = document.getElementById('explain-concept-button');
+                    if (explainConceptButton) explainConceptButton.onclick = handleExplainConcept;
+                }
+            }
+        }
+
+        // --- Renderização de Componentes HTML ---
+
+        function renderLoginPage(state) {
+            const { selectedUserType, nameInput, passwordInput, message, userId } = state;
+
+            let passwordFieldHtml = '';
+            if (selectedUserType === 'professor') {
+                passwordFieldHtml = `
+                    <div class="mb-4">
+                        <label htmlFor="password" class="block text-gray-700 text-sm font-bold mb-2 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key mr-1"><path d="m21.79 13.91-2.18 5.72a2 2 0 0 1-1.25 1.25l-5.72 2.18a2 2 0 0 1-2.58-1.57l-.37-1.12.98-2.56a2 2 0 0 0-1.57-2.58l-1.12-.37-2.56.98a2 2 0 0 0-2.58-1.57l-5.72-2.18a2 2 0 0 1-1.25-1.25l-2.18-5.72a2 2 0 0 1 1.57-2.58l1.12-.37 2.56.98a2 2 0 0 0 2.58-1.57l.37-1.12.98-2.56a2 2 0 0 0 2.58-1.57l5.72-2.18a2 2 0 0 1 1.25-1.25l5.72-2.18a2 2 0 0 1 2.58 1.57l.37 1.12-.98 2.56a2 2 0 0 0 1.57 2.58l1.12.37 2.56-.98a2 2 0 0 0 2.58 1.57Z"/></svg>
+                            Senha:
+                        </label>
+                        <input
+                            type="password"
+                            id="password"
+                            class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                            placeholder="************"
+                            value="${passwordInput}"
+                        />
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-4 font-inter">
+                    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+                        <h2 class="text-3xl font-extrabold text-center text-gray-900 mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book inline-block mr-2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                            Entrar na Plataforma de Provas
+                        </h2>
+                        ${message ? `
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
+                                <span class="block sm:inline">${message}</span>
+                            </div>
+                        ` : ''}
+                        <div class="mb-4">
+                            <label htmlFor="name" class="block text-gray-700 text-sm font-bold mb-2">
+                                ${selectedUserType === 'professor' ? 'Usuário do Professor:' : 'Seu Nome Completo:'}
+                            </label>
+                            <input
+                                type="text"
+                                id="name"
+                                class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                                placeholder="${selectedUserType === 'professor' ? 'Ex: professor' : 'Ex: João da Silva'}"
+                                value="${nameInput}"
+                            />
+                        </div>
+                        ${passwordFieldHtml}
+                        <div class="mb-6 flex justify-around">
+                            <label class="inline-flex items-center text-gray-700 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    class="form-radio h-5 w-5 text-indigo-600"
+                                    name="userType"
+                                    value="aluno"
+                                    ${selectedUserType === 'aluno' ? 'checked' : ''}
+                                />
+                                <span class="ml-2 font-medium">Sou Aluno</span>
+                            </label>
+                            <label class="inline-flex items-center text-gray-700 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    class="form-radio h-5 w-5 text-indigo-600"
+                                    name="userType"
+                                    value="professor"
+                                    ${selectedUserType === 'professor' ? 'checked' : ''}
+                                />
+                                <span class="ml-2 font-medium">Sou Professor</span>
+                            </label>
+                        </div>
+                        <button
+                            id="login-button"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 transform hover:scale-105"
+                        >
+                            Entrar
+                        </button>
+                        <p class="text-center text-gray-500 text-xs mt-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user inline-block mr-1"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            ID do Usuário Firebase (para referência): ${userId || 'Carregando...'}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTeacherDashboard(state) {
+            const { loggedInUserName, teacherMessage, activities, newActivityName, confirmModal,
+                    selectedActivityForLLM, llmTopic, llmQuestionType, isGenerating, llmError } = state;
+
+            let llmQuestionsSectionHtml = '';
+            if (!selectedActivityForLLM) {
+                llmQuestionsSectionHtml = `
+                    <p class="text-gray-600">
+                        Selecione uma atividade na lista acima clicando em "Gerar IA" para começar a gerar questões.
+                    </p>
+                `;
+            } else {
+                let generatedQuestionsListHtml = '';
+                if (selectedActivityForLLM.llmGeneratedQuestions.length > 0) {
+                    generatedQuestionsListHtml = `
+                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Questões Geradas para esta Atividade:</h3>
+                            <ul class="list-disc pl-5 text-gray-700">
+                                ${selectedActivityForLLM.llmGeneratedQuestions.map((q, index) => `
+                                    <li key="${index}" class="mb-4 p-2 bg-gray-100 rounded-md">
+                                        <p class="font-bold text-base mb-1">${q.questionText}</p>
+                                        ${q.type === 'multiple_choice' ? `
+                                            <ul class="list-alpha ml-4">
+                                                ${q.options.map((option, optIndex) => `
+                                                    <li class="${option === q.correctAnswer ? 'text-green-700 font-semibold' : ''}">
+                                                        ${String.fromCharCode(97 + optIndex)}. ${option}
+                                                        ${option === q.correctAnswer ? ' (Correta)' : ''}
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        ` : ''}
+                                        ${q.type === 'true_false' ? `
+                                            <p><span class="font-semibold">Resposta:</span> ${q.correctAnswer}</p>
+                                        ` : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+                llmQuestionsSectionHtml = `
+                    <div class="border border-gray-200 p-4 rounded-lg">
+                        <p class="text-indigo-700 font-semibold mb-4">
+                            Gerando questões para: <span class="font-bold">${selectedActivityForLLM.name}</span>
+                        </p>
+                        ${llmError ? `
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
+                                <span class="block sm:inline">${llmError}</span>
+                            </div>
+                        ` : ''}
+                        <div class="mb-4">
+                            <label htmlFor="llmTopic" class="block text-gray-700 text-sm font-bold mb-2">
+                                Tópico para as Questões:
+                            </label>
+                            <input
+                                type="text"
+                                id="llmTopic"
+                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                                placeholder="Ex: Mitose e Meiose"
+                                value="${llmTopic}"
+                            />
+                        </div>
+                        <div class="mb-4">
+                            <label htmlFor="llmQuestionType" class="block text-gray-700 text-sm font-bold mb-2">
+                                Tipo de Questão:
+                            </label>
+                            <select
+                                id="llmQuestionType"
+                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                                value="${llmQuestionType}"
+                            >
+                                <option value="multiple_choice">Múltipla Escolha</option>
+                                <option value="true_false">Verdadeiro/Falso</option>
+                            </select>
+                        </div>
+                        <button
+                            id="generate-questions-button"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center justify-center ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}"
+                            ${isGenerating ? 'disabled' : ''}
+                        >
+                            ${isGenerating ? `
+                                <svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ` : `
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lightbulb mr-2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 3c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/><path d="M11 17h2"/><path d="M12 14v8"/></svg>
+                            `}
+                            ${isGenerating ? 'Gerando...' : 'Gerar Questões'}
+                        </button>
+                        ${generatedQuestionsListHtml}
+                    </div>
+                `;
+            }
+
+            let confirmModalHtml = '';
+            if (confirmModal.isOpen) {
+                confirmModalHtml = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                            <p class="text-lg font-semibold mb-4">Tem certeza que deseja remover esta atividade?</p>
+                            <div class="flex justify-center gap-4">
+                                <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                                    Confirmar
+                                </button>
+                                <button id="cancel-delete-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="min-h-screen bg-gray-100 p-8 font-inter">
+                    <header class="bg-white shadow rounded-xl p-6 mb-8 flex justify-between items-center">
+                        <h1 class="text-3xl font-extrabold text-gray-900">
+                            Painel do Professor - Bem-vindo(a), ${loggedInUserName}!
+                        </h1>
+                        <button
+                            id="logout-button"
+                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out mr-1"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="17 17 22 12 17 7"/><line x1="22" x2="10" y1="12" y2="12"/></svg>
+                            Sair
+                        </button>
+                    </header>
+
+                    ${teacherMessage ? `
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md relative mb-4" role="alert">
+                            <span class="block sm:inline">${teacherMessage}</span>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book mr-2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                                Gerenciamento de Atividades
+                            </h2>
+                            <div class="flex mb-4">
+                                <input
+                                    type="text"
+                                    id="new-activity-name"
+                                    class="flex-grow shadow appearance-none border rounded-l-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200"
+                                    placeholder="Nome da nova atividade"
+                                    value="${newActivityName}"
+                                />
+                                <button
+                                    id="add-activity-button"
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-r-lg shadow-md transition duration-200 flex items-center"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus mr-1"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                    Adicionar
+                                </button>
+                            </div>
+                            <ul class="divide-y divide-gray-200">
+                                ${activities.map(activity => `
+                                    <li class="py-3 flex justify-between items-center">
+                                        <div class="flex-grow">
+                                            <span class="text-lg text-gray-700">${activity.name} (<span class="font-semibold">${activity.status}</span>)</span>
+                                            ${activity.llmGeneratedQuestions && activity.llmGeneratedQuestions.length > 0 ? `
+                                                <p class="text-sm text-gray-500 mt-1">
+                                                    (${activity.llmGeneratedQuestions.length} questões de IA adicionadas)
+                                                </p>
+                                            ` : ''}
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <button
+                                                data-id="${activity.id}"
+                                                class="generate-llm-button bg-purple-500 hover:bg-purple-600 text-white font-bold py-1 px-3 rounded-lg shadow-sm transition duration-200 flex items-center text-sm"
+                                                title="Selecionar para gerar questões com IA"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles mr-1"><path d="M9.9 10.95 7 14l3.05 3.05L14 20l3.05-3.05L20 14l-3.05-3.05L14 7l-3.05 3.05Z"/><path d="M5.5 8.5 3 12l2.5 3.5L8 12l-2.5-3.5Z"/><path d="M17.5 1.5 14 4l3.5 2.5L21 4l-3.5-2.5Z"/></svg>
+                                                Gerar IA
+                                            </button>
+                                            <button
+                                                data-id="${activity.id}"
+                                                class="delete-activity-button bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg shadow-sm transition duration-200 flex items-center"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minus mr-1"><path d="M5 12h14"/></svg>
+                                                Remover
+                                            </button>
+                                        </div>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bar-chart mr-2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                                Desempenho e Relatórios
+                            </h2>
+                            <p class="text-gray-600 mb-4">
+                                Aqui você veria gráficos de desempenho dos alunos e o progresso geral.
+                                Para uma implementação completa, seria necessário um componente de gráficos (ex: Recharts) e dados reais do Firestore.
+                            </p>
+                            <button
+                                id="export-data-button"
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="10" y1="12" y2="12"/></svg>
+                                Exportar Dados (TXT para Excel)
+                            </button>
+                            <p class="text-gray-500 text-sm mt-4">
+                                A exportação real exigiria dados de um banco de dados (ex: Firestore) e uma lógica de back-end para processar os arquivos.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lightbulb mr-2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 3c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/><path d="M11 17h2"/><path d="M12 14v8"/></svg>
+                            ✨ Gerar Questões com IA
+                        </h2>
+                        ${llmQuestionsSectionHtml}
+                    </div>
+                    ${confirmModalHtml}
+                </div>
+            `;
+        }
+
+        function renderStudentDashboard(state) {
+            const { loggedInUserName, studentActivities, selectedActivity, studentMessage,
+                    showExplainConcept, conceptInput, conceptExplanation, isExplaining, explainError } = state;
+
+            let activityInProgressHtml = '';
+            if (selectedActivity) {
+                activityInProgressHtml = `
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                            Realizando Atividade: ${selectedActivity.name}
+                        </h2>
+                        <p class="text-gray-700 mb-6">
+                            (Esta é uma simulação de uma prova. Em uma aplicação real, aqui apareceriam as questões e opções de resposta.)
+                            <br />
+                            <br />
+                            **Questão 1:** Qual a capital do Brasil?
+                            <br />
+                            <label class="block mt-2"><input type="radio" name="q1" value="Rio de Janeiro" class="mr-2" /> Rio de Janeiro</label>
+                            <label class="block"><input type="radio" name="q1" value="Brasília" class="mr-2" /> Brasília</label>
+                            <label class="block"><input type="radio" name="q1" value="São Paulo" class="mr-2" /> São Paulo</label>
+                            <br/>
+                            **Questão 2:** O que é um algorítimo?
+                            <br/>
+                            <textarea class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" rows="4" placeholder="Sua resposta dissertativa..."></textarea>
+                        </p>
+                        <button
+                            id="submit-activity-button"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text mr-2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                            Finalizar Atividade
+                        </button>
+                    </div>
+                `;
+            }
+
+            let explainConceptSectionHtml = '';
+            let explanationContentHtml = '';
+            if (showExplainConcept) {
+                if (conceptExplanation) {
+                    explanationContentHtml = `
+                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Explicação:</h3>
+                            <p class="text-gray-700 whitespace-pre-wrap">${conceptExplanation}</p>
+                        </div>
+                    `;
+                }
+                explainConceptSectionHtml = `
+                    <div class="border border-gray-200 p-4 rounded-lg">
+                        ${explainError ? `
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
+                                <span class="block sm:inline">${explainError}</span>
+                            </div>
+                        ` : ''}
+                        <div class="mb-4">
+                            <label htmlFor="conceptInput" class="block text-gray-700 text-sm font-bold mb-2">
+                                Conceito para Explicar:
+                            </label>
+                            <input
+                                type="text"
+                                id="conceptInput"
+                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"
+                                placeholder="Ex: Fotossíntese"
+                                value="${conceptInput}"
+                            />
+                        </div>
+                        <button
+                            id="explain-concept-button"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center justify-center ${isExplaining ? 'opacity-50 cursor-not-allowed' : ''}"
+                            ${isExplaining ? 'disabled' : ''}
+                        >
+                            ${isExplaining ? `
+                                <svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ` : `
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            `}
+                            ${isExplaining ? 'Explicando...' : 'Explicar Conceito'}
+                        </button>
+                        ${explanationContentHtml}
+                    </div>
+                `;
+            }
+
+
+            return `
+                <div class="min-h-screen bg-gray-100 p-8 font-inter">
+                    <header class="bg-white shadow rounded-xl p-6 mb-8 flex justify-between items-center">
+                        <h1 class="text-3xl font-extrabold text-gray-900">
+                            Painel do Aluno - Bem-vindo(a), ${loggedInUserName}!
+                        </h1>
+                        <button
+                            id="logout-button"
+                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out mr-1"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="17 17 22 12 17 7"/><line x1="22" x2="10" y1="12" y2="12"/></svg>
+                            Sair
+                        </button>
+                    </header>
+
+                    ${studentMessage ? `
+                        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-md relative mb-4" role="alert">
+                            <span class="block sm:inline">${studentMessage}</span>
+                        </div>
+                    ` : ''}
+
+                    ${selectedActivity ? activityInProgressHtml : `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="bg-white rounded-xl shadow-lg p-6">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book mr-2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                                    Minhas Avaliações
+                                </h2>
+                                <ul class="divide-y divide-gray-200">
+                                    ${studentActivities.map(activity => `
+                                        <li class="py-3 flex justify-between items-center">
+                                            <span class="text-lg text-gray-700">
+                                                ${activity.name} -
+                                                <span class="ml-2 font-semibold ${activity.status === 'Aberta' ? 'text-green-600' : activity.status === 'Concluída' ? 'text-blue-600' : 'text-red-600'}">
+                                                    ${activity.status}
+                                                </span>
+                                                ${activity.score !== null ? `<span class="ml-2 text-gray-500"> (Nota: ${activity.score})</span>` : ''}
+                                            </span>
+                                            ${activity.status === 'Aberta' ? `
+                                                <button
+                                                    data-id="${activity.id}"
+                                                    class="start-activity-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded-lg shadow-sm transition duration-200"
+                                                >
+                                                    Iniciar
+                                                </button>
+                                            ` : ''}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow-lg p-6">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bar-chart mr-2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                                    Meus Gráficos de Desempenho
+                                </h2>
+                                <p class="text-gray-600 mb-4">
+                                    Aqui você veria gráficos personalizados do seu desempenho ao longo do tempo.
+                                    Para uma implementação completa, seria necessário um componente de gráficos (ex: Recharts) e dados reais do Firestore.
+                                </p>
+                                <button
+                                    id="export-pdf-button"
+                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="10" y1="12" y2="12"/></svg>
+                                    Exportar Relatório (PDF)
+                                </button>
+                                <p class="text-gray-500 text-sm mt-4">
+                                    A geração de PDF real exigiria dados de um banco de dados (ex: Firestore) e uma lógica de back-end ou biblioteca robusta para formatar e gerar o arquivo.
+                                </p>
+                            </div>
+                        </div>
+                    `}
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            ✨ Explicar Conceito com IA
+                        </h2>
+                        <button
+                            id="toggle-explain-concept-button"
+                            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 mb-4"
+                        >
+                            ${showExplainConcept ? 'Ocultar Ferramenta' : 'Abrir Explicador de Conceitos'}
+                        </button>
+
+                        ${showExplainConcept ? `
+                            <div class="border border-gray-200 p-4 rounded-lg">
+                                ${explainError ? `
+                                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4" role="alert">
+                                        <span class="block sm:inline">${explainError}</span>
+                                    </div>
+                                ` : ''}
+                                <div class="mb-4">
+                                    <label htmlFor="conceptInput" class="block text-gray-700 text-sm font-bold mb-2">
+                                        Conceito para Explicar:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="conceptInput"
+                                        class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200"
+                                        placeholder="Ex: Fotossíntese"
+                                        value="${conceptInput}"
+                                    />
+                                </div>
+                                <button
+                                    id="explain-concept-button"
+                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center justify-center ${isExplaining ? 'opacity-50 cursor-not-allowed' : ''}"
+                                    ${isExplaining ? 'disabled' : ''}
+                                >
+                                    ${isExplaining ? `
+                                        <svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ` : `
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square mr-2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    `}
+                                    ${isExplaining ? 'Explicando...' : 'Explicar Conceito'}
+                                </button>
+                                ${conceptExplanation ? `
+                                    <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Explicação:</h3>
+                                        <p class="text-gray-700 whitespace-pre-wrap">${conceptExplanation}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Lógica da Aplicação ---
+
+        // Função para lidar com o login
+        async function handleLogin() {
+            const nameInputElem = document.getElementById('name');
+            const passwordInputElem = document.getElementById('password');
+
+            appState.nameInput = nameInputElem ? nameInputElem.value.trim() : '';
+            appState.passwordInput = passwordInputElem ? passwordInputElem.value : '';
+
+            if (appState.nameInput === '') {
+                appState.message = 'Por favor, insira seu nome de usuário.';
+                render(renderLoginPage);
+                return;
+            }
+
+            if (appState.selectedUserType === 'professor') {
+                if (appState.nameInput.toLowerCase() === 'professor' && appState.passwordInput === 'senha123') {
+                    appState.loggedInUserName = appState.nameInput;
+                    appState.loggedInUserType = 'professor';
+                    appState.currentPage = 'teacher';
+                    appState.message = '';
+                    localStorage.setItem('platform_is_professor_logged_in', 'true');
+                    localStorage.setItem('platform_professor_username', appState.nameInput);
+                } else {
+                    appState.message = 'Nome de usuário ou senha do professor incorretos.';
+                    render(renderLoginPage);
+                    return;
+                }
+            } else { // Aluno
+                appState.loggedInUserName = appState.nameInput;
+                appState.loggedInUserType = 'aluno';
+                appState.currentPage = 'student';
+                appState.message = '';
+                localStorage.setItem('platform_user_name', appState.nameInput);
+                localStorage.setItem('platform_user_type', 'aluno');
+            }
+
+            // --- Firestore: Registrar evento de login ---
+            if (appState.db && appState.userId && appState.isAuthReady) {
+                try {
+                    const logCollectionRef = collection(appState.db, `artifacts/${__app_id}/public/data/login_logout_logs`);
+                    await addDoc(logCollectionRef, {
+                        userId: appState.userId,
+                        userName: appState.loggedInUserName,
+                        userType: appState.loggedInUserType,
+                        timestamp: new Date(),
+                        eventType: 'login'
+                    });
+                    console.log("Evento de login registrado no Firestore.");
+                } catch (e) {
+                    console.error("Erro ao registrar evento de login no Firestore:", e);
+                }
+            } else {
+                console.warn("Firestore não está pronto para registrar o login.");
+            }
+            render(appState.currentPage === 'teacher' ? renderTeacherDashboard : renderStudentDashboard);
+        }
+
+        // Função para lidar com o logout
+        async function handleLogout() {
+            // --- Firestore: Registrar evento de logout ---
+            if (appState.db && appState.userId && appState.isAuthReady) {
+                try {
+                    const logCollectionRef = collection(appState.db, `artifacts/${__app_id}/public/data/login_logout_logs`);
+                    await addDoc(logCollectionRef, {
+                        userId: appState.userId,
+                        userName: appState.loggedInUserName,
+                        userType: appState.loggedInUserType,
+                        timestamp: new Date(),
+                        eventType: 'logout'
+                    });
+                    console.log("Evento de logout registrado no Firestore.");
+                } catch (e) {
+                    console.error("Erro ao registrar evento de logout no Firestore:", e);
+                }
+            }
+
+            // Limpa o localStorage
+            localStorage.removeItem('platform_user_name');
+            localStorage.removeItem('platform_user_type');
+            localStorage.removeItem('platform_is_professor_logged_in');
+            localStorage.removeItem('platform_professor_username');
+
+            appState.currentPage = 'login';
+            appState.loggedInUserName = '';
+            appState.loggedInUserType = 'aluno'; // Reset para padrão
+            appState.nameInput = ''; // Limpa input de login
+            appState.passwordInput = ''; // Limpa input de senha
+            appState.message = '';
+            appState.teacherMessage = '';
+            appState.studentMessage = '';
+            appState.selectedActivityForLLM = null;
+            appState.selectedActivity = null;
+            render(renderLoginPage);
+        }
+
+        // --- Funções do Painel do Professor ---
+        function handleAddActivity() {
+            const newActivityNameInput = document.getElementById('new-activity-name');
+            const name = newActivityNameInput ? newActivityNameInput.value.trim() : '';
+
+            if (name === '') {
+                appState.teacherMessage = 'O nome da atividade não pode ser vazio.';
+                render(renderTeacherDashboard);
+                return;
+            }
+            const newActivity = {
+                id: appState.activities.length + 1,
+                name: name,
+                status: "Ativa",
+                llmGeneratedQuestions: [],
+            };
+            appState.activities = [...appState.activities, newActivity];
+            appState.newActivityName = '';
+            appState.teacherMessage = 'Atividade adicionada com sucesso!';
+
+            // --- Firestore: Adicionar nova atividade ---
+            if (appState.db && appState.userId && appState.isAuthReady) {
+                try {
+                    const teacherActivitiesRef = collection(appState.db, `artifacts/${__app_id}/users/${appState.userId}/teacher_activities`);
+                    addDoc(teacherActivitiesRef, {
+                        name: newActivity.name,
+                        status: newActivity.status,
+                        createdAt: new Date(),
+                        llmGeneratedQuestions: [],
+                    });
+                    console.log("Atividade adicionada ao Firestore.");
+                } catch (e) {
+                    console.error("Erro ao adicionar atividade ao Firestore:", e);
+                }
+            }
+            render(renderTeacherDashboard);
+        }
+
+        function handleDeleteActivity(id) {
+            appState.confirmModal = { isOpen: true, activityId: id };
+            render(renderTeacherDashboard);
+        }
+
+        function confirmDelete() {
+            appState.activities = appState.activities.filter(activity => activity.id !== appState.confirmModal.activityId);
+            appState.teacherMessage = 'Atividade removida com sucesso!';
+            if (appState.selectedActivityForLLM && appState.selectedActivityForLLM.id === appState.confirmModal.activityId) {
+                appState.selectedActivityForLLM = null;
+                appState.llmTopic = '';
+                appState.llmQuestionType = 'multiple_choice';
+            }
+            appState.confirmModal = { isOpen: false, activityId: null };
+
+            // --- Firestore: Remover atividade ---
+            if (appState.db && appState.userId && appState.isAuthReady) {
+                console.log("Lógica para remover atividade do Firestore seria implementada aqui.");
+            }
+            render(renderTeacherDashboard);
+        }
+
+        function cancelDelete() {
+            appState.confirmModal = { isOpen: false, activityId: null };
+            render(renderTeacherDashboard);
+        }
+
+        function handleExportData() {
+            const loginLogoutData = [
+                "timestamp,nome_usuario,tipo_usuario,evento",
+                `${new Date().toISOString()},${appState.loggedInUserName},${appState.loggedInUserType},export_request`
+            ].join('\n');
+
+            const activityResultsData = [
+                "atividade,aluno,nota,data_avaliacao",
+                `Exemplo Atividade 1,${appState.loggedInUserName},90,${new Date().toLocaleDateString()}`
+            ].join('\n');
+
+            // Download Login/Logout logs
+            const loginBlob = new Blob([loginLogoutData], { type: 'text/csv;charset=utf-8;' });
+            const loginLink = document.createElement('a');
+            loginLink.href = URL.createObjectURL(loginBlob);
+            loginLink.setAttribute('download', `registros_acesso_${new Date().toISOString().split('T')[0]}.txt`);
+            document.body.appendChild(loginLink);
+            loginLink.click();
+            document.body.removeChild(loginLink);
+
+            // Download Activity Results
+            const resultsBlob = new Blob([activityResultsData], { type: 'text/csv;charset=utf-8;' });
+            const resultsLink = document.createElement('a');
+            resultsLink.href = URL.createObjectURL(resultsBlob);
+            resultsLink.setAttribute('download', `resultados_atividades_${new Date().toISOString().split('T')[0]}.txt`);
+            document.body.appendChild(resultsLink);
+            resultsLink.click();
+            document.body.removeChild(resultsLink);
+
+            appState.teacherMessage = 'Dados exportados com sucesso! (Verifique seus downloads)';
+            console.log("Lógica de exportação de dados para Excel/TXT simulada. Em uma app real, buscaria do Firestore.");
+            render(renderTeacherDashboard);
+        }
+
+        // --- Funções do LLM para Professor ---
+        async function handleGenerateQuestions() {
+            if (!appState.selectedActivityForLLM) {
+                appState.llmError = 'Por favor, selecione uma atividade antes de gerar questões.';
+                render(renderTeacherDashboard);
+                return;
+            }
+            if (!appState.llmTopic.trim()) {
+                appState.llmError = 'Por favor, digite um tópico para gerar as questões.';
+                render(renderTeacherDashboard);
+                return;
+            }
+
+            appState.isGenerating = true;
+            appState.llmError = '';
+            render(renderTeacherDashboard); // Renderiza para mostrar o spinner
+
+            try {
+                const prompt = `Gere 3 questões em formato JSON sobre o tópico: "${appState.llmTopic}".
+                Cada questão deve ser um objeto com as seguintes propriedades:
+                - "questionText": string (o enunciado da questão)
+                - "type": string ("multiple_choice" ou "true_false")
+                - "options": array de strings (apenas para type "multiple_choice", com 4 opções)
+                - "correctAnswer": string (a resposta correta, que deve ser uma das opções para múltipla escolha ou "Verdadeiro"/"Falso" para verdadeiro/falso).
+                Retorne um array de objetos JSON.`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    "questionText": { "type": "STRING" },
+                                    "type": { "type": "STRING", "enum": ["multiple_choice", "true_false"] },
+                                    "options": {
+                                        "type": "ARRAY",
+                                        "items": { "type": "STRING" }
+                                    },
+                                    "correctAnswer": { "type": "STRING" }
+                                },
+                                "required": ["questionText", "type", "correctAnswer"]
+                            }
+                        }
+                    }
+                };
+                const apiKey = ""; // Canvas fornecerá a chave API em runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonText = result.candidates[0].content.parts[0].text;
+                    const newQuestions = JSON.parse(jsonText); // Agora parseamos como JSON
+
+                    appState.activities = appState.activities.map(activity =>
+                        activity.id === appState.selectedActivityForLLM.id
+                            ? { ...activity, llmGeneratedQuestions: [...activity.llmGeneratedQuestions, ...newQuestions] }
+                            : activity
+                    );
+                    appState.teacherMessage = `Questões geradas e adicionadas à atividade "${appState.selectedActivityForLLM.name}"!`;
+                    appState.llmTopic = '';
+                    // Atualiza appState.selectedActivityForLLM para refletir as novas questões
+                    appState.selectedActivityForLLM = appState.activities.find(act => act.id === appState.selectedActivityForLLM.id);
+                } else {
+                    appState.llmError = 'Não foi possível gerar questões. A resposta da IA não estava no formato esperado. Tente novamente.';
+                    console.error("Estrutura de resposta inesperada:", result);
+                }
+            } catch (error) {
+                appState.llmError = `Erro ao conectar com a API Gemini. Por favor, verifique sua conexão com a internet e tente novamente. Detalhes: ${error.message}`;
+                console.error("Erro ao chamar Gemini API ou parsear JSON:", error);
+            } finally {
+                appState.isGenerating = false;
+                render(renderTeacherDashboard); // Renderiza novamente com o resultado ou erro
+            }
+        }
+
+
+        // --- Funções do Painel do Aluno ---
+        function handleStartActivity(id) {
+            const activity = appState.studentActivities.find(act => act.id === id);
+            if (activity && activity.status === 'Aberta') {
+                appState.selectedActivity = activity;
+                appState.studentMessage = '';
+
+                // --- Firestore: Registrar início da atividade ---
+                if (appState.db && appState.userId && appState.isAuthReady) {
+                    try {
+                        const studentProgressRef = collection(appState.db, `artifacts/${__app_id}/users/${appState.userId}/student_progress`);
+                        addDoc(studentProgressRef, {
+                            activityId: activity.id,
+                            activityName: activity.name,
+                            status: 'in_progress',
+                            startedAt: new Date(),
+                        });
+                        console.log("Início da atividade registrado no Firestore.");
+                    } catch (e) {
+                        console.error("Erro ao registrar início da atividade no Firestore:", e);
+                    }
+                }
+            } else {
+                appState.studentMessage = `Esta atividade está ${activity.status}. Não pode ser iniciada.`;
+            }
+            render(renderStudentDashboard);
+        }
+
+        function handleSubmitActivity() {
+            if (appState.selectedActivity) {
+                const score = Math.floor(Math.random() * 101);
+                appState.studentActivities = appState.studentActivities.map(act =>
+                    act.id === appState.selectedActivity.id ? { ...act, status: 'Concluída', score: score } : act
+                );
+                appState.studentMessage = `Atividade "${appState.selectedActivity.name}" concluída! Sua nota: ${score}`;
+                appState.selectedActivity = null;
+
+                // --- Firestore: Salvar resultado da atividade ---
+                if (appState.db && appState.userId && appState.isAuthReady) {
+                    try {
+                        const studentResultsRef = collection(appState.db, `artifacts/${__app_id}/users/${appState.userId}/student_results`);
+                        addDoc(studentResultsRef, {
+                            activityId: appState.selectedActivity.id,
+                            activityName: appState.selectedActivity.name,
+                            score: score,
+                            completedAt: new Date(),
+                        });
+                        console.log("Resultado da atividade salvo no Firestore.");
+                    } catch (e) {
+                        console.error("Erro ao salvar resultado da atividade no Firestore:", e);
+                    }
+                }
+            }
+            render(renderStudentDashboard);
+        }
+
+        function handleExportPDF() {
+            const reportContent = `
+                Relatório de Desempenho - ${appState.loggedInUserName}
+
+                ---
+
+                Suas Notas:
+                ${appState.studentActivities.map(act => `${act.name}: ${act.score !== null ? act.score : 'N/A'}`).join('\n')}
+
+                ---
+
+                Gráficos de Desempenho:
+                (Nesta demonstração, os gráficos seriam gerados aqui visualmente com uma biblioteca como Recharts)
+
+                ---
+                Gerado em: ${new Date().toLocaleDateString()}
+            `;
+
+            const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', `relatorio_desempenho_${appState.loggedInUserName.replace(/\s/g, '_')}.txt`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            appState.studentMessage = 'Relatório PDF gerado com sucesso! (Verifique seus downloads)';
+            console.log("Lógica de exportação de PDF simulada com TXT. Em uma app real, buscaria do Firestore.");
+            render(renderStudentDashboard);
+        }
+
+        // --- Funções do LLM para Aluno ---
+        async function handleExplainConcept() {
+            if (!appState.conceptInput.trim()) {
+                appState.explainError = 'Por favor, digite um conceito para explicação.';
+                render(renderStudentDashboard);
+                return;
+            }
+            appState.isExplaining = true;
+            appState.conceptExplanation = '';
+            appState.explainError = '';
+            render(renderStudentDashboard); // Renderiza para mostrar o spinner
+
+            try {
+                const prompt = `Explique o conceito de "${appState.conceptInput}" de forma concisa e clara.`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Canvas fornecerá a chave API em runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    appState.conceptExplanation = result.candidates[0].content.parts[0].text;
+                } else {
+                    appState.explainError = 'Não foi possível obter a explicação. A resposta da IA não estava no formato esperado. Tente novamente.';
+                    console.error("Estrutura de resposta inesperada:", result);
+                }
+            } catch (error) {
+                appState.explainError = `Erro ao conectar com a API Gemini. Por favor, verifique sua conexão com a internet e tente novamente. Detalhes: ${error.message}`;
+                console.error("Erro ao chamar Gemini API:", error);
+            } finally {
+                appState.isExplaining = false;
+                render(renderStudentDashboard); // Renderiza novamente com o resultado ou erro
+            }
+        }
+
+
+        // --- Inicialização do Firebase ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+                appState.firebaseApp = initializeApp(firebaseConfig);
+                appState.db = getFirestore(appState.firebaseApp);
+                appState.auth = getAuth(appState.firebaseApp);
+
+                onAuthStateChanged(appState.auth, async (user) => {
+                    if (user) {
+                        appState.userId = user.uid;
+                    } else {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            try {
+                                await signInWithCustomToken(appState.auth, __initial_auth_token);
+                            } catch (error) {
+                                console.error("Erro ao fazer login com token personalizado:", error);
+                                await signInAnonymously(appState.auth);
+                            }
+                        } else {
+                            await signInAnonymously(appState.auth);
+                        }
+                    }
+                    appState.isAuthReady = true;
+
+                    // --- Verificar localStorage para auto-login ---
+                    const storedUserName = localStorage.getItem('platform_user_name');
+                    const storedUserType = localStorage.getItem('platform_user_type');
+                    const isProfessorStored = localStorage.getItem('platform_is_professor_logged_in') === 'true';
+                    const storedProfessorUsername = localStorage.getItem('platform_professor_username');
+
+                    if (isProfessorStored && storedProfessorUsername) {
+                        appState.loggedInUserName = storedProfessorUsername;
+                        appState.loggedInUserType = 'professor';
+                        appState.currentPage = 'teacher';
+                    } else if (storedUserName && storedUserType === 'aluno') {
+                        appState.loggedInUserName = storedUserName;
+                        appState.loggedInUserType = 'aluno';
+                        appState.currentPage = 'student';
+                    } else {
+                        appState.currentPage = 'login'; // Ninguém logado, vai para a tela de login
+                    }
+
+                    // Renderiza a página apropriada
+                    if (appState.currentPage === 'teacher') {
+                        render(renderTeacherDashboard);
+                    } else if (appState.currentPage === 'student') {
+                        render(renderStudentDashboard);
+                    } else {
+                        render(renderLoginPage);
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao inicializar Firebase:", error);
+                appState.message = "Erro ao inicializar o aplicativo. Por favor, tente novamente.";
+                render(renderLoginPage); // Garante que a página de login seja exibida com a mensagem de erro
+            }
+        });
+
+    </script>
+</body>
+</html>
