@@ -214,10 +214,10 @@
         const TEACHER_CODE = "professor"; // Código secreto para ativar o modo professor
         let isTeacherMode = false; // Estado do modo professor (padrão: desativado)
 
-        // Variáveis do Timer da Questão
+        // Variáveis do Timer da Questão (mantidas para compatibilidade, mas não usadas para contagem regressiva ativa)
         let questionTimerIntervalId = null;
         let questionTimeLeft = 0;
-        const questionTimeLimit = 15; // Tempo em segundos para cada questão
+        const questionTimeLimit = 15; // Tempo em segundos para cada questão (agora um valor de referência, não um limite ativo)
 
         // Dados do quiz (a maioria será lida/escrita do Firestore)
         const questions = [
@@ -265,7 +265,7 @@
             { text: "Um servidor proxy atua como um intermediário para solicitações de clientes a outros servidores.", answer: "certo", category: "Redes e Internet" },
             { text: "Uma LAN (Local Area Network) conecta computadores em uma área geográfica extensa, como cidades.", answer: "errado", category: "Redes e Internet" }, // LAN é área limitada, WAN é extensa
             { text: "A fibra óptica transmite dados usando sinais elétricos.", answer: "errado", category: "Redes e Internet" }, // Usa luz, não sinais elétricos
-            { text: "Um firewall de rede é um hardware que impede o acesso não autorizado a uma rede.", answer: "certo", category: "Redes e Internet" },
+            { text: "Um firewall de rede é um hardware que impede o acesso não autorizado a uma rede.", answer: "certo", category: "Segurança Digital" },
             { text: "O IPv6 foi criado para substituir o IPv4 devido à exaustão de endereços.", answer: "certo", category: "Redes e Internet" },
             // Nova pergunta sobre Redes e Internet
             { text: "HTML é uma linguagem de programação usada para criar a lógica de um site.", answer: "errado", category: "Redes e Internet" },
@@ -289,7 +289,23 @@
             { text: "Um ataque de negação de serviço (DDoS) tem como objetivo sobrecarregar um sistema para torná-lo inacessível.", answer: "certo", category: "Segurança Digital" },
 
             // Nova pergunta sobre Hardware
-            { text: "A impressora é um periférico de entrada.", answer: "errado", category: "Hardware" }
+            { text: "A impressora é um periférico de entrada.", answer: "errado", category: "Hardware" },
+            // Novas perguntas adicionadas para aumentar o conteúdo
+            { text: "O Google Chrome é um sistema operacional.", answer: "errado", category: "Software" },
+            { text: "A função principal de um roteador é traduzir nomes de domínio em endereços IP.", answer: "errado", category: "Redes e Internet" },
+            { text: "Firewall protege contra acesso não autorizado à rede.", answer: "certo", category: "Segurança Digital" },
+            { text: "Um pixel é a menor unidade de uma imagem digital.", answer: "certo", category: "Hardware" },
+            { text: "A realidade virtual (RV) e a realidade aumentada (RA) são a mesma tecnologia.", answer: "errado", category: "Software" },
+            { text: "A nuvem é um servidor físico que armazena todos os seus arquivos localmente.", answer: "errado", category: "Redes e Internet" },
+            { text: "Um backdoor é uma forma legítima de acesso a um sistema para manutenção.", answer: "errado", category: "Segurança Digital" },
+            { text: "A porta USB-C é reversível, permitindo que seja conectada de qualquer lado.", answer: "certo", category: "Hardware" },
+            { text: "Linguagens de programação de alto nível são mais difíceis de ler para humanos.", answer: "errado", category: "Software" },
+            { text: "Um cache de navegador armazena dados para acelerar o carregamento de páginas web futuras.", answer: "certo", category: "Redes e Internet" },
+            { text: "Um ataque de força bruta tenta adivinhar senhas testando todas as combinações possíveis.", answer: "certo", category: "Segurança Digital" },
+            { text: "Um Gigabyte (GB) é menor que um Megabyte (MB).", answer: "errado", category: "Hardware" },
+            { text: "O Linux é um sistema operacional de código aberto.", answer: "certo", category: "Software" },
+            { text: "Bluetooth é uma tecnologia de rede de longo alcance usada para conectar cidades.", answer: "errado", category: "Redes e Internet" },
+            { text: "Um cavalo de Troia é um tipo de vírus que se disfarça de software legítimo.", answer: "certo", category: "Segurança Digital" }
         ];
 
         // Definição dos grupos com cores padrão
@@ -484,19 +500,22 @@
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     currentUserId = user.uid;
-                    console.log("Authenticated as:", currentUserId);
+                    console.log("Autenticado como:", currentUserId, "Tipo de Autenticação:", user.isAnonymous ? "Anônima" : "Custom Token");
                     await setupQuizListener();
                 } else {
+                    console.log("Usuário não autenticado. Tentando autenticação anônima...");
                     // Sign in anonymously if no user is found
                     try {
                         if (typeof __initial_auth_token !== 'undefined') {
                             await signInWithCustomToken(auth, __initial_auth_token);
+                            console.log("Autenticado com token personalizado.");
                         } else {
                             await signInAnonymously(auth);
+                            console.log("Autenticado anonimamente.");
                         }
                     } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showAlert("Erro ao autenticar no Firebase. Por favor, tente novamente.");
+                        console.error("Erro na autenticação Firebase:", error);
+                        showAlert("Erro ao autenticar no Firebase. Por favor, tente novamente e verifique as configurações de autenticação do seu projeto Firebase (especialmente a autenticação anônima).");
                     }
                 }
             });
@@ -504,6 +523,16 @@
 
         // Listener para o estado do quiz no Firestore
         async function setupQuizListener() {
+            if (!db) {
+                console.error("Firestore não inicializado. Não é possível configurar o listener.");
+                showAlert("Erro: Firestore não está pronto. Recarregue a página.");
+                return;
+            }
+            if (!auth.currentUser) {
+                console.warn("setupQuizListener: current user is null. Cannot set up Firestore listener without authentication.");
+                return; // Não configura o listener se não houver autenticação
+            }
+
             onSnapshot(quizDocRef, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     latestQuizStateData = docSnapshot.data(); // Armazena o estado completo
@@ -553,38 +582,28 @@
                 }
             }, (error) => {
                 console.error("Erro ao ouvir o estado do quiz:", error);
-                showAlert("Erro ao carregar o estado do quiz. Por favor, recarregue a página.");
+                showAlert("Erro ao carregar o estado do quiz. Verifique se o Firestore está configurado corretamente e se as regras de segurança permitem leitura e escrita.");
             });
         }
 
-        // Função para iniciar o timer da questão
+        // Função para iniciar o timer da questão (removida a funcionalidade de contagem regressiva visível)
         function startQuestionTimer(activeGroupId) {
+            // A função agora apenas garante que não haja timers de questões antigos rodando.
+            // A contagem regressiva visível foi removida.
             if (questionTimerIntervalId) {
                 clearInterval(questionTimerIntervalId);
+                questionTimerIntervalId = null;
             }
-
-            questionTimeLeft = questionTimeLimit;
-            countdownElement.textContent = `Tempo restante: ${questionTimeLeft}s`;
-            countdownElement.classList.remove('hidden');
-
-            questionTimerIntervalId = setInterval(() => {
-                questionTimeLeft--;
-                countdownElement.textContent = `Tempo restante: ${questionTimeLeft}s`;
-
-                if (questionTimeLeft <= 0) {
-                    clearInterval(questionTimerIntervalId);
-                    countdownElement.classList.add('hidden');
-                    // Somente o grupo ativo ou professor processa o timeout
-                    if (isTeacherMode || (activeGroup && activeGroup.id === selectedLocalGroupId)) {
-                        handleQuestionTimeout(activeGroupId);
-                    }
-                }
-            }, 1000);
+            countdownElement.classList.add('hidden'); // Garante que o elemento de contagem esteja oculto
+            // O timer principal (questionTimerIntervalId) e o timeout automático da questão não são mais iniciados aqui.
         }
 
-        // Função para lidar com o timeout da questão
+        // A função handleQuestionTimeout não será mais chamada automaticamente por um timer.
+        // Ela só seria relevante se houvesse uma forma manual de forçar um "timeout".
         async function handleQuestionTimeout(activeGroupId) {
-            console.log(`Tempo esgotado para o grupo ${activeGroupId}.`);
+            // Este bloco de código não será mais ativado automaticamente pelo timer de questão.
+            // Manteve-se aqui caso se queira reintroduzir a funcionalidade ou chamar manualmente.
+            console.log(`Tempo esgotado para o grupo ${activeGroupId} (se ativado manualmente).`);
             playIncorrectSound(); // Som de erro ao expirar o tempo
 
             explanationText.innerHTML = "Tempo esgotado! A resposta foi considerada errada.";
@@ -624,7 +643,7 @@
             console.log("activeGroup:", activeGroup);
             console.log("selectedLocalGroupId:", selectedLocalGroupId);
 
-            // Sempre parar o timer ao renderizar um novo estado para evitar múltiplos timers
+            // Sempre parar quaisquer timers ao renderizar um novo estado para evitar múltiplos timers
             if (questionTimerIntervalId) {
                 clearInterval(questionTimerIntervalId);
                 questionTimerIntervalId = null;
@@ -645,7 +664,7 @@
             explanationText.classList.add('hidden', 'opacity-0');
             incorrectMark.classList.add('hidden');
             incorrectMarkSpan.classList.remove('opacity-100'); // Ensure 'X' is also transparent
-            countdownElement.classList.add('hidden');
+            countdownElement.classList.add('hidden'); // Garante que o countdown esteja oculto
 
             if (quizStatus === 'setup') {
                 if (isTeacherMode) {
@@ -677,7 +696,7 @@
                     if (isTeacherMode || (currentActiveGroup.id === selectedLocalGroupId)) {
                         questionContent = currentQuestion.text; // Mostra a pergunta real
                         showAnswerButtons = true; // Habilita os botões de resposta
-                        startQuestionTimer(currentActiveGroup.id); // Inicia o timer
+                        // Não inicia o timer de contagem regressiva automática aqui
                     } else {
                         // SE NÃO É O TURNO DESTE GRUPO, MOSTRA MENSAGEM DE ESPERA
                         questionContent = `Aguardando a vez do Grupo ${displayActiveGroupName}...`;
@@ -707,12 +726,17 @@
 
         // Função para atualizar o estado do quiz no Firestore
         async function updateQuizStateInFirestore(updates) {
+            if (!auth.currentUser) {
+                showAlert("Você não está autenticado. Não é possível atualizar o quiz.");
+                console.error("Erro: current user is null. Cannot update quiz state in Firestore.");
+                return; // Impede a operação se o usuário não estiver autenticado
+            }
             try {
                 // Use setDoc with merge: true to create or update the document
                 await setDoc(quizDocRef, updates, { merge: true });
             } catch (error) {
                 console.error("Erro ao atualizar o estado do quiz no Firestore:", error);
-                showAlert("Não foi possível salvar o progresso. Verifique sua conexão.");
+                showAlert("Não foi possível salvar o progresso. Verifique sua conexão e as permissões do Firestore (erro: " + error.message + ").");
             }
         }
 
@@ -721,6 +745,11 @@
             if (!selectedLocalGroupId) {
                 showAlert('Por favor, selecione seu grupo para começar!');
                 return;
+            }
+            if (!auth.currentUser) {
+                showAlert("Você não está autenticado. Não é possível entrar em um grupo. Tente novamente.");
+                console.error("Erro: current user is null. Cannot join group.");
+                return; // Impede a operação se o usuário não estiver autenticado
             }
 
             const selectedGroupData = allGroups.find(g => g.id === selectedLocalGroupId);
@@ -777,13 +806,19 @@
             } // Changed catch to handle the error when setting up the database
             catch (error) {
                 console.error("Erro ao registrar grupo do aluno:", error);
-                showAlert("Não foi possível registrar seu grupo. Por favor, tente novamente.");
+                showAlert("Não foi possível registrar seu grupo. Por favor, tente novamente e verifique as permissões do Firestore (erro: " + error.message + ").");
             }
         }
 
 
         // Função para o professor iniciar o quiz
         async function teacherStartQuiz() {
+            if (!auth.currentUser) {
+                showAlert("Você não está autenticado. Não é possível iniciar o quiz.");
+                console.error("Erro: current user is null. Cannot start quiz.");
+                return; // Impede a operação se o usuário não estiver autenticado
+            }
+
             const currentQuizDoc = await getDoc(quizDocRef);
             let currentQuizData = currentQuizDoc.exists() ? currentQuizDoc.data() : {};
             
@@ -826,16 +861,25 @@
                 await setDoc(quizDocRef, newQuizState); // Overwrite/set the quiz state
             } catch (error) {
                 console.error("Erro ao iniciar quiz pelo professor:", error);
-                showAlert("Não foi possível iniciar o quiz. Verifique sua conexão.");
+                showAlert("Não foi possível iniciar o quiz. Verifique sua conexão e as permissões do Firestore (erro: " + error.message + ").");
             }
         }
 
         // Função para avançar o quiz no Firestore
         async function advanceQuizState(selectedAnswer, correctAnswer, currentCategory, activeGroupId) {
-            // Garante que o timer seja limpo quando o estado avança, seja por resposta ou timeout
-            if (questionTimerIntervalId) {
-                clearInterval(questionTimerIntervalId);
-                questionTimerIntervalId = null;
+            if (!auth.currentUser) {
+                showAlert("Você não está autenticado. Não é possível avançar o quiz.");
+                console.error("Erro: current user is null. Cannot advance quiz state.");
+                return; // Impede a operação se o usuário não estiver autenticado
+            }
+            // Garante que quaisquer timers de explicação sejam limpos
+            if (explanationTimeoutId) {
+                clearTimeout(explanationTimeoutId);
+                explanationTimeoutId = null;
+            }
+            if (countdownIntervalId) { // Este é o timer da explicação, não da questão
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
             }
 
             const currentQuizState = await getDoc(quizDocRef);
@@ -916,7 +960,12 @@
 
         // Função para reiniciar o quiz no Firestore
         async function restartQuizInFirestore() {
-            // Garante que o timer seja limpo ao reiniciar
+            if (!auth.currentUser) {
+                showAlert("Você não está autenticado. Não é possível reiniciar o quiz.");
+                console.error("Erro: current user is null. Cannot restart quiz.");
+                return; // Impede a operação se o usuário não estiver autenticado
+            }
+            // Garante que os timers sejam limpos ao reiniciar
             if (questionTimerIntervalId) {
                 clearInterval(questionTimerIntervalId);
                 questionTimerIntervalId = null;
@@ -951,7 +1000,7 @@
                 selectedLocalGroupId = null; // Limpa a variável local
             } catch (error) {
                 console.error("Erro ao reiniciar quiz no Firestore:", error);
-                showAlert("Não foi possível reiniciar o quiz. Por favor, tente novamente.");
+                showAlert("Não foi possível reiniciar o quiz. Por favor, tente novamente e verifique as permissões do Firestore (erro: " + error.message + ").");
             }
         }
 
@@ -1299,14 +1348,9 @@
 
         answerButtons.forEach(button => {
             button.addEventListener('click', async () => {
-                // Ao clicar em qualquer botão de resposta, parar o timer da questão
-                if (questionTimerIntervalId) {
-                    clearInterval(questionTimerIntervalId);
-                    questionTimerIntervalId = null;
-                    countdownElement.classList.add('hidden'); // Esconde o countdown
-                }
+                // Ao clicar em qualquer botão de resposta, garantir que timers de explicação/transição sejam limpos
                 if (explanationTimeoutId) { clearTimeout(explanationTimeoutId); }
-                if (countdownIntervalId) { clearInterval(countdownIntervalId); } // Clear the explanation countdown as well
+                if (countdownIntervalId) { clearInterval(countdownIntervalId); } 
 
                 // Check if it's actually this group's turn to answer
                 if (!activeGroup || activeGroup.id !== selectedLocalGroupId) {
@@ -1336,15 +1380,11 @@
                 explanationText.classList.remove('hidden', 'opacity-0'); 
                 explanationText.classList.add('opacity-100');
                 
-                let timeLeft = 10;
-                countdownElement.textContent = `Próxima vez em ${timeLeft} segundos...`;
-                countdownElement.classList.remove('hidden'); // Make sure it's hidden during explanation transition
-
-                // This interval is for explanation display, not question answering time
+                // O countdown para a próxima vez (após a explicação)
+                let timeLeft = 5; // Tempo para a explicação aparecer e depois avançar
+                // Não mostra o countdown na tela, apenas usa para o atraso
                 countdownIntervalId = setInterval(() => {
                     timeLeft--;
-                    // The countdown for explanation is not explicitly shown in UI now, but could be added back if needed
-                    // For now, it just controls the transition time
                 }, 1000); 
 
                 explanationTimeoutId = setTimeout(async () => {
@@ -1364,7 +1404,7 @@
                         incorrectMarkSpan.removeEventListener('transitionend', handler);
                     }, { once: true });
 
-                }, 5000); // Wait 5 seconds for explanation to fade out
+                }, 5000); // Espera 5 segundos para a explicação desaparecer antes de avançar
             });
         });
 
