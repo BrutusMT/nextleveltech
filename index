@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Informática Interativa</title>
+    <!-- Inclusão do Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclusão da biblioteca para o efeito de confetes -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Inclusão da biblioteca Tone.js para efeitos sonoros -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- Inclusão da biblioteca D3.js para gráficos -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilo para a transição suave entre as questões */
+        .quiz-section {
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        }
+        .hidden-section {
+            opacity: 0;
+            transform: scale(0.95);
+            display: none;
+        }
+        /* Estilo para garantir que as seções não ocupem espaço quando ocultas */
+        .quiz-section[style*="display: none"] {
+            display: none; /* Override para garantir que 'display: none' seja aplicado */
+        }
+        /* Estilo para realçar o círculo do grupo quando selecionado */
+        .group-selection-item input[type="radio"]:checked + label .group-color-circle-selection {
+            outline: 3px solid theme('colors.blue.500'); /* Realça a seleção */
+            outline-offset: 2px;
+        }
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .rank-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: theme('colors.gray.700');
+            width: 3rem;
+            text-align: right;
+        }
+        .rank-circle {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 9999px;
+            border: 4px solid theme('colors.gray.300');
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+        .rank-details {
+            text-align: left;
+            flex-grow: 1;
+        }
+        .rank-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: theme('colors.gray.800');
+        }
+        .rank-score {
+            font-size: 1rem;
+            font-weight: 600;
+            color: theme('colors.blue.600');
+        }
+        .stars {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 1.2rem; /* Tamanho das estrelas */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col lg:flex-row items-start justify-center min-h-screen p-4 w-full">
+
+    <!-- Seção Lateral Esquerda (Exibição do Grupo Ativo) -->
+    <aside id="group-sidebar" class="w-full lg:w-1/4 xl:w-1/5 bg-white p-4 lg:p-6 rounded-2xl shadow-xl lg:mr-4 mb-4 lg:mb-0 flex-shrink-0 flex flex-col items-center justify-center">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Grupo Atual</h3>
+        <div id="active-group-display" class="flex flex-col items-center mb-6">
+            <div id="active-group-color-circle" class="w-20 h-20 rounded-full border-4 border-gray-300 flex items-center justify-center text-lg font-bold text-white shadow-md"></div>
+            <p id="active-group-name" class="mt-4 text-2xl font-extrabold text-gray-700"></p>
+            <p id="active-group-score" class="mt-2 text-xl font-semibold text-blue-600">Pontos: 0</p>
+        </div>
+    </aside>
+
+    <main id="quiz-container" class="w-full lg:w-1/2 xl:w-3/5 bg-white p-6 sm:p-8 rounded-2xl shadow-xl text-center flex-grow">
+
+        <!-- Seção Inicial (Início do Quiz) -->
+        <div id="start-section" class="quiz-section">
+            <header class="mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Avaliação de Informática</h1>
+                <p class="text-gray-600 mt-2">Estilo Quiz - Certo ou Errado</p>
+            </header>
+            
+            <div class="mb-8">
+                <label id="group-selection-label" class="block text-lg font-medium text-gray-700 mb-4">Selecione e Personalize os Grupos Participantes:</label>
+                <div id="group-selection-options" class="grid grid-cols-2 sm:grid-cols-4 gap-4 justify-items-center">
+                    <!-- Opções de grupo serão geradas aqui pelo JavaScript -->
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="teacher-mode-input" class="block text-md font-medium text-gray-700 mb-2">Código para Modo Professor (opcional):</label>
+                <div class="flex justify-center items-center gap-2">
+                    <input type="password" id="teacher-mode-input" placeholder="Digite o código" class="w-48 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-center">
+                    <button id="activateTeacherModeBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-transform transform hover:scale-105">
+                        Ativar
+                    </button>
+                </div>
+            </div>
+
+            <button id="startBtn" class="w-full max-w-xs mx-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105">
+                Começar o Quiz
+            </button>
+        </div>
+
+        <!-- Nova Seção de Espera para Alunos -->
+        <div id="waiting-section" class="quiz-section hidden-section">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Aguardando o Professor</h2>
+            <p class="text-xl text-gray-700 mb-8">Você entrou no grupo <span id="waiting-group-name" class="font-bold"></span>.</p>
+            <p class="text-lg text-gray-600">Por favor, aguarde o professor iniciar o quiz!</p>
+            <div class="mt-8">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto"></div>
+            </div>
+        </div>
+
+        <!-- Seção do Quiz (Questões) -->
+        <div id="question-section" class="quiz-section hidden-section relative">
+            <div id="question-category" class="text-blue-600 font-bold text-lg mb-2"></div>
+            <div id="question-counter" class="text-gray-500 font-semibold mb-4"></div>
+            <p id="question-text" class="text-xl sm:text-2xl font-medium text-gray-800 mb-8 min-h-[100px] flex items-center justify-center"></p>
+            <!-- Elemento para exibir a explicação -->
+            <p id="explanation-text" class="text-base sm:text-lg text-gray-600 mt-4 mb-6 hidden opacity-0 transition-opacity duration-300"></p>
+            <div id="countdown" class="text-gray-500 font-bold text-sm mt-2 hidden"></div>
+            
+            <div id="answer-buttons-container" class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button data-answer="certo" class="answer-btn w-full sm:w-48 bg-green-500 hover:bg-green-600 text-white font-extrabold py-4 px-8 rounded-lg text-xl transition-transform transform hover:scale-110">
+                    CERTO
+                </button>
+                <button data-answer="errado" class="answer-btn w-full sm:w-48 bg-red-500 hover:bg-red-600 text-white font-extrabold py-4 px-8 rounded-lg text-xl transition-transform transform hover:scale-110">
+                    ERRADO
+                </button>
+            </div>
+
+            <!-- Elemento para o 'X' vermelho -->
+            <div id="incorrect-mark" class="absolute inset-0 flex items-center justify-center hidden pointer-events-none z-10">
+                <span class="text-red-500 text-9xl sm:text-[10rem] md:text-[12rem] font-extrabold opacity-0 transition-opacity duration-300" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">X</span>
+            </div>
+        </div>
+
+        <!-- Seção de Resultados -->
+        <div id="result-section" class="quiz-section hidden-section">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Quiz Finalizado!</h2>
+            <p class="text-xl text-gray-700 mb-4">Ranking dos Grupos:</p>
+            <div id="final-scores" class="flex flex-col items-center gap-4">
+                <!-- Pontuações finais dos grupos serão exibidas aqui em formato de ranking -->
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mt-8 mb-4">Desempenho por Categoria</h3>
+            <div id="category-charts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl mx-auto">
+                <!-- Gráficos de desempenho por categoria serão inseridos aqui -->
+            </div>
+            <button id="restartBtn" class="mt-8 w-full max-w-xs mx-auto bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105">
+                Tentar Novamente
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Seção Lateral Direita (Ranking Dinâmico) -->
+    <aside id="top-group-sidebar" class="w-full lg:w-1/4 xl:w-1/5 bg-white p-4 lg:p-6 rounded-2xl shadow-xl lg:ml-4 mt-4 lg:mt-0 flex-shrink-0 flex flex-col items-center justify-start">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Classificação Atual</h3>
+        <div id="dynamic-ranking-display" class="w-full flex flex-col items-center gap-2">
+            <!-- O ranking completo dos grupos aparecerá aqui -->
+        </div>
+    </aside>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="custom-alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <p id="custom-alert-message" class="text-lg font-semibold text-gray-800 mb-4"></p>
+            <button id="custom-alert-ok-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">OK</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variáveis globais do Firebase
+        let app;
+        let db;
+        let auth;
+        let quizDocRef; // Referência ao documento do quiz no Firestore
+        let currentUserId; // ID do usuário logado
+        let latestQuizStateData = null; // Armazena o último snapshot do Firestore
+        
+        // Variável para controlar o Modo Professor
+        const TEACHER_CODE = "professor"; // Código secreto para ativar o modo professor
+        let isTeacherMode = false; // Estado do modo professor (padrão: desativado)
+
+        // Variáveis do Timer da Questão
+        let questionTimerIntervalId = null;
+        let questionTimeLeft = 0;
+        const questionTimeLimit = 15; // Tempo em segundos para cada questão
+
+        // Dados do quiz (a maioria será lida/escrita do Firestore)
+        const questions = [
+            // Hardware (13 questões)
+            { text: "O processador (CPU) é considerado o 'cérebro' do computador.", answer: "certo", category: "Hardware" },
+            { text: "A Memória RAM perde seus dados quando o computador é desligado.", answer: "certo", category: "Hardware" },
+            { text: "Hardware é a parte lógica do computador, como os programas.", answer: "errado", category: "Hardware" },
+            { text: "SSD é uma tecnologia de armazenamento mais lenta que o HD tradicional.", answer: "errado", category: "Hardware" },
+            { text: "Placa-mãe é o principal circuito impresso que conecta todos os componentes do computador.", answer: "certo", category: "Hardware" },
+            { text: "Um disco rígido (HD) é uma forma de armazenamento volátil.", answer: "errado", category: "Hardware" },
+            { text: "A GPU (Graphics Processing Unit) é responsável por renderizar imagens e vídeos.", answer: "certo", category: "Hardware" },
+            { text: "O chipset é um conjunto de chips que controla a comunicação entre a CPU, memória e outros periféricos.", answer: "certo", category: "Hardware" },
+            { text: "Fonte de alimentação converte corrente alternada em corrente contínua para os componentes do PC.", answer: "certo", category: "Hardware" },
+            { text: "Periféricos de entrada incluem impressoras e monitores.", answer: "errado", category: "Hardware" },
+            { text: "Um cooler é usado para superaquecer o processador.", answer: "errado", category: "Hardware" },
+            { text: "Slots de expansão na placa-mãe são usados para adicionar placas de vídeo ou som.", answer: "certo", category: "Hardware" },
+            { text: "Um pen drive é um tipo de memória RAM.", answer: "errado", category: "Hardware" },
+
+            // Software (12 questões)
+            { text: "Software é a parte física do computador, como o teclado.", answer: "errado", category: "Software" },
+            { text: "Um sistema operacional é um tipo de software de sistema.", answer: "certo", category: "Software" },
+            { text: "Aplicativos como navegadores de internet são considerados software de aplicação.", answer: "certo", category: "Software" },
+            { text: "Um driver é um software que permite que o sistema operacional se comunique com um dispositivo de hardware.", answer: "certo", category: "Software" },
+            { text: "Firmware é um software embutido em hardware que controla suas funções básicas.", answer: "certo", category: "Software" },
+            { text: "Compiladores traduzem código-fonte para código de máquina.", answer: "certo", category: "Software" },
+            { text: "Um editor de texto como o Bloco de Notas é um software de sistema.", answer: "errado", category: "Software" },
+            { text: "Sistemas de gerenciamento de banco de dados (SGBD) são exemplos de software de aplicação.", answer: "certo", category: "Software" },
+            { text: "A linguagem de programação Python é um software de hardware.", answer: "errado", category: "Software" },
+            { text: "Utilitários de sistema como desfragmentadores de disco são softwares de aplicação.", answer: "errado", category: "Software" },
+            { text: "Um sistema operacional de 64 bits pode usar mais memória RAM do que um de 32 bits.", answer: "certo", category: "Software" },
+            { text: "Microsoft Word é um software de código aberto.", answer: "errado", category: "Software" },
+            // Novas perguntas sobre Software
+            { text: "O sistema operacional Android é um software de código fechado, desenvolvido exclusivamente pela Google.", answer: "errado", category: "Software" },
+            { text: "Navegadores web, como Chrome ou Firefox, são exemplos de software de aplicação.", answer: "certo", category: "Software" },
+
+
+            // Redes e Internet (12 questões)
+            { text: "A Internet e a World Wide Web (WWW) são a mesma coisa.", answer: "errado", category: "Redes e Internet" },
+            { text: "Endereço IP é um identificador único para um dispositivo em uma rede.", answer: "certo", category: "Redes e Internet" },
+            { text: "Um roteador é um dispositivo que encaminha pacotes de dados entre redes de computadores.", answer: "certo", category: "Redes e Internet" },
+            { text: "Wi-Fi é uma tecnologia sem fio que permite a conexão de dispositivos à internet ou a outras redes.", answer: "certo", category: "Redes e Internet" },
+            { text: "Ethernet é uma tecnologia de rede sem fio de alta velocidade.", answer: "errado", category: "Redes e Internet" },
+            { text: "O protocolo HTTP é usado para transferir arquivos entre computadores.", answer: "errado", category: "Redes e Internet" }, // HTTP é para web, FTP é para arquivos
+            { text: "DNS (Domain Name System) traduz nomes de domínio em endereços IP.", answer: "certo", category: "Redes e Internet" },
+            { text: "Um servidor proxy atua como um intermediário para solicitações de clientes a outros servidores.", answer: "certo", category: "Redes e Internet" },
+            { text: "Uma LAN (Local Area Network) conecta computadores em uma área geográfica extensa, como cidades.", answer: "errado", category: "Redes e Internet" }, // LAN é área limitada, WAN é extensa
+            { text: "A fibra óptica transmite dados usando sinais elétricos.", answer: "errado", category: "Redes e Internet" }, // Usa luz, não sinais elétricos
+            { text: "Um firewall de rede é um hardware que impede o acesso não autorizado a uma rede.", answer: "certo", category: "Redes e Internet" },
+            { text: "O IPv6 foi criado para substituir o IPv4 devido à exaustão de endereços.", answer: "certo", category: "Redes e Internet" },
+            // Nova pergunta sobre Redes e Internet
+            { text: "HTML é uma linguagem de programação usada para criar a lógica de um site.", answer: "errado", category: "Redes e Internet" },
+
+
+            // Segurança Digital (13 questões)
+            { text: "Um antivírus protege apenas contra vírus, não contra outros malwares.", answer: "errado", category: "Segurança Digital" },
+            { text: "Phishing é uma tentativa de roubar informações pessoais fingindo ser uma entidade confiável.", answer: "certo", category: "Segurança Digital" },
+            { text: "Usar '123456' como senha é uma prática de segurança recomendada.", answer: "errado", category: "Segurança Digital" },
+            { text: "Firewall é uma barreira de segurança que controla o tráfego de rede, protegendo contra acessos não autorizados.", answer: "certo", category: "Segurança Digital" },
+            { text: "Criptografia é o processo de converter informações em um código para impedir acesso não autorizado.", answer: "certo", category: "Segurança Digital" },
+            { text: "Malware é um termo genérico para software malicioso.", answer: "certo", category: "Segurança Digital" },
+            { text: "Engenharia social envolve a manipulação psicológica de pessoas para realizar ações ou divulgar informações confidenciais.", answer: "certo", category: "Segurança Digital" },
+            { text: "Um backup deve ser armazenado no mesmo dispositivo dos dados originais para segurança.", answer: "errado", category: "Segurança Digital" },
+            { text: "Autenticação de dois fatores (2FA) aumenta a segurança exigindo duas formas de verificação.", answer: "certo", category: "Segurança Digital" },
+            { text: "Ransomware é um tipo de malware que criptografa arquivos e exige resgate para sua liberação.", answer: "certo", category: "Segurança Digital" },
+            { text: "Apenas empresas grandes são alvos de ataques cibernéticos.", answer: "errado", category: "Segurança Digital" },
+            { text: "Spyware é um software que monitora as atividades do usuário sem seu conhecimento.", answer: "certo", category: "Segurança Digital" },
+            { text: "Usar redes Wi-Fi públicas sem VPN é sempre seguro.", answer: "errado", category: "Segurança Digital" },
+            // Nova pergunta sobre Segurança Digital
+            { text: "Um ataque de negação de serviço (DDoS) tem como objetivo sobrecarregar um sistema para torná-lo inacessível.", answer: "certo", category: "Segurança Digital" },
+
+            // Nova pergunta sobre Hardware
+            { text: "A impressora é um periférico de entrada.", answer: "errado", category: "Hardware" }
+        ];
+
+        // Definição dos grupos com cores padrão
+        const allGroups = [
+            { id: 'group1', name: 'Grupo 1', color: '#EF4444' }, // Red-500
+            { id: 'group2', name: 'Grupo 2', color: '#22C55E' }, // Green-500
+            { id: 'group3', name: 'Grupo 3', color: '#3B82F6' }, // Blue-500
+            { id: 'group4', name: 'Grupo 4', color: '#EAB308' }, // Yellow-500
+            { id: 'group5', name: 'Grupo 5', color: '#8B5CF6' }, // Purple-500
+            { id: 'group6', name: 'Grupo 6', color: '#EC4899' }, // Pink-500
+            { id: 'group7', name: 'Grupo 7', color: '#14B8A6' }, // Teal-500
+            { id: 'group8', name: 'Grupo 8', color: '#F97316' }, // Orange-500
+        ];
+
+        let groupScores = {}; 
+        let groupCategoryStats = {}; 
+
+        let participatingGroups = []; 
+        let groupsToAnswerThisQuestion = []; 
+        let activeGroup = null; 
+        let explanationTimeoutId; 
+        let countdownIntervalId; 
+
+        // Variáveis para o fluxo de categorias e questões
+        let categorizedQuestions = {}; 
+        let categoryOrder = []; 
+        let currentCategoryName = ''; 
+        let currentQuestionInRound = null; 
+        let currentQuestionQueue = []; 
+        let globalQuestionNumber = 0; 
+        let currentCategoryIndex = 0; 
+        let quizStatus = 'setup'; // 'setup', 'playing', 'finished'
+        let selectedLocalGroupId = localStorage.getItem('selectedGroupId') || null; // Carrega do localStorage
+
+        // Elementos da UI
+        const startSection = document.getElementById('start-section');
+        const waitingSection = document.getElementById('waiting-section'); // Nova seção de espera
+        const waitingGroupNameDisplay = document.getElementById('waiting-group-name'); // Para mostrar o nome do grupo na tela de espera
+        const questionSection = document.getElementById('question-section');
+        const resultSection = document.getElementById('result-section');
+        const startBtn = document.getElementById('startBtn');
+        const questionCategoryDisplay = document.getElementById('question-category'); 
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const explanationText = document.getElementById('explanation-text'); 
+        const countdownElement = document.getElementById('countdown'); 
+        const answerButtonsContainer = document.getElementById('answer-buttons-container');
+        const answerButtons = document.querySelectorAll('.answer-btn');
+        const restartBtn = document.getElementById('restartBtn');
+        const incorrectMark = document.getElementById('incorrect-mark');
+        const incorrectMarkSpan = incorrectMark.querySelector('span');
+        const finalScoresDisplay = document.getElementById('final-scores'); 
+        const categoryChartsContainer = document.getElementById('category-charts-container'); 
+        const groupSelectionOptions = document.getElementById('group-selection-options');
+        const groupSelectionLabel = document.getElementById('group-selection-label'); // Novo elemento
+        const groupSidebar = document.getElementById('group-sidebar');
+        const activeGroupColorCircle = document.getElementById('active-group-color-circle');
+        const activeGroupNameDisplay = document.getElementById('active-group-name'); 
+        const activeGroupScoreDisplay = document.getElementById('active-group-score');
+        const dynamicRankingDisplay = document.getElementById('dynamic-ranking-display');
+        const customAlertModal = document.getElementById('custom-alert-modal');
+        const customAlertMessage = document.getElementById('custom-alert-message');
+        const customAlertOkBtn = document.getElementById('custom-alert-ok-btn');
+        const teacherModeInput = document.getElementById('teacher-mode-input');
+        const activateTeacherModeBtn = document.getElementById('activateTeacherModeBtn');
+        const topGroupSidebar = document.getElementById('top-group-sidebar'); // Referência ao painel lateral de ranking
+
+        // --- Configuração dos Sons com Tone.js ---
+        const correctSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.2 }
+        }).toDestination();
+
+        const incorrectSynth = new Tone.NoiseSynth({
+            noise: { type: "white" },
+            envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }
+        }).toDestination();
+
+        function playCorrectSound() { correctSynth.triggerAttackRelease(["C5", "E5", "G5"], "8n"); }
+        function playIncorrectSound() { incorrectSynth.triggerAttackRelease("16n", Tone.now()); }
+        // --- Fim da Configuração dos Sons ---
+
+        // Função para mostrar custom alert modal
+        function showAlert(message) {
+            customAlertMessage.textContent = message;
+            customAlertModal.classList.remove('hidden');
+            customAlertOkBtn.onclick = () => {
+                customAlertModal.classList.add('hidden');
+            };
+        }
+
+        // Função para trocar de seção visível com transição
+        function showSection(sectionToShow) {
+            [startSection, waitingSection, questionSection, resultSection].forEach(section => { // Inclui a nova seção
+                if (section.id === sectionToShow.id) {
+                    section.classList.remove('hidden-section');
+                    section.offsetWidth; 
+                    section.style.opacity = 1;
+                    section.style.transform = 'scale(1)';
+                } else {
+                    section.style.opacity = 0;
+                    section.style.transform = 'scale(0.95)';
+                    section.addEventListener('transitionend', function handler() {
+                        section.classList.add('hidden-section');
+                        section.removeEventListener('transitionend', handler);
+                    }, { once: true });
+                }
+            });
+        }
+
+        // Função para embaralhar um array (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // --- Funções para Gerenciamento de Categorias e Questões ---
+        function setupCategorizedQuestions() {
+            categorizedQuestions = {};
+            questions.forEach(q => {
+                if (!categorizedQuestions[q.category]) {
+                    categorizedQuestions[q.category] = [];
+                }
+                categorizedQuestions[q.category].push(q);
+            });
+            categoryOrder = Object.keys(categorizedQuestions);
+            shuffleArray(categoryOrder); // Randomiza a ordem das categorias
+        }
+
+        // --- Função para gerar explicação com o Gemini API ---
+        async function generateExplanation(questionText, correctAnswer, selectedAnswer) {
+            explanationText.innerHTML = "Gerando explicação..."; 
+            explanationText.classList.remove('hidden', 'opacity-0');
+            explanationText.classList.add('opacity-100');
+            countdownElement.classList.add('hidden');
+
+            const userCorrect = (selectedAnswer === correctAnswer);
+            const prompt = `A questão é: '${questionText}'. A resposta correta é '${correctAnswer}'. O usuário respondeu '${selectedAnswer}'. Por favor, forneça uma explicação concisa (${userCorrect ? 'da resposta correta' : 'do erro e da resposta correta'}), em no máximo 2-3 frases, em português.`;
+
+            try {
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    let explanation = result.candidates[0].content.parts[0].text;
+                    
+                    explanation = explanation.replace(/certo/gi, '<span class="text-green-500 font-bold">Certo</span>');
+                    explanation = explanation.replace(/errado/gi, '<span class="text-red-500 font-bold">Errado</span>');
+
+                    return explanation;
+                } else {
+                    console.error('Estrutura de resposta inesperada do Gemini API:', result);
+                    return "Não foi possível gerar uma explicação no momento. Tente novamente.";
+                }
+            } catch (error) {
+                console.error('Erro ao chamar o Gemini API:', error);
+                return "Erro ao gerar explicação. Verifique sua conexão ou tente mais tarde.";
+            }
+        }
+        // --- Fim da Função Gemini API ---
+
+        // --- Firebase/Firestore Integration ---
+
+        // Função para inicializar o Firebase
+        async function initializeFirebase() {
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+            if (!app) { // Initialize only once
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+            }
+
+            quizDocRef = doc(db, "artifacts", appId, "public", "data", "quiz_state", "main_quiz");
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    console.log("Authenticated as:", currentUserId);
+                    await setupQuizListener();
+                } else {
+                    // Sign in anonymously if no user is found
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showAlert("Erro ao autenticar no Firebase. Por favor, tente novamente.");
+                    }
+                }
+            });
+        }
+
+        // Listener para o estado do quiz no Firestore
+        async function setupQuizListener() {
+            onSnapshot(quizDocRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    latestQuizStateData = docSnapshot.data(); // Armazena o estado completo
+                    // Atualiza variáveis locais para a lógica do jogo
+                    quizStatus = latestQuizStateData.status || 'setup';
+                    participatingGroups = latestQuizStateData.participatingGroups || [];
+                    groupScores = latestQuizStateData.groupScores || {};
+                    groupCategoryStats = latestQuizStateData.groupCategoryStats || {};
+                    groupsToAnswerThisQuestion = latestQuizStateData.groupsToAnswerThisQuestion || [];
+                    activeGroup = latestQuizStateData.activeGroup || null;
+                    currentCategoryName = latestQuizStateData.currentCategoryName || '';
+                    currentQuestionInRound = latestQuizStateData.currentQuestionInRound || null;
+                    globalQuestionNumber = latestQuizStateData.globalQuestionNumber || 0;
+                    currentCategoryIndex = latestQuizStateData.currentCategoryIndex || 0;
+                    categoryOrder = latestQuizStateData.categoryOrder || [];
+                    
+                    // Debugging check for question integrity
+                    if (quizStatus === 'playing' && currentQuestionInRound) {
+                        if (!currentQuestionInRound.text) {
+                            console.warn("currentQuestionInRound in Firestore is missing 'text' property:", currentQuestionInRound);
+                        }
+                    }
+
+                    // Renderiza a UI (incluindo o ranking dinâmico) com base no estado do quiz
+                    renderQuizState();
+
+                } else {
+                    // Se o documento não existe (primeira vez ou reset), inicializa no setup
+                    latestQuizStateData = null; // Zera o snapshot
+                    quizStatus = 'setup';
+                    participatingGroups = [];
+                    groupScores = {};
+                    groupCategoryStats = {};
+                    groupsToAnswerThisQuestion = [];
+                    activeGroup = null;
+                    currentCategoryName = '';
+                    currentQuestionInRound = null;
+                    globalQuestionNumber = 0;
+                    currentCategoryIndex = 0;
+                    categoryOrder = [];
+                    // Clear local group selection if quiz state is reset
+                    localStorage.removeItem('selectedGroupId');
+                    selectedLocalGroupId = null; 
+                    renderInitialGroupOptions(); // Garante que as opções de seleção estejam visíveis
+                    updateDynamicRankingDisplay(); // Atualiza ranking para zerado imediatamente
+                    showSection(startSection); // Volta para a tela de setup
+                }
+            }, (error) => {
+                console.error("Erro ao ouvir o estado do quiz:", error);
+                showAlert("Erro ao carregar o estado do quiz. Por favor, recarregue a página.");
+            });
+        }
+
+        // Função para iniciar o timer da questão
+        function startQuestionTimer(activeGroupId) {
+            if (questionTimerIntervalId) {
+                clearInterval(questionTimerIntervalId);
+            }
+
+            questionTimeLeft = questionTimeLimit;
+            countdownElement.textContent = `Tempo restante: ${questionTimeLeft}s`;
+            countdownElement.classList.remove('hidden');
+
+            questionTimerIntervalId = setInterval(() => {
+                questionTimeLeft--;
+                countdownElement.textContent = `Tempo restante: ${questionTimeLeft}s`;
+
+                if (questionTimeLeft <= 0) {
+                    clearInterval(questionTimerIntervalId);
+                    countdownElement.classList.add('hidden');
+                    // Somente o grupo ativo ou professor processa o timeout
+                    if (isTeacherMode || (activeGroup && activeGroup.id === selectedLocalGroupId)) {
+                        handleQuestionTimeout(activeGroupId);
+                    }
+                }
+            }, 1000);
+        }
+
+        // Função para lidar com o timeout da questão
+        async function handleQuestionTimeout(activeGroupId) {
+            console.log(`Tempo esgotado para o grupo ${activeGroupId}.`);
+            playIncorrectSound(); // Som de erro ao expirar o tempo
+
+            explanationText.innerHTML = "Tempo esgotado! A resposta foi considerada errada.";
+            explanationText.classList.remove('hidden', 'opacity-0'); 
+            explanationText.classList.add('opacity-100');
+            answerButtonsContainer.classList.add('hidden', 'opacity-0'); // Oculta botões
+
+            // Exibe 'X' para indicar resposta incorreta por timeout
+            incorrectMark.classList.remove('hidden');
+            incorrectMarkSpan.offsetWidth; 
+            incorrectMarkSpan.classList.add('opacity-100');
+
+            // Aguarda o tempo da explicação antes de avançar
+            explanationTimeoutId = setTimeout(async () => {
+                explanationText.classList.add('opacity-0');
+                incorrectMarkSpan.classList.remove('opacity-100'); 
+
+                await advanceQuizState('timeout', currentQuestionInRound.answer, currentQuestionInRound.category, activeGroupId);
+
+                explanationText.addEventListener('transitionend', function handler() {
+                    explanationText.classList.add('hidden');
+                    explanationText.removeEventListener('transitionend', handler);
+                }, { once: true });
+
+                incorrectMarkSpan.addEventListener('transitionend', function handler() {
+                    incorrectMark.classList.add('hidden');
+                    incorrectMarkSpan.removeEventListener('transitionend', handler);
+                }, { once: true });
+
+            }, 5000); // Exibir "Tempo esgotado" por 5 segundos antes de avançar.
+        }
+
+        // Função para renderizar a UI baseada no estado global (do Firestore)
+        function renderQuizState() {
+            console.log("renderQuizState called. Status:", quizStatus);
+            console.log("currentQuestionInRound:", currentQuestionInRound);
+            console.log("activeGroup:", activeGroup);
+            console.log("selectedLocalGroupId:", selectedLocalGroupId);
+
+            // Sempre parar o timer ao renderizar um novo estado para evitar múltiplos timers
+            if (questionTimerIntervalId) {
+                clearInterval(questionTimerIntervalId);
+                questionTimerIntervalId = null;
+            }
+            if (explanationTimeoutId) {
+                clearTimeout(explanationTimeoutId);
+                explanationTimeoutId = null;
+            }
+            if (countdownIntervalId) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
+            }
+
+            updateDynamicRankingDisplay(); // Always update dynamic ranking display
+            updateActiveGroupDisplay();
+            
+            // Limpa quaisquer estados visuais de explicação/erro para a nova questão
+            explanationText.classList.add('hidden', 'opacity-0');
+            incorrectMark.classList.add('hidden');
+            incorrectMarkSpan.classList.remove('opacity-100'); // Ensure 'X' is also transparent
+            countdownElement.classList.add('hidden');
+
+            if (quizStatus === 'setup') {
+                if (isTeacherMode) {
+                    showSection(startSection); // Teacher stays on setup to start quiz
+                } else if (selectedLocalGroupId) {
+                    // Student has selected a group, show waiting screen
+                    const currentSelectedGroup = allGroups.find(g => g.id === selectedLocalGroupId);
+                    waitingGroupNameDisplay.textContent = currentSelectedGroup ? (document.querySelector(`.group-name-input[data-group-id="${selectedLocalGroupId}"]`)?.value.trim() || currentSelectedGroup.name) : 'Seu Grupo';
+                    showSection(waitingSection);
+                } else {
+                    // Student hasn't selected a group yet
+                    showSection(startSection);
+                }
+                answerButtonsContainer.classList.add('hidden', 'opacity-0'); // Ensure buttons are hidden in setup/waiting
+            } else if (quizStatus === 'playing') {
+                showSection(questionSection);
+                
+                const currentQuestion = latestQuizStateData?.currentQuestionInRound;
+                const currentActiveGroup = latestQuizStateData?.activeGroup;
+                const displayCategoryName = latestQuizStateData?.currentCategoryName || 'N/A';
+                const displayGlobalQuestionNumber = typeof latestQuizStateData?.globalQuestionNumber === 'number' ? latestQuizStateData.globalQuestionNumber : 0;
+                const displayActiveGroupName = currentActiveGroup?.name || 'Nenhum';
+
+                // Determine content and button visibility once
+                let questionContent = 'Carregando próxima questão...'; // Default loading message
+                let showAnswerButtons = false;
+
+                if (currentQuestion && currentQuestion.text && currentActiveGroup) {
+                    if (isTeacherMode || (currentActiveGroup.id === selectedLocalGroupId)) {
+                        questionContent = currentQuestion.text; // Mostra a pergunta real
+                        showAnswerButtons = true; // Habilita os botões de resposta
+                        startQuestionTimer(currentActiveGroup.id); // Inicia o timer
+                    } else {
+                        // SE NÃO É O TURNO DESTE GRUPO, MOSTRA MENSAGEM DE ESPERA
+                        questionContent = `Aguardando a vez do Grupo ${displayActiveGroupName}...`;
+                        showAnswerButtons = false; // Oculta os botões
+                    }
+                } else {
+                    // If data is not fully ready, keep the loading message
+                    questionContent = 'Carregando próxima questão...';
+                    showAnswerButtons = false;
+                }
+
+                questionCategoryDisplay.textContent = `Categoria: ${displayCategoryName}`;
+                questionCounter.textContent = `Questão ${displayGlobalQuestionNumber} de ${questions.length} - Vez do Grupo ${displayActiveGroupName}`;
+                questionText.textContent = questionContent; // Set text once after determination
+
+                if (showAnswerButtons) {
+                    answerButtonsContainer.classList.remove('hidden', 'opacity-0');
+                } else {
+                    answerButtonsContainer.classList.add('hidden', 'opacity-0');
+                }
+
+            } else if (quizStatus === 'finished') {
+                showResults();
+                answerButtonsContainer.classList.add('hidden', 'opacity-0'); // Ensure buttons are hidden in results
+            }
+        }
+
+        // Função para atualizar o estado do quiz no Firestore
+        async function updateQuizStateInFirestore(updates) {
+            try {
+                // Use setDoc with merge: true to create or update the document
+                await setDoc(quizDocRef, updates, { merge: true });
+            } catch (error) {
+                console.error("Erro ao atualizar o estado do quiz no Firestore:", error);
+                showAlert("Não foi possível salvar o progresso. Verifique sua conexão.");
+            }
+        }
+
+        // Função para registrar ou atualizar o grupo de um aluno no Firestore
+        async function studentJoinGroup() {
+            if (!selectedLocalGroupId) {
+                showAlert('Por favor, selecione seu grupo para começar!');
+                return;
+            }
+
+            const selectedGroupData = allGroups.find(g => g.id === selectedLocalGroupId);
+            const customNameInput = document.querySelector(`.group-name-input[data-group-id="${selectedLocalGroupId}"]`);
+            const customName = customNameInput.value.trim();
+            const studentGroup = {
+                id: selectedGroupData.id,
+                name: customName !== '' ? customName : selectedGroupData.name,
+                color: selectedGroupData.color
+            };
+
+            try {
+                const currentQuizDoc = await getDoc(quizDocRef);
+                let existingParticipatingGroups = currentQuizDoc.exists() ? (currentQuizDoc.data().participatingGroups || []) : [];
+                let existingGroupScores = currentQuizDoc.exists() ? (currentQuizDoc.data().groupScores || {}) : {};
+                let existingGroupCategoryStats = currentQuizDoc.exists() ? (currentQuizDoc.data().groupCategoryStats || {}) : {};
+
+                const groupExistsIndex = existingParticipatingGroups.findIndex(g => g.id === studentGroup.id);
+                if (groupExistsIndex === -1) {
+                    existingParticipatingGroups.push(studentGroup);
+                    existingGroupScores[studentGroup.id] = 0; // Initialize score for new group
+                    existingGroupCategoryStats[studentGroup.id] = {}; // Initialize stats
+                    Object.keys(categorizedQuestions).forEach(category => {
+                        existingGroupCategoryStats[studentGroup.id][category] = { correct: 0, incorrect: 0 };
+                    });
+                } else {
+                    // Update name of existing group if it changed
+                    existingParticipatingGroups[groupExistsIndex].name = studentGroup.name;
+                    // Ensure scores and stats are initialized if somehow missing (shouldn't happen if already participating)
+                    if (!existingGroupScores[studentGroup.id]) existingGroupScores[studentGroup.id] = 0;
+                    if (!existingGroupCategoryStats[studentGroup.id]) {
+                        existingGroupCategoryStats[studentGroup.id] = {};
+                        Object.keys(categorizedQuestions).forEach(category => {
+                            existingGroupCategoryStats[studentGroup.id][category] = { correct: 0, incorrect: 0 };
+                        });
+                    }
+                }
+
+                // Use setDoc with merge: true to create or update the document
+                await setDoc(quizDocRef, {
+                    participatingGroups: existingParticipatingGroups,
+                    groupScores: existingGroupScores,
+                    groupCategoryStats: existingGroupCategoryStats,
+                    status: currentQuizDoc.exists() ? currentQuizDoc.data().status : 'setup', // Student does NOT change quiz status
+                    timestamp: Date.now()
+                }, { merge: true });
+
+                // Student successfully joined, now move to waiting screen
+                localStorage.setItem('selectedGroupId', selectedLocalGroupId); // Persiste a seleção do grupo
+                const currentSelectedGroup = allGroups.find(g => g.id === selectedLocalGroupId);
+                waitingGroupNameDisplay.textContent = customName !== '' ? customName : currentSelectedGroup.name;
+                showSection(waitingSection);
+
+            } // Changed catch to handle the error when setting up the database
+            catch (error) {
+                console.error("Erro ao registrar grupo do aluno:", error);
+                showAlert("Não foi possível registrar seu grupo. Por favor, tente novamente.");
+            }
+        }
+
+
+        // Função para o professor iniciar o quiz
+        async function teacherStartQuiz() {
+            const currentQuizDoc = await getDoc(quizDocRef);
+            let currentQuizData = currentQuizDoc.exists() ? currentQuizDoc.data() : {};
+            
+            let groupsForQuizStart = currentQuizData.participatingGroups || [];
+            let scoresForQuizStart = currentQuizData.groupScores || {};
+            let statsForQuizStart = currentQuizData.groupCategoryStats || {};
+
+            if (groupsForQuizStart.length === 0) {
+                showAlert('Nenhum grupo de aluno selecionado ainda. Peça aos alunos para se juntarem antes de iniciar.');
+                return;
+            }
+
+            setupCategorizedQuestions(); // Prepare questions for the game
+            const initialCategoryIndex = 0;
+            const initialCategoryName = categoryOrder[initialCategoryIndex];
+            let initialQuestionQueue = [...categorizedQuestions[initialCategoryName]];
+            shuffleArray(initialQuestionQueue);
+            const initialQuestion = initialQuestionQueue.shift();
+            
+            let initialGroupsToAnswer = groupsForQuizStart.map(g => g.id);
+            shuffleArray(initialGroupsToAnswer);
+            const initialActiveGroup = groupsForQuizStart.find(g => g.id === initialGroupsToAnswer[0]);
+
+            const newQuizState = {
+                status: 'playing', // Professor sets status to playing
+                participatingGroups: groupsForQuizStart,
+                groupScores: scoresForQuizStart,
+                groupCategoryStats: statsForQuizStart,
+                currentCategoryIndex: initialCategoryIndex,
+                currentCategoryName: initialCategoryName,
+                currentQuestionInRound: initialQuestion,
+                currentQuestionQueue: initialQuestionQueue,
+                globalQuestionNumber: 1,
+                groupsToAnswerThisQuestion: initialGroupsToAnswer.slice(1),
+                activeGroup: initialActiveGroup,
+                categoryOrder: categoryOrder,
+                timestamp: Date.now()
+            };
+            try {
+                await setDoc(quizDocRef, newQuizState); // Overwrite/set the quiz state
+            } catch (error) {
+                console.error("Erro ao iniciar quiz pelo professor:", error);
+                showAlert("Não foi possível iniciar o quiz. Verifique sua conexão.");
+            }
+        }
+
+        // Função para avançar o quiz no Firestore
+        async function advanceQuizState(selectedAnswer, correctAnswer, currentCategory, activeGroupId) {
+            // Garante que o timer seja limpo quando o estado avança, seja por resposta ou timeout
+            if (questionTimerIntervalId) {
+                clearInterval(questionTimerIntervalId);
+                questionTimerIntervalId = null;
+            }
+
+            const currentQuizState = await getDoc(quizDocRef);
+            if (!currentQuizState.exists()) {
+                console.error("Estado do quiz não encontrado para avançar.");
+                return;
+            }
+            let data = currentQuizState.data();
+
+            let updatedGroupScores = { ...data.groupScores };
+            let updatedGroupCategoryStats = JSON.parse(JSON.stringify(data.groupCategoryStats)); // Deep copy
+
+            // Atualiza pontuação e stats (considerando 'timeout' como resposta incorreta)
+            if (selectedAnswer === correctAnswer) {
+                updatedGroupScores[activeGroupId]++;
+                updatedGroupCategoryStats[activeGroupId][currentCategory].correct++;
+            } else {
+                updatedGroupCategoryStats[activeGroupId][currentCategory].incorrect++;
+            }
+
+            let nextGroupsToAnswerThisQuestion = [...data.groupsToAnswerThisQuestion];
+            let nextActiveGroup = null;
+            let nextQuestionInRound = data.currentQuestionInRound;
+            let nextGlobalQuestionNumber = data.globalQuestionNumber;
+            let nextCategoryIndex = data.currentCategoryIndex;
+            let nextCategoryName = data.currentCategoryName;
+            let nextQuestionQueue = [...data.currentQuestionQueue];
+            let nextCategoryOrder = [...data.categoryOrder];
+
+            // Determina o próximo grupo ou próxima questão
+            if (nextGroupsToAnswerThisQuestion.length > 0) {
+                const nextId = nextGroupsToAnswerThisQuestion.shift();
+                nextActiveGroup = data.participatingGroups.find(g => g.id === nextId);
+            } else {
+                // Todos os grupos responderam a esta questão, pega a próxima questão
+                if (nextQuestionQueue.length === 0) {
+                    // Todas as questões desta categoria foram respondidas, vai para a próxima categoria
+                    nextCategoryIndex++;
+                    if (nextCategoryIndex >= nextCategoryOrder.length) {
+                        // Fim do quiz
+                        await updateQuizStateInFirestore({
+                            status: 'finished',
+                            groupScores: updatedGroupScores,
+                            groupCategoryStats: updatedGroupCategoryStats,
+                            timestamp: Date.now()
+                        });
+                        return;
+                    }
+                    // Nova categoria
+                    nextCategoryName = nextCategoryOrder[nextCategoryIndex];
+                    nextQuestionQueue = [...categorizedQuestions[nextCategoryName]];
+                    shuffleArray(nextQuestionQueue);
+                }
+                nextQuestionInRound = nextQuestionQueue.shift();
+                nextGlobalQuestionNumber++;
+                
+                // Reseta os grupos para a nova questão
+                let tempGroupsForNewQuestion = data.participatingGroups.map(g => g.id);
+                shuffleArray(tempGroupsForNewQuestion);
+                nextActiveGroup = data.participatingGroups.find(g => g.id === tempGroupsForNewQuestion[0]);
+                nextGroupsToAnswerThisQuestion = tempGroupsForNewQuestion.slice(1);
+            }
+
+            await updateQuizStateInFirestore({
+                groupScores: updatedGroupScores,
+                groupCategoryStats: updatedGroupCategoryStats,
+                groupsToAnswerThisQuestion: nextGroupsToAnswerThisQuestion,
+                activeGroup: nextActiveGroup,
+                currentQuestionInRound: nextQuestionInRound,
+                globalQuestionNumber: nextGlobalQuestionNumber,
+                currentCategoryIndex: nextCategoryIndex,
+                currentCategoryName: nextCategoryName,
+                currentQuestionQueue: nextQuestionQueue,
+                timestamp: Date.now()
+            });
+        }
+
+
+        // Função para reiniciar o quiz no Firestore
+        async function restartQuizInFirestore() {
+            // Garante que o timer seja limpo ao reiniciar
+            if (questionTimerIntervalId) {
+                clearInterval(questionTimerIntervalId);
+                questionTimerIntervalId = null;
+            }
+            if (explanationTimeoutId) {
+                clearTimeout(explanationTimeoutId);
+                explanationTimeoutId = null;
+            }
+            if (countdownIntervalId) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
+            }
+
+            const initialQuizState = {
+                status: 'setup',
+                participatingGroups: [], // Volta para vazio para reseleção
+                groupScores: {},
+                groupCategoryStats: {},
+                groupsToAnswerThisQuestion: [],
+                activeGroup: null,
+                currentCategoryName: '',
+                currentQuestionInRound: null,
+                globalQuestionNumber: 0,
+                currentCategoryIndex: 0,
+                categoryOrder: [],
+                timestamp: Date.now()
+            };
+            try {
+                await setDoc(quizDocRef, initialQuizState);
+                isTeacherMode = false; // Resetar o modo professor ao reiniciar o quiz
+                localStorage.removeItem('selectedGroupId'); // Limpa a seleção local do grupo
+                selectedLocalGroupId = null; // Limpa a variável local
+            } catch (error) {
+                console.error("Erro ao reiniciar quiz no Firestore:", error);
+                showAlert("Não foi possível reiniciar o quiz. Por favor, tente novamente.");
+            }
+        }
+
+
+        // --- Funções de UI (maioria reativas ao estado do Firestore) ---
+        function renderInitialGroupOptions() {
+            groupSelectionOptions.innerHTML = '';
+            // Ajusta o label para o modo professor
+            if (isTeacherMode) {
+                groupSelectionLabel.textContent = "No Modo Professor, você não participa de um grupo. Use este painel para iniciar e gerenciar o quiz para os alunos.";
+                groupSelectionOptions.classList.remove('grid'); // Remove grid layout for a simple message
+                groupSelectionOptions.innerHTML = `
+                    <div class="col-span-full text-center text-gray-600 mt-4 text-lg">
+                        <p>Os alunos deverão selecionar seus grupos em seus próprios dispositivos.</p>
+                        <p class="mt-2">Clique em "Começar o Quiz" para iniciar o jogo para todos os grupos.</p>
+                    </div>
+                `;
+            } else {
+                groupSelectionLabel.textContent = "Selecione e Personalize os Grupos Participantes:";
+                groupSelectionOptions.classList.add('grid'); // Restore grid layout for group selection
+                allGroups.forEach(group => {
+                    const groupOptionDiv = document.createElement('div');
+                    groupOptionDiv.classList.add('group-selection-item', 'flex', 'flex-col', 'items-center', 'p-2', 'rounded-lg', 'bg-white', 'shadow-sm', 'border', 'border-gray-200');
+                    
+                    const isChecked = selectedLocalGroupId === group.id; // Check based on local selected ID
+                    const customName = participatingGroups.find(pg => pg.id === group.id)?.name || group.name; // Use name from Firestore if exists, else default
+
+                    groupOptionDiv.innerHTML = `
+                        <label for="group-select-${group.id}" class="flex flex-col items-center cursor-pointer mb-2">
+                            <input type="radio" id="group-select-${group.id}" name="group-selection" data-group-id="${group.id}" class="hidden peer group-radio" ${isChecked ? 'checked' : ''}>
+                            <span class="group-color-circle-selection w-16 h-16 rounded-full border-2 border-gray-300 flex items-center justify-center text-xl font-bold transition-all peer-checked:border-blue-500 peer-checked:shadow-lg" style="background-color: ${group.color};">${group.id.replace('group', '')}</span>
+                            <span class="mt-2 text-sm font-medium text-gray-700 peer-checked:text-blue-600">${customName}</span>
+                        </label>
+                        <input type="text" data-group-id="${group.id}" value="${customName}" placeholder="${group.name}" class="group-name-input w-full text-center px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2">
+                    `;
+                    groupSelectionOptions.appendChild(groupOptionDiv);
+                });
+
+                // Adiciona os event listeners para radio buttons e inputs
+                document.querySelectorAll('.group-radio').forEach(radio => {
+                    radio.removeEventListener('change', updateLocalSelectedGroupUI);
+                    radio.addEventListener('change', updateLocalSelectedGroupUI);
+                });
+                document.querySelectorAll('.group-name-input').forEach(input => {
+                    input.removeEventListener('input', updateLocalSelectedGroupUI); // Still needed to update local display
+                    input.addEventListener('input', updateLocalSelectedGroupUI);
+                });
+            }
+        }
+
+        // Função para atualizar o ID do grupo selecionado localmente na UI
+        function updateLocalSelectedGroupUI() {
+            const selectedRadio = document.querySelector('.group-radio:checked');
+            if (selectedRadio) {
+                selectedLocalGroupId = selectedRadio.dataset.groupId;
+                localStorage.setItem('selectedGroupId', selectedLocalGroupId); // Salva no localStorage
+                // Update the name displayed next to the circle locally
+                const customNameInput = document.querySelector(`.group-name-input[data-group-id="${selectedLocalGroupId}"]`);
+                const groupNameSpan = selectedRadio.nextElementSibling.nextElementSibling; // Span with group name
+                if (groupNameSpan && customNameInput) {
+                    groupNameSpan.textContent = customNameInput.value.trim() || allGroups.find(g => g.id === selectedLocalGroupId).name;
+                }
+            } else {
+                selectedLocalGroupId = null;
+                localStorage.removeItem('selectedGroupId'); // Remove do localStorage se nenhum grupo for selecionado
+            }
+        }
+
+
+        function updateActiveGroupDisplay() {
+            if (isTeacherMode) {
+                activeGroupColorCircle.style.backgroundColor = '#6B46C1'; // Purple for teacher
+                activeGroupColorCircle.textContent = 'P'; // 'P' for Professor
+                activeGroupNameDisplay.textContent = 'Modo Professor';
+                activeGroupScoreDisplay.textContent = ''; // No score for teacher
+            } else if (activeGroup) {
+                activeGroupColorCircle.style.backgroundColor = activeGroup.color;
+                activeGroupColorCircle.textContent = activeGroup.id.replace('group', ''); 
+                activeGroupNameDisplay.textContent = activeGroup.name;
+                activeGroupScoreDisplay.textContent = `Pontos: ${groupScores[activeGroup.id] || 0}`;
+            } else {
+                activeGroupColorCircle.style.backgroundColor = '#cccccc'; 
+                activeGroupColorCircle.textContent = '?';
+                activeGroupNameDisplay.textContent = 'Nenhum Grupo';
+                activeGroupScoreDisplay.textContent = 'Pontos: 0';
+            }
+        }
+
+        function updateDynamicRankingDisplay() {
+            // Controla a visibilidade do painel lateral inteiro
+            if (isTeacherMode) {
+                topGroupSidebar.classList.remove('hidden');
+            } else {
+                topGroupSidebar.classList.add('hidden');
+            }
+
+            dynamicRankingDisplay.innerHTML = ''; 
+            
+            if (!isTeacherMode) {
+                // Se não for modo professor, apenas exibe a mensagem de que é visível para o professor
+                dynamicRankingDisplay.innerHTML = '<p class="text-gray-500 text-center text-lg mt-4">Classificação visível apenas para o professor.</p>';
+                return;
+            }
+
+            // Usa latestQuizStateData para renderizar o ranking
+            if (!latestQuizStateData || !latestQuizStateData.participatingGroups || latestQuizStateData.participatingGroups.length === 0) {
+                dynamicRankingDisplay.innerHTML = '<p class="text-gray-500 text-center">Nenhum grupo selecionado.</p>';
+                return;
+            }
+            
+            const currentParticipatingGroups = latestQuizStateData.participatingGroups;
+            const currentGroupScores = latestQuizStateData.groupScores;
+            const currentGroupCategoryStats = latestQuizStateData.groupCategoryStats;
+
+            const groupsWithScores = currentParticipatingGroups.map(group => {
+                let totalErrors = 0;
+                // Calcula o total de erros para este grupo em todas as categorias
+                if (currentGroupCategoryStats[group.id]) { // Verifica se o grupo tem stats de categoria
+                    for (const category in currentGroupCategoryStats[group.id]) {
+                        totalErrors += currentGroupCategoryStats[group.id][category].incorrect || 0;
+                    }
+                }
+
+                return { 
+                    ...group,
+                    score: currentGroupScores[group.id] || 0,
+                    errors: totalErrors 
+                };
+            });
+
+            const sortedGroups = groupsWithScores.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.id.localeCompare(b.id); 
+            });
+
+            sortedGroups.forEach((group, index) => {
+                const rankItemDiv = document.createElement('div');
+                rankItemDiv.classList.add('rank-item', 'p-2', 'rounded-lg', 'shadow-sm', 'bg-gray-50', 'w-full'); 
+                
+                if (index === 0) {
+                    rankItemDiv.classList.add('bg-yellow-100', 'border-yellow-500', 'border-2');
+                } else if (index === 1) {
+                    rankItemDiv.classList.add('bg-gray-100', 'border-gray-400', 'border-2');
+                } else if (index === 2) {
+                    rankItemDiv.classList.add('bg-orange-100', 'border-orange-400', 'border-2');
+                }
+
+                rankItemDiv.innerHTML = `
+                    <div class="rank-number">${index + 1}º</div>
+                    <div class="rank-circle" style="background-color: ${group.color};">${group.id.replace('group', '')}</div>
+                    <div class="rank-details">
+                        <p class="rank-name">${group.name}</p>
+                        <p class="rank-score">${group.score} Pontos <span class="text-red-500 text-sm font-normal">(${group.errors} erros)</span></p>
+                        <span class="stars">${generateStars(group.score)}</span>
+                    </div>
+                `;
+                dynamicRankingDisplay.appendChild(rankItemDiv);
+            });
+        }
+        
+        function initializeGroupScoresAndCategoryStats() {
+            groupScores = {}; 
+            groupCategoryStats = {}; 
+            participatingGroups.forEach(group => {
+                groupScores[group.id] = 0;
+                groupCategoryStats[group.id] = {};
+                Object.keys(categorizedQuestions).forEach(category => {
+                    groupCategoryStats[group.id][category] = { correct: 0, incorrect: 0 };
+                });
+            });
+        }
+
+        function generateStars(score) {
+            let starsHtml = '';
+            for (let i = 0; i < score; i++) {
+                starsHtml += '⭐'; 
+            }
+            return starsHtml;
+        }
+
+        function createGroupCategoryChart(groupId, groupName, groupColor, categoryStats) {
+            const chartDiv = document.createElement('div');
+            chartDiv.id = `chart-${groupId}`;
+            chartDiv.classList.add('bg-white', 'p-4', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'flex', 'flex-col', 'items-center');
+            categoryChartsContainer.appendChild(chartDiv);
+
+            const chartTitle = document.createElement('h4');
+            chartTitle.classList.add('text-lg', 'font-semibold', 'text-gray-800', 'mb-3', 'text-center');
+            chartTitle.textContent = `Desempenho do ${groupName}`;
+            chartDiv.appendChild(chartTitle);
+
+            const data = Object.keys(categorizedQuestions).map(category => ({
+                category: category,
+                correct: (categoryStats[category] ? categoryStats[category].correct : 0),
+                incorrect: (categoryStats[category] ? categoryStats[category].incorrect : 0)
+            }));
+
+            const margin = { top: 10, right: 10, bottom: 60, left: 30 },
+                width = 280 - margin.left - margin.right, 
+                height = 180 - margin.top - margin.bottom; 
+
+            const svg = d3.select(`#chart-${groupId}`)
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const categories = data.map(d => d.category);
+            const maxVal = d3.max(data, d => d.correct + d.incorrect);
+
+            const x = d3.scaleBand()
+                .range([0, width])
+                .domain(categories)
+                .padding(0.2);
+
+            const y = d3.scaleLinear()
+                .range([height, 0])
+                .domain([0, maxVal + 1]); 
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("transform", "translate(-10,0)rotate(-45)")
+                .style("text-anchor", "end")
+                .style("font-size", "10px"); 
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(maxVal > 0 ? maxVal : 1))
+                .style("font-size", "10px"); 
+
+            // Barras para respostas incorretas
+            svg.selectAll(".bar-incorrect")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar-incorrect")
+                .attr("x", d => x(d.category))
+                .attr("y", d => y(d.incorrect))
+                .attr("width", x.bandwidth())
+                .attr("height", d => height - y(d.incorrect))
+                .attr("fill", "#EF4444"); // Red
+
+            // Barras para respostas corretas (empilhadas sobre as incorretas)
+            svg.selectAll(".bar-correct")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar-correct")
+                .attr("x", d => x(d.category))
+                .attr("y", d => y(d.correct + d.incorrect)) 
+                .attr("width", x.bandwidth())
+                .attr("height", d => y(d.incorrect) - y(d.correct + d.incorrect)) 
+                .attr("fill", "#22C55E"); // Green
+
+            // Adiciona um círculo de cor do grupo para identificação no canto
+            svg.append("circle")
+                .attr("cx", width + margin.right - 15) 
+                .attr("cy", -5)
+                .attr("r", 10)
+                .attr("fill", groupColor);
+        }
+
+        function showResults() {
+            showSection(resultSection); 
+            
+            finalScoresDisplay.innerHTML = ''; 
+            // Usa latestQuizStateData para garantir que os resultados finais usem os dados mais recentes do Firestore
+            const currentParticipatingGroups = latestQuizStateData.participatingGroups || [];
+            const currentGroupScores = latestQuizStateData.groupScores || {};
+
+            const groupsWithScores = currentParticipatingGroups.map(group => ({
+                ...group,
+                score: currentGroupScores[group.id] || 0
+            }));
+
+            const sortedGroups = groupsWithScores.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.id.localeCompare(b.id); 
+            });
+
+            sortedGroups.forEach((group, index) => {
+                const rankDiv = document.createElement('div');
+                rankDiv.classList.add('p-4', 'rounded-lg', 'shadow-md', 'bg-white', 'w-full', 'max-w-md', 'flex', 'items-center', 'gap-4');
+                if (index === 0) {
+                    rankDiv.classList.add('bg-yellow-100', 'border-yellow-500', 'border-2', 'scale-105');
+                } else if (index === 1) {
+                    rankDiv.classList.add('bg-gray-100', 'border-gray-400', 'border-2');
+                } else if (index === 2) {
+                    rankDiv.classList.add('bg-orange-100', 'border-orange-400', 'border-2');
+                }
+
+                rankDiv.innerHTML = `
+                    <div class="rank-number">${index + 1}º</div>
+                    <div class="rank-circle" style="background-color: ${group.color};">${group.id.replace('group', '')}</div>
+                    <div class="rank-details">
+                        <p class="rank-name">${group.name}</p>
+                        <p class="rank-score">${group.score} Pontos</p>
+                        <span class="stars">${generateStars(group.score)}</span>
+                    </div>
+                `;
+                finalScoresDisplay.appendChild(rankDiv);
+            });
+
+            categoryChartsContainer.innerHTML = ''; 
+            currentParticipatingGroups.forEach(group => {
+                createGroupCategoryChart(group.id, group.name, group.color, latestQuizStateData.groupCategoryStats[group.id] || {});
+            });
+        }
+
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', async () => {
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+
+            if (isTeacherMode) {
+                await teacherStartQuiz();
+            } else { // Student clicks "Começar o Quiz"
+                await studentJoinGroup();
+            }
+        });
+
+
+        activateTeacherModeBtn.addEventListener('click', () => {
+            if (teacherModeInput.value === TEACHER_CODE) {
+                isTeacherMode = true;
+                showAlert("Modo Professor Ativado! O ranking está visível para você.");
+                renderInitialGroupOptions(); // Re-renderiza a área de seleção de grupo para o modo professor
+                updateActiveGroupDisplay(); // Atualiza a barra lateral do grupo ativo para o modo professor
+                updateDynamicRankingDisplay(); // Exibe o ranking imediatamente para o professor
+            } else {
+                showAlert("Código incorreto. Você não é o professor.");
+                isTeacherMode = false;
+                renderInitialGroupOptions(); // Re-renderiza a área de seleção de grupo para o modo aluno
+                updateActiveGroupDisplay(); // Atualiza a barra lateral do grupo ativo para o modo aluno
+                updateDynamicRankingDisplay(); // Oculta o ranking para o aluno
+            }
+            teacherModeInput.value = ''; // Limpa o campo de código
+        });
+
+        answerButtons.forEach(button => {
+            button.addEventListener('click', async () => {
+                // Ao clicar em qualquer botão de resposta, parar o timer da questão
+                if (questionTimerIntervalId) {
+                    clearInterval(questionTimerIntervalId);
+                    questionTimerIntervalId = null;
+                    countdownElement.classList.add('hidden'); // Esconde o countdown
+                }
+                if (explanationTimeoutId) { clearTimeout(explanationTimeoutId); }
+                if (countdownIntervalId) { clearInterval(countdownIntervalId); } // Clear the explanation countdown as well
+
+                // Check if it's actually this group's turn to answer
+                if (!activeGroup || activeGroup.id !== selectedLocalGroupId) {
+                    showAlert("Aguarde a sua vez para responder!");
+                    return; // Prevent answering if it's not their turn
+                }
+
+                const selectedAnswer = button.getAttribute('data-answer');
+                const correctAnswer = currentQuestionInRound.answer; 
+                const currentCategory = currentQuestionInRound.category; 
+
+                answerButtonsContainer.classList.add('hidden', 'opacity-0'); // Oculta os botões imediatamente ao clicar
+
+                if (selectedAnswer === correctAnswer) {
+                    launchConfetti(); 
+                    playCorrectSound(); 
+                } else {
+                    incorrectMark.classList.remove('hidden');
+                    incorrectMarkSpan.offsetWidth; 
+                    incorrectMarkSpan.classList.add('opacity-100');
+                    playIncorrectSound(); 
+                }
+                
+                // Chamada da função generateExplanation
+                const explanation = await generateExplanation(currentQuestionInRound.text, correctAnswer, selectedAnswer); 
+                explanationText.innerHTML = explanation;
+                explanationText.classList.remove('hidden', 'opacity-0'); 
+                explanationText.classList.add('opacity-100');
+                
+                let timeLeft = 10;
+                countdownElement.textContent = `Próxima vez em ${timeLeft} segundos...`;
+                countdownElement.classList.remove('hidden'); // Make sure it's hidden during explanation transition
+
+                // This interval is for explanation display, not question answering time
+                countdownIntervalId = setInterval(() => {
+                    timeLeft--;
+                    // The countdown for explanation is not explicitly shown in UI now, but could be added back if needed
+                    // For now, it just controls the transition time
+                }, 1000); 
+
+                explanationTimeoutId = setTimeout(async () => {
+                    explanationText.classList.add('opacity-0');
+                    incorrectMarkSpan.classList.remove('opacity-100'); 
+
+                    // Atualiza o estado do quiz no Firestore para avançar
+                    await advanceQuizState(selectedAnswer, correctAnswer, currentCategory, activeGroup.id);
+
+                    explanationText.addEventListener('transitionend', function handler() {
+                        explanationText.classList.add('hidden');
+                        explanationText.removeEventListener('transitionend', handler);
+                    }, { once: true });
+
+                    incorrectMarkSpan.addEventListener('transitionend', function handler() {
+                        incorrectMark.classList.add('hidden');
+                        incorrectMarkSpan.removeEventListener('transitionend', handler);
+                    }, { once: true });
+
+                }, 5000); // Wait 5 seconds for explanation to fade out
+            });
+        });
+
+        restartBtn.addEventListener('click', async () => {
+            await restartQuizInFirestore(); // Reinicia o quiz no Firestore
+        });
+
+        // Função para simular confetes
+        function launchConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase(); // Inicia a conexão Firebase e o listener do quiz
+            setupCategorizedQuestions(); // Organiza as perguntas por categoria uma vez
+            // A renderização inicial da UI e do ranking é feita pelo setupQuizListener no onSnapshot
+            // para refletir o estado do Firestore.
+        });
+    </script>
+
+</body>
+</html>
