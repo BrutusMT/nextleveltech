@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Conceitos de SO</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+        h1, h2 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .intro-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .intro-section input[type="text"] {
+            padding: 10px;
+            width: 70%;
+            max-width: 300px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .intro-section button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .intro-section button:hover {
+            background-color: #0056b3;
+        }
+        .quiz-section {
+            display: none; /* Esconde o quiz inicialmente */
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        .question p {
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .question label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .question input[type="radio"] {
+            margin-right: 8px;
+        }
+        .submit-btn, .export-btn {
+            display: block;
+            width: 200px;
+            margin: 30px auto 10px; /* Ajuste para ter mais espaço */
+            padding: 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            text-align: center;
+        }
+        .submit-btn {
+            background-color: #28a745;
+        }
+        .submit-btn:hover {
+            background-color: #218838;
+        }
+        .export-btn {
+            background-color: #6c757d;
+        }
+        .export-btn:hover {
+            background-color: #5a6268;
+        }
+        .results-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #e9ecef;
+            text-align: center;
+        }
+        .results-section p {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .incorrect-answers {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .incorrect-answers h3 {
+            color: #dc3545;
+        }
+        .incorrect-answers ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .incorrect-answers li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+        }
+        .incorrect-answers .correct-answer {
+            font-weight: bold;
+            color: #28a745;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bem-vindo ao Quiz de Sistemas Operacionais!</h1>
+
+        <div class="intro-section" id="introSection">
+            <p>Por favor, insira seu nome para iniciar a atividade:</p>
+            <input type="text" id="userName" placeholder="Seu nome">
+            <button onclick="startQuiz()">Iniciar Quiz</button>
+        </div>
+
+        <div class="quiz-section" id="quizSection">
+            <h2>Olá, <span id="displayUserName"></span>! Responda às perguntas:</h2>
+            <form id="quizForm">
+                </form>
+            <button class="submit-btn" onclick="submitQuiz()">Finalizar Quiz</button>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <h2>Resultados do Quiz</h2>
+            <p>Parabéns, <span id="resultUserName"></span>! Você acertou <span id="score">0</span> de <span id="totalQuestions">0</span> perguntas.</p>
+            <div style="width: 70%; margin: 20px auto;">
+                <canvas id="scoreChart"></canvas>
+            </div>
+            <div class="incorrect-answers" id="incorrectAnswers">
+                <h3>Respostas Incorretas:</h3>
+                <ul></ul>
+            </div>
+            <button class="export-btn" onclick="exportToPdf()">Exportar para PDF</button>
+            <button class="submit-btn" onclick="location.reload()">Fazer Novamente</button>
+        </div>
+    </div>
+
+    <script>
+        // Use a desestruturação para importar o jsPDF
+        const { jsPDF } = window.jspdf;
+
+        const questions = [
+            {
+                question: "Qual o principal objetivo da memória virtual?",
+                options: [
+                    "Aumentar a velocidade do processador.",
+                    "Compensar a falta de memória física RAM.",
+                    "Melhorar a qualidade gráfica dos jogos.",
+                    "Reduzir o consumo de energia do computador."
+                ],
+                answer: "Compensar a falta de memória física RAM."
+            },
+            {
+                question: "O que é 'paginação' no contexto da memória virtual?",
+                options: [
+                    "Um método de compressão de arquivos.",
+                    "A divisão da memória física e virtual em blocos de tamanho fixo.",
+                    "Um tipo de hardware de memória.",
+                    "O processo de instalar um novo software."
+                ],
+                answer: "A divisão da memória física e virtual em blocos de tamanho fixo."
+            },
+            {
+                question: "Como são chamados os blocos de dados na memória virtual?",
+                options: [
+                    "Frames",
+                    "Segmentos",
+                    "Páginas",
+                    "Clusters"
+                ],
+                answer: "Páginas"
+            },
+            {
+                question: "Como são chamados os blocos correspondentes na memória física?",
+                options: [
+                    "Páginas",
+                    "Frames",
+                    "Índices",
+                    "Setores"
+                ],
+                answer: "Frames"
+            },
+            {
+                question: "O que acontece em um 'page-out'?",
+                options: [
+                    "Dados são carregados do disco para a RAM.",
+                    "Dados são movidos da RAM de volta para o disco.",
+                    "A CPU inicia um novo processo.",
+                    "Um erro de memória é detectado."
+                ],
+                answer: "Dados são movidos da RAM de volta para o disco."
+            },
+            {
+                question: "O que é um 'processo' em um sistema operacional?",
+                options: [
+                    "Um arquivo salvo no disco rígido.",
+                    "Uma instância de um programa em execução.",
+                    "Um componente de hardware.",
+                    "Um protocolo de rede."
+                ],
+                answer: "Uma instância de um programa em execução."
+            },
+            {
+                question: "Qual a função do agendamento (scheduling) de processos?",
+                options: [
+                    "Organizar arquivos no disco.",
+                    "Decidir qual processo vai usar a CPU em determinado momento.",
+                    "Criptografar dados para segurança.",
+                    "Conectar o computador à internet."
+                ],
+                answer: "Decidir qual processo vai usar a CPU em determinado momento."
+            },
+            {
+                question: "O que significa 'isolamento de processos' na memória virtual?",
+                options: [
+                    "Programas são executados em compartimentos separados, sem interferir uns nos outros.",
+                    "Programas são impedidos de acessar a internet.",
+                    "Apenas um programa pode rodar por vez.",
+                    "A memória virtual é desligada para economizar energia."
+                ],
+                answer: "Programas são executados em compartimentos separados, sem interferir uns nos outros."
+            },
+            {
+                question: "Qual o benefício da memória virtual para sistemas com pouca RAM?",
+                options: [
+                    "Permite rodar apenas um programa por vez.",
+                    "Possibilita a execução de mais programas do que a RAM física permitiria.",
+                    "Acelera a gravação de dados em DVDs.",
+                    "Diminui a necessidade de um sistema operacional."
+                ],
+                answer: "Possibilita a execução de mais programas do que a RAM física permitiria."
+            },
+            {
+                question: "O que é 'page-in'?",
+                options: [
+                    "Dados são movidos da RAM para o disco.",
+                    "Dados são carregados do disco para a RAM.",
+                    "O sistema operacional inicia um novo arquivo.",
+                    "Aumenta-se o tamanho de uma página."
+                ],
+                answer: "Dados são carregados do disco para a RAM."
+            },
+            {
+                question: "Qual o papel do sistema operacional na criação e término de processos?",
+                options: [
+                    "Apenas monitorar o uso da rede.",
+                    "Gerenciar a alocação e desalocação de recursos para os processos.",
+                    "Decidir o nome dos arquivos.",
+                    "Controlar a temperatura do hardware."
+                ],
+                answer: "Gerenciar a alocação e desalocação de recursos para os processos."
+            },
+            {
+                question: "O que são algoritmos de substituição de página?",
+                options: [
+                    "Métodos para escolher qual página mover da RAM para o disco quando não há frames livres.",
+                    "Algoritmos para converter formatos de imagem.",
+                    "Técnicas para organizar dados em um banco de dados.",
+                    "Formas de acelerar a inicialização do sistema operacional."
+                ],
+                answer: "Métodos para escolher qual página mover da RAM para o disco quando não há frames livres."
+            },
+            {
+                question: "Qual mecanismo o SO utiliza para garantir a comunicação ordenada entre processos?",
+                options: [
+                    "Antivírus.",
+                    "Mecanismos de sincronização (semáforos, monitores).",
+                    "Compressores de arquivos.",
+                    "Ferramentas de desenho."
+                ],
+                answer: "Mecanismos de sincronização (semáforos, monitores)."
+            },
+            {
+                question: "O que é uma 'condição de corrida' (race condition)?",
+                options: [
+                    "Um erro de digitação em um programa.",
+                    "Quando a saída de um processo depende da sequência de eventos incontroláveis.",
+                    "Um problema de velocidade em jogos online.",
+                    "Um tipo de ataque cibernético."
+                ],
+                answer: "Quando a saída de um processo depende da sequência de eventos incontroláveis."
+            },
+            {
+                question: "Cite um exemplo de mecanismo de Comunicação Interprocessos (IPC):",
+                options: [
+                    "Memória cache.",
+                    "Pipes.",
+                    "Placa de vídeo.",
+                    "Teclado."
+                ],
+                answer: "Pipes."
+            },
+            {
+                question: "Qual o objetivo principal do gerenciamento de recursos pelo SO?",
+                options: [
+                    "Limitar o acesso à internet.",
+                    "Garantir que os recursos (CPU, memória, arquivos) sejam usados de forma otimizada e sem conflitos.",
+                    "Desligar o computador automaticamente.",
+                    "Apenas formatar o disco rígido."
+                ],
+                answer: "Garantir que os recursos (CPU, memória, arquivos) sejam usados de forma otimizada e sem conflitos."
+            },
+            {
+                question: "O que é um 'deadlock'?",
+                options: [
+                    "Um tipo de vírus de computador.",
+                    "Quando dois ou mais processos ficam esperando indefinidamente por um recurso que está sendo segurado por outro processo.",
+                    "Um desligamento inesperado do sistema.",
+                    "Um problema de conexão de rede."
+                ],
+                answer: "Quando dois ou mais processos ficam esperando indefinidamente por um recurso que está sendo segurado por outro processo."
+            },
+            {
+                question: "A memória virtual utiliza qual parte do hardware para armazenar dados temporariamente?",
+                options: [
+                    "A CPU.",
+                    "O disco rígido (ou SSD).",
+                    "A placa de rede.",
+                    "O monitor."
+                ],
+                answer: "O disco rígido (ou SSD)."
+            },
+            {
+                question: "Qual a principal vantagem da paginação para a memória virtual?",
+                options: [
+                    "Eliminar a necessidade de memória RAM.",
+                    "Permitir o uso eficiente e flexível da memória física e virtual.",
+                    "Diminuir o tamanho dos arquivos.",
+                    "Aumentar a vida útil da bateria."
+                ],
+                answer: "Permitir o uso eficiente e flexível da memória física e virtual."
+            },
+            {
+                question: "Se um programa precisa de mais memória do que a RAM disponível, o que o sistema operacional faz com a ajuda da memória virtual?",
+                options: [
+                    "Mostra uma mensagem de erro e fecha o programa.",
+                    "Temporariamente move partes do programa menos usadas para o disco.",
+                    "Solicita ao usuário que instale mais RAM.",
+                    "Reduz a qualidade gráfica do programa."
+                ],
+                answer: "Temporariamente move partes do programa menos usadas para o disco."
+            },
+            {
+                question: "Qual o nome do software que gerencia a memória virtual e os processos?",
+                options: [
+                    "Aplicativo de escritório.",
+                    "Navegador web.",
+                    "Sistema Operacional.",
+                    "Antivírus."
+                ],
+                answer: "Sistema Operacional."
+            },
+            {
+                question: "A paginação torna o uso da memória transparente para o programador. Verdadeiro ou Falso?",
+                options: ["Verdadeiro", "Falso"],
+                answer: "Verdadeiro"
+            },
+            {
+                question: "O que aconteceria sem o isolamento de processos na memória?",
+                options: [
+                    "Todos os programas funcionariam mais rápido.",
+                    "Um programa poderia acidentalmente ou intencionalmente corromper os dados de outro.",
+                    "A internet ficaria mais lenta.",
+                    "Seria mais fácil instalar novos programas."
+                ],
+                answer: "Um programa poderia acidentalmente ou intencionalmente corromper os dados de outro."
+            },
+            {
+                question: "Qual o principal recurso que o agendamento de processos gerencia?",
+                options: [
+                    "Espaço em disco.",
+                    "Memória RAM.",
+                    "CPU (Unidade Central de Processamento).",
+                    "Dispositivos USB."
+                ],
+                answer: "CPU (Unidade Central de Processamento)."
+            },
+            {
+                question: "Mecanismos como pipes e sockets são usados para quê?",
+                options: [
+                    "Para conectar cabos de rede.",
+                    "Para a comunicação entre diferentes processos.",
+                    "Para ouvir música.",
+                    "Para imprimir documentos."
+                ],
+                answer: "Para a comunicação entre diferentes processos."
+            },
+            {
+                question: "O SO é responsável por detectar e lidar com quais tipos de problemas relacionados a processos?",
+                options: [
+                    "Apenas problemas de rede.",
+                    "Erros (ex: acesso a memória inválida) e deadlocks.",
+                    "Problemas de conexão de impressora.",
+                    "Apenas bugs de software de terceiros."
+                ],
+                answer: "Erros (ex: acesso a memória inválida) e deadlocks."
+            },
+            {
+                question: "A memória virtual ajuda a evitar o problema de 'fragmentação externa'. Verdadeiro ou Falso?",
+                options: ["Verdadeiro", "Falso"],
+                answer: "Verdadeiro"
+            },
+            {
+                question: "Qual das seguintes não é uma responsabilidade do SO no gerenciamento de processos?",
+                options: [
+                    "Criação de processos.",
+                    "Manutenção da bateria do notebook.",
+                    "Sincronização de processos.",
+                    "Gerenciamento de recursos."
+                ],
+                answer: "Manutenção da bateria do notebook."
+            },
+            {
+                question: "A paginação é a única técnica de gerenciamento de memória em sistemas operacionais modernos. Verdadeiro ou Falso?",
+                options: ["Verdadeiro", "Falso"],
+                answer: "Falso"
+            },
+            {
+                question: "A memória virtual permite que programas maiores que a RAM física sejam executados. Verdadeiro ou Falso?",
+                options: ["Verdadeiro", "Falso"],
+                answer: "Verdadeiro"
+            }
+        ];
+
+        let userName = "";
+        let userScore = 0;
+        let totalQuestions = questions.length;
+        let incorrectAnswersData = [];
+
+        function startQuiz() {
+            userName = document.getElementById('userName').value;
+            if (userName.trim() === "") {
+                alert("Por favor, digite seu nome para iniciar.");
+                return;
+            }
+
+            document.getElementById('introSection').style.display = 'none';
+            document.getElementById('quizSection').style.display = 'block';
+            document.getElementById('displayUserName').textContent = userName;
+            generateQuestions();
+        }
+
+        function generateQuestions() {
+            const quizForm = document.getElementById('quizForm');
+            quizForm.innerHTML = ''; // Limpa perguntas anteriores, se houver
+
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('question');
+                questionDiv.innerHTML = `<p>${index + 1}. ${q.question}</p>`;
+
+                // Embaralhar as opções para cada pergunta
+                const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+                shuffledOptions.forEach(option => {
+                    const label = document.createElement('label');
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = `question${index}`;
+                    input.value = option;
+                    label.appendChild(input);
+                    label.appendChild(document.createTextNode(option));
+                    questionDiv.appendChild(label);
+                });
+                quizForm.appendChild(questionDiv);
+            });
+            document.getElementById('totalQuestions').textContent = questions.length;
+        }
+
+        function submitQuiz() {
+            userScore = 0;
+            incorrectAnswersData = [];
+            const incorrectAnswersList = document.getElementById('incorrectAnswers').querySelector('ul');
+            incorrectAnswersList.innerHTML = ''; // Limpa resultados anteriores
+
+            questions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+                if (selectedOption && selectedOption.value === q.answer) {
+                    userScore++;
+                } else {
+                    const listItem = document.createElement('li');
+                    const userAnswer = selectedOption ? selectedOption.value : 'Nenhuma resposta';
+                    listItem.innerHTML = `
+                        <strong>Questão ${index + 1}:</strong> ${q.question}<br>
+                        Sua resposta: ${userAnswer}<br>
+                        <span class="correct-answer">Resposta correta: ${q.answer}</span>
+                    `;
+                    incorrectAnswersList.appendChild(listItem);
+                    incorrectAnswersData.push({
+                        question: q.question,
+                        userAnswer: userAnswer,
+                        correctAnswer: q.answer
+                    });
+                }
+            });
+
+            document.getElementById('quizSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('resultUserName').textContent = userName;
+            document.getElementById('score').textContent = userScore;
+
+            if (userScore === questions.length) {
+                document.getElementById('incorrectAnswers').style.display = 'none';
+            } else {
+                document.getElementById('incorrectAnswers').style.display = 'block';
+            }
+
+            drawChart();
+        }
+
+        function drawChart() {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            // Destrói o gráfico anterior se ele existir para evitar sobreposição
+            if (window.scoreChartInstance) {
+                window.scoreChartInstance.destroy();
+            }
+
+            window.scoreChartInstance = new Chart(ctx, {
+                type: 'doughnut', // Gráfico de rosca
+                data: {
+                    labels: ['Acertos', 'Erros'],
+                    datasets: [{
+                        data: [userScore, totalQuestions - userScore],
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.7)', // Verde para acertos
+                            'rgba(220, 53, 69, 0.7)'  // Vermelho para erros
+                        ],
+                        borderColor: [
+                            'rgba(40, 167, 69, 1)',
+                            'rgba(220, 53, 69, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Desempenho no Quiz'
+                        }
+                    }
+                }
+            });
+        }
+
+        async function exportToPdf() {
+            const doc = new jsPDF();
+            let yPos = 20;
+
+            doc.setFontSize(18);
+            doc.text(`Resultados do Quiz - ${userName}`, 105, yPos, { align: 'center' });
+            yPos += 20;
+
+            doc.setFontSize(12);
+            doc.text(`Total de Perguntas: ${totalQuestions}`, 20, yPos);
+            yPos += 10;
+            doc.text(`Acertos: ${userScore}`, 20, yPos);
+            yPos += 10;
+            doc.text(`Erros: ${totalQuestions - userScore}`, 20, yPos);
+            yPos += 20;
+
+            // Adicionar o gráfico
+            const chartCanvas = document.getElementById('scoreChart');
+            if (chartCanvas) {
+                const imgData = chartCanvas.toDataURL('image/png');
+                const imgWidth = 150; // Largura da imagem no PDF
+                const imgHeight = (chartCanvas.height * imgWidth) / chartCanvas.width; // Manter proporção
+                
+                // Centralizar imagem
+                const imgX = (doc.internal.pageSize.width - imgWidth) / 2;
+                doc.addImage(imgData, 'PNG', imgX, yPos, imgWidth, imgHeight);
+                yPos += imgHeight + 20;
+            }
+
+            // Adicionar as respostas incorretas, se houver
+            if (incorrectAnswersData.length > 0) {
+                doc.setFontSize(14);
+                doc.text('Respostas Incorretas:', 20, yPos);
+                yPos += 10;
+
+                doc.setFontSize(10);
+                incorrectAnswersData.forEach((data, index) => {
+                    const textLines = doc.splitTextToSize(`Questão ${index + 1}: ${data.question}\nSua resposta: ${data.userAnswer}\nResposta correta: ${data.correctAnswer}`, 170); // Largura máxima 170mm
+
+                    // Verificar se há espaço suficiente na página, senão adicionar nova página
+                    if (yPos + (textLines.length * 7) > doc.internal.pageSize.height - 20) { // 7 é uma estimativa da altura da linha
+                        doc.addPage();
+                        yPos = 20; // Resetar yPos para a nova página
+                    }
+
+                    doc.text(textLines, 25, yPos);
+                    yPos += (textLines.length * 7) + 5; // Adiciona espaço entre as perguntas
+                });
+            }
+
+            doc.save(`Quiz_SO_Resultado_${userName}.pdf`);
+        }
+    </script>
+</body>
+</html>
