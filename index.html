@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Prova Online</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f0f2f5;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    .btn {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: .6rem 1.2rem;
+      margin-top: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .btn:hover { background: #0056b3; }
+    input[type="text"] {
+      width: 100%;
+      padding: .5rem;
+      margin-top: .3rem;
+      box-sizing: border-box;
+    }
+    label { display: block; margin: .5rem 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="section active" id="sec-nome">
+      <h2>Bem-vindo!</h2>
+      <p>Digite seu nome:</p>
+      <input type="text" id="nome" placeholder="Seu nome">
+      <button class="btn" id="btn-start">Iniciar Prova</button>
+    </div>
+
+    <form id="form-prova">
+      <script>
+        const perguntas = [
+          "O sistema operacional é essencial para o funcionamento do computador.",
+          "Ctrl + C serve para deletar arquivos permanentemente.",
+          "A nuvem permite armazenar arquivos na internet.",
+          "Google Chrome é um sistema operacional.",
+          "Hardware é a parte física do computador."
+        ];
+
+        for (let i = 1; i <= 5; i++) {
+          document.write(`
+            <div class="section" id="sec-q${i}">
+              <h3>${i}. ${perguntas[i - 1]}</h3>
+              <label><input type="radio" name="q${i}" value="certo" required> Certo</label>
+              <label><input type="radio" name="q${i}" value="errado"> Errado</label>
+              ${i < 5
+                ? `<button type="button" class="btn" id="btn-next${i}">Próxima</button>`
+                : `<button type="submit" class="btn">Enviar Prova</button>`}
+            </div>
+          `);
+        }
+      </script>
+    </form>
+
+    <p id="mensagem" style="margin-top:1rem;"></p>
+  </div>
+
+  <script>
+    const nomeInp = document.getElementById('nome');
+    const btnStart = document.getElementById('btn-start');
+    const form = document.getElementById('form-prova');
+    const mensagem = document.getElementById('mensagem');
+    const segs = Array.from(document.querySelectorAll('.section'));
+
+    let current = 0;
+
+    function show(i) {
+      segs.forEach((s, idx) => s.classList.toggle('active', idx === i));
+      current = i;
+    }
+
+    btnStart.onclick = () => {
+      const nome = nomeInp.value.trim();
+      if (!nome) return alert('Insira seu nome');
+      form.append(Object.assign(document.createElement('input'), {
+        type: 'hidden',
+        name: 'nome',
+        value: nome
+      }));
+      show(1);
+    };
+
+    for (let i = 1; i <= 4; i++) {
+      setTimeout(() => {
+        const btn = document.getElementById(`btn-next${i}`);
+        if (btn) btn.onclick = () => show(i + 1);
+      }, 0);
+    }
+
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+
+      try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbzLgDZ0-L0S5aj5KkDbpdf-Fsd8WYqD_iXsdJpa7p5zXyNlYzecMhPVstyxcBF5kns5/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.text();
+        const json = JSON.parse(result);
+
+        mensagem.innerText = `Prova enviada! Acertos: ${json.acertos}, Erros: ${json.erros}`;
+        form.reset();
+        show(0);
+      } catch (err) {
+        console.error("Erro ao enviar:", err);
+        mensagem.innerText = "Erro ao enviar. Tente novamente.";
+      }
+    };
+  </script>
+</body>
+</html>
