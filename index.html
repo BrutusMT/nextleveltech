@@ -1,139 +1,1876 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Prova Online</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #f0f2f5;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 600px;
-    }
-    .section { display: none; }
-    .section.active { display: block; }
-    .btn {
-      background: #007bff;
-      color: #fff;
-      border: none;
-      padding: .6rem 1.2rem;
-      margin-top: 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    .btn:hover { background: #0056b3; }
-    input[type="text"] {
-      width: 100%;
-      padding: .5rem;
-      margin-top: .3rem;
-      box-sizing: border-box;
-    }
-    label { display: block; margin: .5rem 0; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Gado</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF and jspdf-autotable for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <!-- SheetJS (xlsx) for Excel export -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        /* Barra de rolagem personalizada para o corpo da tabela */
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Estilos de alerta */
+        .alert-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .alert-green { background-color: #10B981; } /* Verde Esmeralda */
+        .alert-orange { background-color: #F59E0B; } /* Laranja Âmbar */
+        .alert-red { background-color: #EF4444; }    /* Vermelho */
+
+        /* Ícone de informação para detalhes da vacina */
+        .info-icon {
+            cursor: pointer;
+            color: #3B82F6; /* Azul-600 */
+            margin-left: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+            vertical-align: middle;
+        }
+        .info-icon:hover {
+            color: #2563EB; /* Azul-700 */
+        }
+
+        /* Estilos específicos da barra lateral */
+        #sidebar {
+            width: 256px; /* w-64 */
+            min-height: 100vh; /* Altura total */
+        }
+        /* Para telas pequenas, a barra lateral está oculta por padrão e desliza para dentro */
+        @media (max-width: 1023px) { /* breakpoint lg */
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        /* Estilo para centralizar o gráfico */
+        #chartsSection .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Defina uma altura mínima para o contêiner para garantir que o gráfico seja visível */
+            min-height: 620px; /* Um pouco mais do que a altura do canvas para padding/margin */
+        }
+    </style>
 </head>
-<body>
-  <div class="container">
-    <div class="section active" id="sec-nome">
-      <h2>Bem-vindo!</h2>
-      <p>Digite seu nome:</p>
-      <input type="text" id="nome" placeholder="Seu nome">
-      <button class="btn" id="btn-start">Iniciar Prova</button>
+<body class="p-4 sm:p-6 md:p-8 flex flex-col lg:flex-row min-h-screen bg-gray-100">
+    <!-- Barra Lateral -->
+    <aside id="sidebar" class="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-200 ease-in-out z-50 rounded-lg shadow-lg lg:rounded-none lg:shadow-none">
+        <div class="flex items-center justify-between px-4 mb-6">
+            <h2 class="text-2xl font-semibold text-white">Menu</h2>
+            <button id="closeSidebarBtn" class="lg:hidden text-white text-3xl focus:outline-none">
+                &times;
+            </button>
+        </div>
+        <nav>
+            <a href="#" id="menuDashboard" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 active:bg-gray-700 current-menu-item">📋 Dashboard</a>
+            <a href="#" id="menuAddCalf" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">➕ Adicionar Bezerro</a>
+            <a href="#" id="menuManageVaccines" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">💉 Gerenciar Vacinas</a>
+            <a href="#" id="menuCharts" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">📊 Gráficos</a>
+            <a href="#" id="menuReports" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">📜 Relatórios de Atividades</a>
+            <a href="#" id="menuProfitLoss" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">📈 Lucros e Despesas</a>
+            <a href="#" id="menuPasture" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700">🌿 Rotação de Pastagem</a>
+            <button id="logoutBtn" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 w-full text-left mt-8">➡️ Sair</button>
+        </nav>
+    </aside>
+
+    <!-- Área de Conteúdo Principal -->
+    <div class="flex-1 overflow-y-auto p-4 lg:p-6 bg-white shadow-xl rounded-lg lg:ml-6 lg:rounded-l-none">
+        <button id="openSidebarBtn" class="lg:hidden p-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none mb-4">
+            ☰ Menu
+        </button>
+        <header class="bg-gradient-to-r from-green-500 to-blue-500 p-6 text-white text-center rounded-lg mb-6 flex flex-col sm:flex-row justify-between items-center relative">
+            <h1 class="text-3xl font-bold mb-2 sm:mb-0">Gerenciador de Gado</h1>
+            <p class="text-lg mb-4 sm:mb-0">Acompanhamento de Bezerros, Idade e Vacinação</p>
+            <!-- Weather Display -->
+            <div id="weatherDisplay" class="absolute top-2 right-2 bg-white bg-opacity-20 rounded-lg px-3 py-1 text-sm flex items-center shadow-md">
+                <span id="weatherIcon" class="mr-1 text-lg">☀️</span>
+                <span id="weatherTemp" class="font-bold mr-1">28°C</span>
+                <span id="weatherCity">Brasília</span>
+            </div>
+        </header>
+
+        <!-- Seção de Login/Registro -->
+        <!-- Esta seção está ativa por padrão e é usada para simular o login sem Firebase -->
+        <section id="authSection" class="content-section active">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-xl mt-10">
+                <h2 class="text-2xl font-bold text-center text-gray-800 mb-6" id="authTitle">Login Simulado (Apenas Localhost)</h2>
+                <p class="text-center text-sm text-gray-600 mb-4">
+                    Nesta versão, os dados são salvos localmente no seu navegador.
+                    Clique em "Login" para aceder à aplicação e testar.
+                </p>
+                <form id="authForm" class="space-y-4">
+                    <div>
+                        <label for="authEmail" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="authEmail" value="usuario@exemplo.com"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" readonly>
+                    </div>
+                    <div>
+                        <label for="authPassword" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="authPassword" value="123456"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" readonly>
+                    </div>
+                    <p class="text-sm text-red-500 hidden" id="authErrorMsg"></p>
+                    <button type="submit" id="authSubmitBtn"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Login
+                    </button>
+                    <p class="text-center text-sm mt-4">
+                        Não tem uma conta? <button type="button" id="toggleAuthMode" class="text-indigo-600 hover:text-indigo-800 font-medium" disabled>Registar (Desativado)</button>
+                    </p>
+                    <p class="text-center text-xs text-red-500 mt-2">
+                        AVISO: Os dados são salvos localmente no seu navegador, mas não em uma base de dados na nuvem.
+                        Não serão sincronizados entre dispositivos e serão perdidos se limpar os dados do navegador.
+                    </p>
+                </form>
+            </div>
+        </section>
+
+
+        <!-- Dashboard/Cattle List Section -->
+        <section id="dashboardSection" class="content-section hidden">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-4">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gado no Pasto</h2>
+                <div class="flex flex-wrap justify-end mb-4 gap-2">
+                    <button id="exportCattlePdfBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        📄 Exportar PDF
+                    </button>
+                    <button id="exportCattleExcelBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        📊 Exportar Excel
+                    </button>
+                    <button id="exportCattleCsvBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        💾 Exportar CSV
+                    </button>
+                     <button id="exportCattleJsonBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        📁 Exportar JSON
+                    </button>
+                    <button id="sellCattleBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        💲 Vender Gado
+                    </button>
+                </div>
+                <div class="overflow-x-auto table-container" style="max-height: 500px;">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Nome</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Nascimento</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Idade</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sexo</th> <!-- Nova coluna para sexo -->
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vacinas</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Vacinação</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cattleList" class="bg-white divide-y divide-gray-200">
+                            <!-- Os dados do gado serão carregados aqui -->
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">A carregar dados...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Calf Section (initially hidden, shown via menu) -->
+        <section id="addCalfSection" class="content-section hidden">
+            <div class="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-4">Adicionar Novo Bezerro</h2>
+                <form id="calfForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="calfName" class="block text-sm font-medium text-gray-700 mb-1">Nome/Identificador do Bezerro</label>
+                        <input type="text" id="calfName" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="birthDate" class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                        <input type="date" id="birthDate" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                        <div class="mt-1 flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="sex" value="Macho" class="form-radio text-blue-600" required>
+                                <span class="ml-2 text-gray-700">Macho ♂️</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="sex" value="Fêmea" class="form-radio text-pink-600" required>
+                                <span class="ml-2 text-gray-700">Fêmea ♀️</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- Novos campos de custo -->
+                    <div>
+                        <label for="vaccinationCost" class="block text-sm font-medium text-gray-700 mb-1">Custo de Vacinação (R$)</label>
+                        <input type="number" id="vaccinationCost" min="0" step="0.01" value="0"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="feedCost" class="block text-sm font-medium text-gray-700 mb-1">Custo de Ração (R$)</label>
+                        <input type="number" id="feedCost" min="0" step="0.01" value="0"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="laborCost" class="block text-sm font-medium text-gray-700 mb-1">Custo de Mão de Obra (R$)</label>
+                        <input type="number" id="laborCost" min="0" step="0.01" value="0"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Adicionar Bezerro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Manage Vaccines Section (initially hidden, shown via menu) -->
+        <section id="manageVaccinesSection" class="content-section hidden">
+            <div class="mb-8 p-4 bg-purple-50 border border-purple-200 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-semibold text-purple-700 mb-4">Gerenciar Vacinações</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label for="calfSelectVaccine" class="block text-sm font-medium text-gray-700 mb-1">Selecionar Bezerro</label>
+                        <select id="calfSelectVaccine" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                            <option value="">Selecione um bezerro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="vaccineSelect" class="block text-sm font-medium text-gray-700 mb-1">Nome da Vacina</label>
+                        <select id="vaccineSelect" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                            <option value="">Selecione uma vacina</option>
+                            <!-- As opções serão populadas pelo JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="vaccineDate" class="block text-sm font-medium text-gray-700 mb-1">Data da Vacina</label>
+                        <input type="date" id="vaccineDate" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                    </div>
+                </div>
+                <div id="vaccinePeriodInfo" class="text-sm text-gray-600 mt-2 mb-4"></div>
+                <div class="flex justify-end">
+                    <button id="addVaccineBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        Adicionar Vacina
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section (initially hidden, shown via menu) -->
+        <section id="chartsSection" class="content-section hidden">
+            <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Gráficos de Gado</h2>
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Distribuição por Sexo</h3>
+                <div class="chart-container">
+                    <canvas id="cattleChart" width="850" height="600"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reportsSection" class="content-section hidden">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-4">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Relatórios de Atividades</h2>
+                <div class="flex justify-end mb-4 space-x-2">
+                    <button id="exportReportsPdfBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        📄 Exportar PDF
+                    </button>
+                    <button id="exportReportsExcelBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        📊 Exportar Excel
+                    </button>
+                </div>
+                <div class="overflow-x-auto table-container" style="max-height: 500px;">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Data/Hora</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ação</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bezerro</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityReportsList" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Nenhum relatório de atividade disponível (funcionalidade desativada em modo de teste).</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profit and Loss Report Section -->
+        <section id="profitLossSection" class="content-section hidden">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-4">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Relatório de Lucros e Despesas</h2>
+                <div class="flex justify-end mb-4 space-x-2">
+                    <button id="exportProfitLossPdfBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        📄 Exportar PDF
+                    </button>
+                    <button id="exportProfitLossExcelBtn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        📊 Exportar Excel
+                    </button>
+                </div>
+                <div class="overflow-x-auto table-container" style="max-height: 500px;">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100 sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Nome Bezerro</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Venda (R$)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Custo Vacinação (R$)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Custo Ração (R$)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Custo Mão de Obra (R$)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Custo Total (R$)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">Lucro/Prejuízo (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profitLossList" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">A carregar dados...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pasture Rotation Section -->
+        <section id="pastureSection" class="content-section hidden">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-4">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Rotação de Pastagem</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-lg text-gray-800">Última Rotação Registrada:</p>
+                        <p id="lastRotationDateDisplay" class="text-xl font-bold text-gray-600">N/A</p>
+                    </div>
+                    <div>
+                        <p class="text-lg text-gray-800">Próxima Rotação Recomendada:</p>
+                        <p id="nextRotationDateDisplay" class="text-xl font-bold text-green-600">N/A</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <label for="rotationDateInput" class="block text-sm font-medium text-gray-700 mb-1">Registrar Nova Rotação (Data)</label>
+                    <input type="date" id="rotationDateInput" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <button id="recordRotationBtn"
+                            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Salvar Rotação
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mt-4">
+                    Intervalo de rotação configurado: <span id="rotationIntervalDisplay">14 dias</span>.
+                </p>
+            </div>
+        </section>
+
     </div>
 
-    <form id="form-prova">
-      <script>
-        const perguntas = [
-          "O sistema operacional é essencial para o funcionamento do computador.",
-          "Ctrl + C serve para deletar arquivos permanentemente.",
-          "A nuvem permite armazenar arquivos na internet.",
-          "Google Chrome é um sistema operacional.",
-          "Hardware é a parte física do computador."
+    <!-- Modal para editar bezerro -->
+    <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Editar Bezerro</h3>
+            <form id="editCalfForm">
+                <input type="hidden" id="editCalfId">
+                <div class="mb-4">
+                    <label for="editCalfName" class="block text-sm font-medium text-gray-700 mb-1">Nome/Identificador</label>
+                    <input type="text" id="editCalfName" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div class="mb-4">
+                    <label for="editBirthDate" class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                    <input type="date" id="editBirthDate" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                 <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                    <div class="mt-1 flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="editSex" value="Macho" class="form-radio text-blue-600" id="editSexMacho" required>
+                            <span class="ml-2 text-gray-700">Macho ♂️</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="editSex" value="Fêmea" class="form-radio text-pink-600" id="editSexFemea" required>
+                            <span class="ml-2 text-gray-700">Fêmea ♀️</span>
+                        </label>
+                    </div>
+                </div>
+                <!-- Novos campos de custo no modal de edição -->
+                <div class="mb-4">
+                    <label for="editVaccinationCost" class="block text-sm font-medium text-gray-700 mb-1">Custo de Vacinação (R$)</label>
+                    <input type="number" id="editVaccinationCost" min="0" step="0.01" value="0"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div class="mb-4">
+                    <label for="editFeedCost" class="block text-sm font-medium text-gray-700 mb-1">Custo de Ração (R$)</label>
+                    <input type="number" id="editFeedCost" min="0" step="0.01" value="0"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div class="mb-4">
+                    <label for="editLaborCost" class="block text-sm font-medium text-gray-700 mb-1">Custo de Mão de Obra (R$)</label>
+                    <input type="number" id="editLaborCost" min="0" step="0.01" value="0"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancelEditBtn"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Guardar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para detalhes da vacinação -->
+    <div id="vaccineDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Detalhes das Vacinas</h3>
+            <p id="vaccineDetailCalfName" class="text-lg font-semibold mb-4"></p>
+            <ul id="vaccineDetailList" class="list-disc pl-5 mb-4">
+                <!-- Os detalhes da vacina serão carregados aqui -->
+            </ul>
+            <div class="flex justify-end">
+                <button type="button" id="closeVaccineDetailBtn"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para informações da vacina -->
+    <div id="vaccineInfoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 id="vaccineInfoTitle" class="text-xl font-bold mb-4">Informações da Vacina</h3>
+            <p id="vaccineInfoDescription" class="text-gray-700 mb-4"></p>
+            <p id="vaccineInfoPeriod" class="text-gray-600 text-sm italic"></p>
+            <div class="flex justify-end">
+                <button type="button" id="closeVaccineInfoBtn"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para vender bezerro -->
+    <div id="sellCalfModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Vender Bezerro</h3>
+            <form id="sellCalfForm">
+                <div class="mb-4">
+                    <label for="sellCalfSelect" class="block text-sm font-medium text-gray-700 mb-1">Selecionar Bezerro para Vender</label>
+                    <select id="sellCalfSelect" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                        <option value="">Selecione um bezerro</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="saleDate" class="block text-sm font-medium text-gray-700 mb-1">Data da Venda</label>
+                    <input type="date" id="saleDate" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                </div>
+                <!-- Novo campo para valor da venda -->
+                <div class="mb-4">
+                    <label for="saleValue" class="block text-sm font-medium text-gray-700 mb-1">Valor da Venda (R$)</label>
+                    <input type="number" id="saleValue" min="0" step="0.01" placeholder="Opcional"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancelSellBtn"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Confirmar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (v9 compat) -->
+    <script type="module">
+        // IMPORTANTE: Este código foi modificado para usar o localStorage para persistência de dados.
+        // Os dados são salvos localmente no seu navegador e não são sincronizados na nuvem.
+
+        // Simulação de variáveis globais do Canvas (não utilizadas, mas mantidas para compatibilidade)
+        const appId = 'local-test-app';
+        const firebaseConfig = {};
+        const initialAuthToken = null;
+
+        let app = null; // Não usado
+        let db = null;  // Não usado
+        let auth = { currentUser: { uid: 'test-user', email: 'teste@exemplo.com' } }; // Simula um utilizador autenticado
+        let userId = auth.currentUser.uid;
+
+        // Chaves para o localStorage
+        const LOCAL_STORAGE_CALVES_KEY = 'cattleManager_calves';
+        const LOCAL_STORAGE_LOGS_KEY = 'cattleManager_logs';
+        const LOCAL_STORAGE_PASTURE_KEY = 'cattleManager_pasture';
+
+        // Simula coleções de dados em memória
+        window.allCalvesData = []; 
+        let calvesCollectionData = [];
+        let editLogsCollectionData = [];
+
+        window.chartInstance = null; // Para manter a instância do Chart.js
+
+        // Variável global para dados de rotação de pastagem (simulada)
+        window.pastureRotationData = {
+            lastRotationDate: null, // Pode ser uma string 'YYYY-MM-DD'
+            rotationIntervalDays: 14 // Intervalo padrão de 14 dias
+        };
+
+        /**
+         * Salva todos os dados em memória no localStorage.
+         */
+        function saveDataToLocalStorage() {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_CALVES_KEY, JSON.stringify(calvesCollectionData));
+                // Convert Date objects in editLogsCollectionData to ISO strings for storage
+                const serializableLogs = editLogsCollectionData.map(log => ({
+                    ...log,
+                    timestamp: log.timestamp instanceof Date ? log.timestamp.toISOString() : log.timestamp
+                }));
+                localStorage.setItem(LOCAL_STORAGE_LOGS_KEY, JSON.stringify(serializableLogs));
+                localStorage.setItem(LOCAL_STORAGE_PASTURE_KEY, JSON.stringify(window.pastureRotationData));
+                console.log("Dados salvos no localStorage.");
+            } catch (e) {
+                console.error("Erro ao salvar dados no localStorage:", e);
+                alert("Erro ao salvar dados localmente. Por favor, verifique o espaço de armazenamento do seu navegador.");
+            }
+        }
+
+        /**
+         * Carrega todos os dados do localStorage para a memória.
+         */
+        function loadDataFromLocalStorage() {
+            try {
+                const storedCalves = localStorage.getItem(LOCAL_STORAGE_CALVES_KEY);
+                if (storedCalves) {
+                    calvesCollectionData = JSON.parse(storedCalves);
+                }
+
+                const storedLogs = localStorage.getItem(LOCAL_STORAGE_LOGS_KEY);
+                if (storedLogs) {
+                    // Convert timestamp ISO strings back to Date objects
+                    editLogsCollectionData = JSON.parse(storedLogs).map(log => ({
+                        ...log,
+                        timestamp: log.timestamp ? new Date(log.timestamp) : null
+                    }));
+                }
+
+                const storedPasture = localStorage.getItem(LOCAL_STORAGE_PASTURE_KEY);
+                if (storedPasture) {
+                    window.pastureRotationData = JSON.parse(storedPasture);
+                }
+                console.log("Dados carregados do localStorage.");
+            } catch (e) {
+                console.error("Erro ao carregar dados do localStorage:", e);
+                alert("Erro ao carregar dados localmente. Os dados podem estar corrompidos ou o navegador não suporta localStorage.");
+            }
+        }
+
+
+        // Simula a referência da coleção de bezerros (agora com localStorage)
+        let calvesCollectionRef = {
+            addDoc: async (data) => {
+                const newId = `calf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                const newCalf = { id: newId, ...data };
+                calvesCollectionData.push(newCalf);
+                sortCalves();
+                saveDataToLocalStorage(); // Salva após adicionar
+                await new Promise(resolve => setTimeout(resolve, 100)); // Simular atraso
+                return { id: newId };
+            },
+            updateDoc: async (id, data) => {
+                const index = calvesCollectionData.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    calvesCollectionData[index] = { ...calvesCollectionData[index], ...data };
+                    sortCalves();
+                    saveDataToLocalStorage(); // Salva após atualizar
+                }
+                await new Promise(resolve => setTimeout(resolve, 100)); // Simular atraso
+            },
+            deleteDoc: async (id) => {
+                calvesCollectionData = calvesCollectionData.filter(c => c.id !== id);
+                sortCalves();
+                saveDataToLocalStorage(); // Salva após deletar
+                await new Promise(resolve => setTimeout(resolve, 100)); // Simular atraso
+            },
+            getDoc: async (id) => {
+                const calf = calvesCollectionData.find(c => c.id === id);
+                await new Promise(resolve => setTimeout(resolve, 100)); // Simular atraso
+                return {
+                    data: () => calf,
+                    exists: () => !!calf
+                };
+            }
+        };
+
+        // Simula a referência da coleção de logs de edição (agora com localStorage)
+        let editLogsCollectionRef = {
+            addDoc: async (data) => {
+                const newId = `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                const newLog = { id: newId, ...data };
+                editLogsCollectionData.push(newLog);
+                sortEditLogs();
+                saveDataToLocalStorage(); // Salva após adicionar log
+                await new Promise(resolve => setTimeout(resolve, 100)); // Simular atraso
+                return { id: newId };
+            }
+        };
+
+        // Simula serverTimestamp (apenas retorna new Date() para compatibilidade)
+        const serverTimestamp = () => new Date();
+
+        function sortCalves() {
+            calvesCollectionData.sort((a, b) => a.name.localeCompare(b.name));
+            renderCattleList(calvesCollectionData);
+            renderProfitLossReport();
+        }
+
+        function sortEditLogs() {
+            editLogsCollectionData.sort((a, b) => (b.timestamp ? b.timestamp.getTime() : 0) - (a.timestamp ? a.timestamp.getTime() : 0));
+            renderActivityReports(editLogsCollectionData);
+        }
+
+        const VACCINES_DATA = [
+            { name: 'Febre Aftosa', periodMonths: 6, description: 'Protege contra a Febre Aftosa, doença viral altamente contagiosa que afeta bovinos, suínos e outros animais de casco fendido. A vacinação é crucial para controlo e erradicação.' },
+            { name: 'Raiva', periodMonths: 12, description: 'Vacina essencial para prevenir a raiva, uma zoonose fatal transmitida por mordidas de animais infetados. É de extrema importância para a saúde pública e animal.' },
+            { name: 'Brucelose', periodMonths: 120, description: 'Vacina para controlo da brucelose (Cepa B19 para fêmeas de 3 a 8 meses), uma doença bacteriana que causa abortos e infertilidade. A vacinação ajuda a reduzir a disseminação.' },
+            { name: 'Clostridiose', periodMonths: 12, description: 'Protege contra diversas doenças causadas por bactérias do género Clostridium, como carbúnculo sintomático (Manqueira), gangrena gasosa e enterotoxemias. A revacinação anual é geralmente recomendada.' },
+            { name: 'Leptospirose', periodMonths: 6, description: 'Previne a leptospirose, uma doença bacteriana que afeta o sistema reprodutivo e pode causar abortos, infertilidade e falha reprodutiva em bovinos. Também é uma zoonose.' },
+            { name: 'Botulismo', periodMonths: 12, description: 'Protege contra o botulismo, uma intoxicação grave causada por toxinas bacterianas. A vacinação é importante em áreas de risco onde a deficiência de fósforo é comum.' }
         ];
 
-        for (let i = 1; i <= 5; i++) {
-          document.write(`
-            <div class="section" id="sec-q${i}">
-              <h3>${i}. ${perguntas[i - 1]}</h3>
-              <label><input type="radio" name="q${i}" value="certo" required> Certo</label>
-              <label><input type="radio" name="q${i}" value="errado"> Errado</label>
-              ${i < 5
-                ? `<button type="button" class="btn" id="btn-next${i}">Próxima</button>`
-                : `<button type="submit" class="btn">Enviar Prova</button>`}
-            </div>
-          `);
+        function showAuthError(message) {
+            const errorElement = document.getElementById('authErrorMsg');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
         }
-      </script>
-    </form>
 
-    <p id="mensagem" style="margin-top:1rem;"></p>
-  </div>
+        function hideAuthError() {
+            document.getElementById('authErrorMsg').classList.add('hidden');
+        }
 
-  <script>
-    const nomeInp = document.getElementById('nome');
-    const btnStart = document.getElementById('btn-start');
-    const form = document.getElementById('form-prova');
-    const mensagem = document.getElementById('mensagem');
-    const segs = Array.from(document.querySelectorAll('.section'));
-
-    let current = 0;
-
-    function show(i) {
-      segs.forEach((s, idx) => s.classList.toggle('active', idx === i));
-      current = i;
-    }
-
-    btnStart.onclick = () => {
-      const nome = nomeInp.value.trim();
-      if (!nome) return alert('Insira seu nome');
-      form.append(Object.assign(document.createElement('input'), {
-        type: 'hidden',
-        name: 'nome',
-        value: nome
-      }));
-      show(1);
-    };
-
-    for (let i = 1; i <= 4; i++) {
-      setTimeout(() => {
-        const btn = document.getElementById(`btn-next${i}`);
-        if (btn) btn.onclick = () => show(i + 1);
-      }, 0);
-    }
-
-    form.onsubmit = async e => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(form));
-
-      try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbzLgDZ0-L0S5aj5KkDbpdf-Fsd8WYqD_iXsdJpa7p5zXyNlYzecMhPVstyxcBF5kns5/exec', {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(data)
+        document.getElementById('toggleAuthMode').addEventListener('click', () => {
+            alert("O registo de utilizadores está desativado na versão de teste local.");
         });
 
-        const result = await response.text();
-        const json = JSON.parse(result);
+        document.getElementById('authForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            hideAuthError();
+            console.log("Login simulado bem-sucedido!");
+            
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('active');
 
-        mensagem.innerText = `Prova enviada! Acertos: ${json.acertos}, Erros: ${json.erros}`;
-        form.reset();
-        show(0);
-      } catch (err) {
-        console.error("Erro ao enviar:", err);
-        mensagem.innerText = "Erro ao enviar. Tente novamente.";
-      }
-    };
-  </script>
+            populateVaccineSelect();
+            setupRealtimeListener();
+            setupEditLogsListener();
+            updateUserIdDisplay();
+            updateWeatherDisplay();
+            renderPastureRotationStatus();
+            document.querySelectorAll('#sidebar nav a, #logoutBtn').forEach(el => el.classList.remove('hidden'));
+        });
+
+        async function initializeAppWithoutFirebase() {
+            console.log("A iniciar a aplicação em modo de teste local (com localStorage).");
+            loadDataFromLocalStorage(); // Carrega os dados salvos
+
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('active');
+
+            populateVaccineSelect();
+            setupRealtimeListener();
+            setupEditLogsListener();
+            updateUserIdDisplay();
+            updateWeatherDisplay();
+            renderPastureRotationStatus();
+            document.querySelectorAll('#sidebar nav a, #logoutBtn').forEach(el => el.classList.remove('hidden'));
+        }
+
+        async function logEditAction(actionType, calfId, calfName, details) {
+            const newLog = {
+                id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                timestamp: new Date(),
+                userId: auth.currentUser.email,
+                actionType: actionType,
+                calfId: calfId,
+                calfName: calfName,
+                details: details
+            };
+            editLogsCollectionData.push(newLog);
+            sortEditLogs();
+            saveDataToLocalStorage(); // Salva os logs após a adição
+            console.log(`Ação registrada: ${actionType} para ${calfName}.`);
+        }
+
+        function populateVaccineSelect() {
+            const vaccineSelectElement = document.getElementById('vaccineSelect');
+            vaccineSelectElement.innerHTML = '<option value="">Selecione uma vacina</option>';
+
+            VACCINES_DATA.forEach(vaccine => {
+                const option = document.createElement('option');
+                option.value = vaccine.name;
+                option.textContent = vaccine.name;
+                vaccineSelectElement.appendChild(option);
+            });
+        }
+
+        document.getElementById('vaccineSelect').addEventListener('change', (event) => {
+            const selectedVaccineName = event.target.value;
+            const vaccineInfoElement = document.getElementById('vaccinePeriodInfo');
+            if (selectedVaccineName) {
+                const vaccine = VACCINES_DATA.find(v => v.name === selectedVaccineName);
+                if (vaccine) {
+                    vaccineInfoElement.textContent = `Período recomendado: ${vaccine.periodMonths} meses`;
+                } else {
+                    vaccineInfoElement.textContent = 'Período recomendado: Desconhecido';
+                }
+            } else {
+                vaccineInfoElement.textContent = '';
+            }
+        });
+
+        function updateUserIdDisplay() {
+            const userIdDisplay = document.createElement('p');
+            userIdDisplay.className = 'text-sm text-gray-500 mt-4 text-center';
+            userIdDisplay.textContent = `O seu ID de Utilizador: ${auth.currentUser.email} (Dados salvos localmente)`;
+            const existingDisplay = document.querySelector('.flex-1 > p.text-sm.text-gray-500');
+            if (existingDisplay) {
+                existingDisplay.remove();
+            }
+            document.querySelector('.flex-1').appendChild(userIdDisplay);
+        }
+
+        function calculateAge(birthDateStr) {
+            const birthDate = new Date(birthDateStr);
+            const today = new Date();
+
+            let years = today.getFullYear() - birthDate.getFullYear();
+            let months = today.getMonth() - birthDate.getMonth();
+            let days = today.getDate() - birthDate.getDate();
+
+            if (days < 0) {
+                months--;
+                days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+            }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            let ageString = "";
+            if (years > 0) ageString += `${years} ano${years > 1 ? 's' : ''} `;
+            if (months > 0) ageString += `${months} mês${months > 1 ? 'es' : ''} `;
+            if (days > 0 || ageString === "") ageString += `${days} dia${days > 1 || ageString === "" ? 's' : ''}`;
+
+            return ageString.trim();
+        }
+
+        function getVaccineInfo(vaccineName) {
+            return VACCINES_DATA.find(v => v.name === vaccineName) || null;
+        }
+
+        function getSingleVaccineStatus(vaccineRecord) {
+            const vaccineInfo = getVaccineInfo(vaccineRecord.vaccineName);
+            const periodMonths = vaccineInfo ? vaccineInfo.periodMonths : 12;
+
+            const vaccineDate = new Date(vaccineRecord.vaccineDate);
+            const today = new Date();
+            const diffTime = today.getTime() - vaccineDate.getTime();
+            const monthsSinceVaccine = diffTime / (1000 * 60 * 60 * 24 * 30.44);
+
+            if (monthsSinceVaccine <= periodMonths * 0.75) {
+                return { status: 'No Prazo', class: 'text-green-600' };
+            } else if (monthsSinceVaccine > periodMonths * 0.75 && monthsSinceVaccine <= periodMonths) {
+                return { status: 'A Vencer', class: 'text-orange-600' };
+            } else {
+                return { status: 'Vencida', class: 'text-red-600' };
+            }
+        }
+
+        function getOverallVaccinationStatus(vaccinations) {
+            if (!vaccinations || vaccinations.length === 0) {
+                return { status: 'Vencido', class: 'alert-red' };
+            }
+
+            let overallStatus = 'No Prazo';
+
+            for (const vaccineRecord of vaccinations) {
+                const singleStatus = getSingleVaccineStatus(vaccineRecord);
+
+                if (singleStatus.status === 'Vencida') {
+                    overallStatus = 'Vencido';
+                    break;
+                } else if (singleStatus.status === 'A Vencer' && overallStatus !== 'Vencido') {
+                    overallStatus = 'Atenção';
+                }
+            }
+
+            let overallClass = '';
+            if (overallStatus === 'No Prazo') overallClass = 'alert-green';
+            else if (overallStatus === 'Atenção') overallClass = 'alert-orange';
+            else overallClass = 'alert-red';
+
+            return { status: overallStatus, class: overallClass };
+        }
+
+        function renderCattleList(calves) {
+            const cattleListElement = document.getElementById('cattleList');
+            cattleListElement.innerHTML = '';
+            const calfSelectVaccine = document.getElementById('calfSelectVaccine');
+            const sellCalfSelect = document.getElementById('sellCalfSelect');
+
+            calfSelectVaccine.innerHTML = '<option value="">Selecione um bezerro</option>';
+            sellCalfSelect.innerHTML = '<option value="">Selecione um bezerro</option>';
+
+            const unsoldCalves = calves.filter(calf => !calf.sold);
+            window.allCalvesData = [...calves];
+
+            if (unsoldCalves.length === 0) {
+                cattleListElement.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Nenhum bezerro no pasto (ou todos vendidos).</td>
+                    </tr>
+                `;
+            }
+
+            unsoldCalves.forEach(calf => {
+                const age = calculateAge(calf.birthDate);
+                const vacStatus = getOverallVaccinationStatus(calf.vaccinations);
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${calf.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${calf.birthDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${age}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${calf.sex || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${calf.vaccinations && calf.vaccinations.length > 0 ?
+                            `<button class="text-blue-600 hover:text-blue-900 font-medium" data-id="${calf.id}" data-name="${calf.name}">Ver Vacinas</button>` :
+                            'Nenhuma'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="alert-dot ${vacStatus.class}"></span>${vacStatus.status}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-2 edit-btn" data-id="${calf.id}" data-name="${calf.name}" data-birthdate="${calf.birthDate}" data-sex="${calf.sex || ''}" data-vaccinationcost="${calf.vaccinationCost || 0}" data-feedcost="${calf.feedCost || 0}" data-laborcost="${calf.laborCost || 0}">Editar</button>
+                        <button class="text-red-600 hover:text-red-900 delete-btn" data-id="${calf.id}">Excluir</button>
+                    </td>
+                `;
+                cattleListElement.appendChild(row);
+
+                let optionVaccine = document.createElement('option');
+                optionVaccine.value = calf.id;
+                optionVaccine.textContent = calf.name;
+                calfSelectVaccine.appendChild(optionVaccine);
+
+                let optionSell = document.createElement('option');
+                optionSell.value = calf.id;
+                optionSell.textContent = calf.name;
+                sellCalfSelect.appendChild(optionSell);
+            });
+
+            document.querySelectorAll('button[data-id][data-name]:not(.edit-btn):not(.delete-btn)').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const calfId = event.target.dataset.id;
+                    const calfName = event.target.dataset.name;
+                    const calf = window.allCalvesData.find(c => c.id === calfId); 
+                    if (calf) {
+                        showVaccineDetailModal(calfName, calf.vaccinations || []);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const id = event.target.dataset.id;
+                    const name = event.target.dataset.name;
+                    const birthDate = event.target.dataset.birthdate;
+                    const sex = event.target.dataset.sex;
+                    const vaccinationCost = parseFloat(event.target.dataset.vaccinationcost);
+                    const feedCost = parseFloat(event.target.dataset.feedcost);
+                    const laborCost = parseFloat(event.target.dataset.laborcost);
+
+                    showEditModal(id, name, birthDate, sex, vaccinationCost, feedCost, laborCost);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    const id = event.target.dataset.id;
+                    const calf = window.allCalvesData.find(c => c.id === id);
+                    if (calf) {
+                        await deleteCalf(id, calf.name);
+                    } else {
+                        await deleteCalf(id, 'Nome Desconhecido');
+                    }
+                });
+            });
+
+            if (document.getElementById('chartsSection').classList.contains('active')) {
+                renderCharts();
+            }
+        }
+
+        function setupRealtimeListener() {
+            renderCattleList(calvesCollectionData);
+            renderProfitLossReport();
+        }
+
+        function setupEditLogsListener() {
+            renderActivityReports(editLogsCollectionData);
+        }
+
+        function renderActivityReports(logs) {
+            const reportsListElement = document.getElementById('activityReportsList');
+            reportsListElement.innerHTML = '';
+
+            if (logs.length === 0) {
+                reportsListElement.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Nenhum relatório de atividade disponível.</td>
+                    </tr>
+                `;
+            }
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                const formattedTimestamp = log.timestamp.toLocaleString('pt-BR');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formattedTimestamp}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.actionType}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.calfName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.details || '-'}</td>
+                `;
+                reportsListElement.appendChild(row);
+            });
+        }
+
+        document.getElementById('calfForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const calfName = document.getElementById('calfName').value;
+            const birthDate = document.getElementById('birthDate').value;
+            const sexRadio = document.querySelector('input[name="sex"]:checked');
+            const vaccinationCost = parseFloat(document.getElementById('vaccinationCost').value) || 0;
+            const feedCost = parseFloat(document.getElementById('feedCost').value) || 0;
+            const laborCost = parseFloat(document.getElementById('laborCost').value) || 0;
+
+
+            if (!calfName || !birthDate || !sexRadio) {
+                alert("Por favor, preencha os campos obrigatórios: Nome, Data de Nascimento e Sexo.");
+                return;
+            }
+            const sex = sexRadio.value;
+
+            try {
+                const docRef = await calvesCollectionRef.addDoc({
+                    name: calfName,
+                    birthDate: birthDate,
+                    sex: sex,
+                    vaccinations: [],
+                    sold: false,
+                    saleDate: null,
+                    saleValue: null,
+                    vaccinationCost: vaccinationCost,
+                    feedCost: feedCost,
+                    laborCost: laborCost
+                });
+                await logEditAction('added', docRef.id, calfName, `Bezerro adicionado: Nome ${calfName}, Sexo ${sex}`);
+                document.getElementById('calfForm').reset();
+                document.getElementById('vaccinationCost').value = 0;
+                document.getElementById('feedCost').value = 0;
+                document.getElementById('laborCost').value = 0;
+                console.log("Bezerro adicionado com sucesso!");
+            }
+            catch (e) {
+                console.error("Erro ao adicionar bezerro: ", e);
+                alert("Erro ao adicionar bezerro: " + e.message);
+            }
+        });
+
+        async function deleteCalf(id, calfName) {
+            if (confirm(`Tem certeza de que deseja excluir o bezerro "${calfName}"?`)) {
+                try {
+                    await calvesCollectionRef.deleteDoc(id);
+                    await logEditAction('deleted', id, calfName, `Bezerro "${calfName}" excluído.`);
+                    console.log("Bezerro excluído com sucesso!");
+                } catch (e) {
+                    console.error("Erro ao excluir bezerro: ", e);
+                    alert("Erro ao excluir bezerro: " + e.message);
+                }
+            }
+        }
+
+        function showEditModal(id, name, birthDate, sex, vaccinationCost, feedCost, laborCost) {
+            document.getElementById('editCalfId').value = id;
+            document.getElementById('editCalfName').value = name;
+            document.getElementById('editBirthDate').value = birthDate;
+            if (sex) {
+                document.getElementById(`editSex${sex}`).checked = true;
+            } else {
+                document.getElementById('editSexMacho').checked = false;
+                document.getElementById('editSexFemea').checked = false;
+            }
+            document.getElementById('editVaccinationCost').value = vaccinationCost;
+            document.getElementById('editFeedCost').value = feedCost;
+            document.getElementById('editLaborCost').value = laborCost;
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function hideEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        document.getElementById('editCalfForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const id = document.getElementById('editCalfId').value;
+            const oldCalfData = window.allCalvesData.find(c => c.id === id); 
+            
+            const newName = document.getElementById('editCalfName').value;
+            const newBirthDate = document.getElementById('editBirthDate').value;
+            const newSexRadio = document.querySelector('input[name="editSex"]:checked');
+            const newVaccinationCost = parseFloat(document.getElementById('editVaccinationCost').value) || 0;
+            const newFeedCost = parseFloat(document.getElementById('editFeedCost').value) || 0;
+            const newLaborCost = parseFloat(document.getElementById('editLaborCost').value) || 0;
+
+            if (!newName || !newBirthDate || !newSexRadio) {
+                alert("Por favor, preencha os campos obrigatórios para atualizar: Nome, Data de Nascimento e Sexo.");
+                return;
+            }
+            const newSex = newSexRadio.value;
+
+            try {
+                await calvesCollectionRef.updateDoc(id, {
+                    name: newName,
+                    birthDate: newBirthDate,
+                    sex: newSex,
+                    vaccinationCost: newVaccinationCost,
+                    feedCost: newFeedCost,
+                    laborCost: newLaborCost
+                });
+
+                let details = [];
+                if (oldCalfData.name !== newName) details.push(`Nome de "${oldCalfData.name}" para "${newName}"`);
+                if (oldCalfData.birthDate !== newBirthDate) details.push(`Data de Nasc. de "${oldCalfData.birthDate}" para "${newBirthDate}"`);
+                if (oldCalfData.sex !== newSex) details.push(`Sexo de "${oldCalfData.sex}" para "${newSex}"`);
+                if (oldCalfData.vaccinationCost !== newVaccinationCost) details.push(`Custo Vacinação de R$${(oldCalfData.vaccinationCost || 0).toFixed(2)} para R$${newVaccinationCost.toFixed(2)}`);
+                if (oldCalfData.feedCost !== newFeedCost) details.push(`Custo Ração de R$${(oldCalfData.feedCost || 0).toFixed(2)} para R$${newFeedCost.toFixed(2)}`);
+                if (oldCalfData.laborCost !== newLaborCost) details.push(`Custo Mão de Obra de R$${(oldCalfData.laborCost || 0).toFixed(2)} para R$${newLaborCost.toFixed(2)}`);
+                
+                await logEditAction('edited', id, newName, details.join(', ') || 'Nenhum campo alterado');
+
+                hideEditModal();
+                console.log("Bezerro atualizado com sucesso!");
+            } catch (e) {
+                console.error("Erro ao atualizar bezerro: ", e);
+                alert("Erro ao atualizar bezerro: " + e.message);
+            }
+        });
+
+        document.getElementById('cancelEditBtn').addEventListener('click', hideEditModal);
+
+        document.getElementById('addVaccineBtn').addEventListener('click', async () => {
+            const calfId = document.getElementById('calfSelectVaccine').value;
+            const vaccineName = document.getElementById('vaccineSelect').value;
+            const vaccineDate = document.getElementById('vaccineDate').value;
+            const calf = window.allCalvesData.find(c => c.id === calfId); 
+
+            if (!calfId || !vaccineName || !vaccineDate) {
+                alert("Por favor, selecione um bezerro e preencha todos os campos da vacina.");
+                return;
+            }
+            if (!calf) {
+                alert("Bezerro não encontrado para adicionar vacina.");
+                return;
+            }
+
+            try {
+                const currentCalfData = await calvesCollectionRef.getDoc(calfId);
+                const updatedVaccinations = [...(currentCalfData.data().vaccinations || []), {
+                    vaccineName: vaccineName,
+                    vaccineDate: vaccineDate
+                }];
+
+                await calvesCollectionRef.updateDoc(calfId, {
+                    vaccinations: updatedVaccinations
+                });
+                await logEditAction('vaccinated', calfId, calf.name, `Vacina "${vaccineName}" adicionada em ${vaccineDate}.`);
+                document.getElementById('vaccineSelect').value = '';
+                document.getElementById('vaccineDate').value = '';
+                document.getElementById('calfSelectVaccine').value = '';
+                document.getElementById('vaccinePeriodInfo').textContent = '';
+                console.log("Vacina adicionada com sucesso!");
+            } catch (e) {
+                console.error("Erro ao adicionar vacina: ", e);
+                alert("Erro ao adicionar vacina: " + e.message);
+            }
+        });
+
+        function showVaccineDetailModal(calfName, vaccinations) {
+            document.getElementById('vaccineDetailCalfName').textContent = `Bezerro: ${calfName}`;
+            const vaccineDetailList = document.getElementById('vaccineDetailList');
+            vaccineDetailList.innerHTML = '';
+
+            if (vaccinations.length === 0) {
+                vaccineDetailList.innerHTML = '<li>Nenhuma vacina registada.</li>';
+            } else {
+                vaccinations.forEach(v => {
+                    const singleStatus = getSingleVaccineStatus(v);
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span class="${singleStatus.class}">${v.vaccineName} em ${v.vaccineDate} - (${singleStatus.status})</span>
+                        <span class="info-icon" data-vaccine-name="${v.vaccineName}"> &#x2139;</span>
+                    `;
+                    vaccineDetailList.appendChild(li);
+                });
+
+                vaccineDetailList.querySelectorAll('.info-icon').forEach(icon => {
+                    icon.addEventListener('click', (event) => {
+                        const vaccineName = event.target.dataset.vaccineName;
+                        showVaccineInfoModal(vaccineName);
+                    });
+                });
+            }
+            document.getElementById('vaccineDetailModal').classList.remove('hidden');
+        }
+
+        document.getElementById('closeVaccineDetailBtn').addEventListener('click', () => {
+            document.getElementById('vaccineDetailModal').classList.add('hidden');
+        });
+
+        function showVaccineInfoModal(vaccineName) {
+            const vaccine = getVaccineInfo(vaccineName);
+            const vaccineInfoTitle = document.getElementById('vaccineInfoTitle');
+            const vaccineInfoDescription = document.getElementById('vaccineInfoDescription');
+            const vaccineInfoPeriod = document.getElementById('vaccineInfoPeriod');
+
+            if (vaccine) {
+                vaccineInfoTitle.textContent = `Informações da Vacina: ${vaccine.name}`;
+                vaccineInfoDescription.textContent = vaccine.description;
+                vaccineInfoPeriod.textContent = `Período de Proteção Estimado: ${vaccine.periodMonths} meses`;
+            } else {
+                vaccineInfoTitle.textContent = `Informações da Vacina: ${vaccineName}`;
+                vaccineInfoDescription.textContent = 'Informações não disponíveis para esta vacina.';
+                vaccineInfoPeriod.textContent = '';
+            }
+            document.getElementById('vaccineInfoModal').classList.remove('hidden');
+        }
+
+        document.getElementById('closeVaccineInfoBtn').addEventListener('click', () => {
+            document.getElementById('vaccineInfoModal').classList.add('hidden');
+        });
+
+        document.getElementById('sellCattleBtn').addEventListener('click', () => {
+            showSellCalfModal();
+        });
+
+        document.getElementById('cancelSellBtn').addEventListener('click', hideSellCalfModal);
+
+        document.getElementById('sellCalfForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const calfId = document.getElementById('sellCalfSelect').value;
+            const saleDate = document.getElementById('saleDate').value;
+            const saleValue = parseFloat(document.getElementById('saleValue').value) || 0;
+            const calf = window.allCalvesData.find(c => c.id === calfId); 
+
+            if (!calfId || !saleDate) {
+                alert("Por favor, selecione um bezerro e a data da venda.");
+                return;
+            }
+            if (!calf) {
+                alert("Bezerro não encontrado para venda.");
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            if (saleDate > today) {
+                alert("A data da venda não pode ser no futuro.");
+                return;
+            }
+
+            try {
+                await calvesCollectionRef.updateDoc(calfId, {
+                    sold: true,
+                    saleDate: saleDate,
+                    saleValue: saleValue
+                });
+                await logEditAction('sold', calfId, calf.name, `Bezerro "${calf.name}" vendido em ${saleDate} por R$${saleValue.toFixed(2)}.`);
+                hideSellCalfModal();
+                document.getElementById('sellCalfSelect').value = '';
+                document.getElementById('saleDate').value = '';
+                document.getElementById('saleValue').value = '';
+                console.log("Bezerro marcado como vendido com sucesso!");
+            } catch (e) {
+                console.error("Erro ao vender bezerro: ", e);
+                alert("Erro ao vender bezerro: " + e.message);
+            }
+        });
+
+        function showSellCalfModal() {
+            const sellCalfSelect = document.getElementById('sellCalfSelect');
+            sellCalfSelect.innerHTML = '<option value="">Selecione um bezerro</option>';
+            window.allCalvesData.filter(calf => !calf.sold).forEach(calf => {
+                const option = document.createElement('option');
+                option.value = calf.id;
+                option.textContent = calf.name;
+                sellCalfSelect.appendChild(option);
+            });
+
+            document.getElementById('sellCalfModal').classList.remove('hidden');
+        }
+
+        function hideSellCalfModal() {
+            document.getElementById('sellCalfModal').classList.add('hidden');
+        }
+
+        function renderCharts() {
+            const ctx = document.getElementById('cattleChart').getContext('2d');
+            let maleCalves = 0;
+            let femaleCalves = 0;
+
+            window.allCalvesData.forEach(calf => {
+                if (!calf.sold) {
+                    if (calf.sex === 'Macho') {
+                        maleCalves++;
+                    } else if (calf.sex === 'Fêmea') {
+                        femaleCalves++;
+                    }
+                }
+            });
+
+            if (window.chartInstance) {
+                window.chartInstance.destroy();
+            }
+
+            window.chartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Machos', 'Fêmeas'],
+                    datasets: [
+                        {
+                            data: [maleCalves, femaleCalves],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.8)',
+                                'rgba(255, 99, 132, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((acc, current) => acc + current, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) + '%' : '0%';
+                                    return `${label}: ${value} (${percentage})`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderProfitLossReport() {
+            const profitLossListElement = document.getElementById('profitLossList');
+            profitLossListElement.innerHTML = '';
+
+            if (window.allCalvesData.length === 0) {
+                profitLossListElement.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Nenhum dado de bezerro disponível para o relatório.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let totalProfitLoss = 0;
+
+            window.allCalvesData.forEach(calf => {
+                const saleValue = calf.sold ? (calf.saleValue || 0) : 0;
+                const vaccinationCost = calf.vaccinationCost || 0;
+                const feedCost = calf.feedCost || 0;
+                const laborCost = calf.laborCost || 0;
+
+                const totalCosts = vaccinationCost + feedCost + laborCost;
+                const profitLoss = saleValue - totalCosts;
+                totalProfitLoss += profitLoss;
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${calf.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${calf.sold ? `R$${saleValue.toFixed(2)}` : 'Não Vendido'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$${vaccinationCost.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$${feedCost.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$${laborCost.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$${totalCosts.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}">R$${profitLoss.toFixed(2)}</td>
+                `;
+                profitLossListElement.appendChild(row);
+            });
+
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'bg-gray-200 font-bold';
+            totalRow.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm" colspan="6">Total Lucro/Prejuízo:</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm ${totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}">R$${totalProfitLoss.toFixed(2)}</td>
+            `;
+            profitLossListElement.appendChild(totalRow);
+        }
+
+        function updateWeatherDisplay() {
+            const weatherIconElement = document.getElementById('weatherIcon');
+            const weatherTempElement = document.getElementById('weatherTemp');
+            const weatherCityElement = document.getElementById('weatherCity');
+
+            const weatherConditions = [
+                { icon: '☀️', temp: '28°C', city: 'Brasília', desc: 'Ensolarado' },
+                { icon: '☁️', temp: '25°C', city: 'São Paulo', desc: 'Nublado' },
+                { icon: '🌧️', temp: '22°C', city: 'Rio de Janeiro', desc: 'Chuvoso' },
+                { icon: '⛅', temp: '26°C', city: 'Belo Horizonte', desc: 'Parcialmente Nublado' }
+            ];
+            const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+
+            weatherIconElement.textContent = randomWeather.icon;
+            weatherTempElement.textContent = randomWeather.temp;
+            weatherCityElement.textContent = randomWeather.city;
+            weatherDisplay.title = `Condição: ${randomWeather.desc}`;
+        }
+
+        function renderPastureRotationStatus() {
+            const lastRotationDateDisplay = document.getElementById('lastRotationDateDisplay');
+            const nextRotationDateDisplay = document.getElementById('nextRotationDateDisplay');
+            const rotationIntervalDisplay = document.getElementById('rotationIntervalDisplay');
+            
+            const lastDate = window.pastureRotationData.lastRotationDate;
+            const interval = window.pastureRotationData.rotationIntervalDays;
+
+            rotationIntervalDisplay.textContent = `${interval} dias`;
+
+            if (lastDate) {
+                lastRotationDateDisplay.textContent = new Date(lastDate).toLocaleDateString('pt-BR');
+                const lastRotation = new Date(lastDate);
+                const nextRotation = new Date(lastRotation);
+                nextRotation.setDate(lastRotation.getDate() + interval);
+
+                nextRotationDateDisplay.textContent = nextRotation.toLocaleDateString('pt-BR');
+                nextRotationDateDisplay.classList.remove('text-green-600', 'text-orange-600', 'text-red-600');
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                nextRotation.setHours(0, 0, 0, 0);
+
+                const diffTime = nextRotation.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= 0) {
+                    nextRotationDateDisplay.classList.add('text-red-600');
+                    nextRotationDateDisplay.textContent += ' (VENCIDO!)';
+                } else if (diffDays <= 3) {
+                    nextRotationDateDisplay.classList.add('text-orange-600');
+                    nextRotationDateDisplay.textContent += ` (Faltam ${diffDays} dias)`;
+                } else {
+                    nextRotationDateDisplay.classList.add('text-green-600');
+                }
+            } else {
+                lastRotationDateDisplay.textContent = 'N/A';
+                nextRotationDateDisplay.textContent = 'N/A (Registre a primeira rotação)';
+                nextRotationDateDisplay.classList.remove('text-green-600', 'text-orange-600', 'text-red-600');
+            }
+        }
+
+        document.getElementById('recordRotationBtn').addEventListener('click', () => {
+            const rotationDateInput = document.getElementById('rotationDateInput');
+            const newRotationDate = rotationDateInput.value;
+
+            if (newRotationDate) {
+                window.pastureRotationData.lastRotationDate = newRotationDate;
+                saveDataToLocalStorage(); // Salva a rotação após atualizar
+                renderPastureRotationStatus();
+                alert(`Rotação de pastagem registrada para: ${new Date(newRotationDate).toLocaleDateString('pt-BR')}`);
+                rotationDateInput.value = '';
+            } else {
+                alert("Por favor, selecione uma data para registrar a rotação.");
+            }
+        });
+
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('#sidebar nav a').forEach(item => {
+                item.classList.remove('bg-gray-700', 'current-menu-item');
+            });
+            const activeMenuItem = document.getElementById(`menu${sectionId.replace('Section', '')}`);
+            if (activeMenuItem) {
+                activeMenuItem.classList.add('bg-gray-700', 'current-menu-item');
+            }
+
+            if (sectionId === 'chartsSection') {
+                renderCharts();
+            }
+            if (sectionId === 'reportsSection') {
+                setupEditLogsListener();
+            }
+            if (sectionId === 'profitLossSection') {
+                renderProfitLossReport();
+            }
+            if (sectionId === 'pastureSection') {
+                renderPastureRotationStatus();
+            }
+            hideSidebar();
+        }
+
+        document.getElementById('openSidebarBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.add('open');
+        });
+
+        document.getElementById('closeSidebarBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('open');
+        });
+
+        function hideSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            console.log("Logout simulado bem-sucedido!");
+            showSection('authSection');
+            document.querySelectorAll('#sidebar nav a, #logoutBtn').forEach(el => el.classList.add('hidden'));
+            document.getElementById('cattleList').innerHTML = `<td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Faça login para ver os dados.</td>`;
+            document.getElementById('activityReportsList').innerHTML = `<td colspan="4" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Nenhum relatório de atividade disponível.</td>`;
+            document.getElementById('profitLossList').innerHTML = `<td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Nenhum dado de bezerro disponível para o relatório.</td>`;
+            
+            // Não limpa o localStorage no logout para que os dados persistam para o próximo "login"
+            // Se o utilizador quiser limpar os dados, deve fazê-lo manualmente no navegador.
+            calvesCollectionData = [];
+            editLogsCollectionData = [];
+            window.pastureRotationData.lastRotationDate = null;
+            if (window.chartInstance) {
+                window.chartInstance.destroy();
+                window.chartInstance = null;
+            }
+        });
+
+        document.getElementById('menuDashboard').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('dashboardSection');
+        });
+        document.getElementById('menuAddCalf').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('addCalfSection');
+        });
+        document.getElementById('menuManageVaccines').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('manageVaccinesSection');
+        });
+        document.getElementById('menuCharts').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('chartsSection');
+        });
+        document.getElementById('menuReports').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('reportsSection');
+        });
+        document.getElementById('menuProfitLoss').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('profitLossSection');
+        });
+        document.getElementById('menuPasture').addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection('pastureSection');
+        });
+
+        document.getElementById('exportCattlePdfBtn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const tableColumn = ["Nome", "Data de Nascimento", "Idade", "Sexo", "Vacinas", "Status Vacinação"];
+            const tableRows = [];
+
+            const unsoldCalves = window.allCalvesData.filter(calf => !calf.sold);
+
+            unsoldCalves.forEach(calf => {
+                const age = calculateAge(calf.birthDate);
+                const vacStatus = getOverallVaccinationStatus(calf.vaccinations);
+                const vaccineNames = (calf.vaccinations || []).map(v => v.vaccineName).join(", ") || "Nenhuma";
+
+                const calfData = [
+                    calf.name,
+                    calf.birthDate,
+                    age,
+                    calf.sex || 'N/A',
+                    vaccineNames,
+                    vacStatus.status
+                ];
+                tableRows.push(calfData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 20,
+                headStyles: { fillColor: [68, 138, 255] },
+                alternateRowStyles: { fillColor: [240, 240, 240] },
+                styles: { font: "helvetica", fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+                columnStyles: {
+                    0: { cellWidth: 30 },
+                    1: { cellWidth: 25 },
+                    2: { cellWidth: 20 },
+                    3: { cellWidth: 15 },
+                    4: { cellWidth: 50 },
+                    5: { cellWidth: 30 }
+                }
+            });
+
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            doc.save(`relatorio_gado_${date}.pdf`);
+            console.log("Relatório de Gado exportado para PDF.");
+        });
+
+        document.getElementById('exportCattleExcelBtn').addEventListener('click', () => {
+            const ws_data = [
+                ["Nome", "Data de Nascimento", "Idade", "Sexo", "Vacinas", "Status Vacinação", "Vendido", "Data da Venda", "Valor da Venda (R$)", "Custo Vacinação (R$)", "Custo Ração (R$)", "Custo Mão de Obra (R$)"]
+            ];
+
+            const calvesToExport = window.allCalvesData;
+
+            calvesToExport.forEach(calf => {
+                const age = calculateAge(calf.birthDate);
+                const vacStatus = getOverallVaccinationStatus(calf.vaccinations);
+                const vaccineDetails = (calf.vaccinations || []).map(v => `${v.vaccineName} (${v.vaccineDate})`).join("; ");
+
+                ws_data.push([
+                    calf.name,
+                    calf.birthDate,
+                    age,
+                    calf.sex || 'N/A',
+                    vaccineDetails,
+                    vacStatus.status,
+                    calf.sold ? "Sim" : "Não",
+                    calf.saleDate || "",
+                    (calf.saleValue || 0).toFixed(2),
+                    (calf.vaccinationCost || 0).toFixed(2),
+                    (calf.feedCost || 0).toFixed(2),
+                    (calf.laborCost || 0).toFixed(2)
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Gado");
+
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            XLSX.writeFile(wb, `relatorio_gado_${date}.xlsx`);
+            console.log("Relatório de Gado exportado para Excel.");
+        });
+
+        document.getElementById('exportCattleCsvBtn').addEventListener('click', () => {
+            const headers = ["Nome", "Data de Nascimento", "Idade", "Sexo", "Vacinas", "Status Vacinação", "Vendido", "Data da Venda", "Valor da Venda (R$)", "Custo Vacinação (R$)", "Custo Ração (R$)", "Custo Mão de Obra (R$)"];
+            let csv = headers.join(',') + '\n';
+
+            const calvesToExport = window.allCalvesData;
+
+            calvesToExport.forEach(calf => {
+                const age = calculateAge(calf.birthDate);
+                const vacStatus = getOverallVaccinationStatus(calf.vaccinations);
+                const vaccineDetails = (calf.vaccinations || []).map(v => `${v.vaccineName} (${v.vaccineDate})`).join("; ").replace(/"/g, '""');
+
+                const row = [
+                    `"${calf.name.replace(/"/g, '""')}"`,
+                    calf.birthDate,
+                    age,
+                    calf.sex || 'N/A',
+                    `"${vaccineDetails}"`,
+                    vacStatus.status,
+                    calf.sold ? "Sim" : "Não",
+                    calf.saleDate || "",
+                    (calf.saleValue || 0).toFixed(2),
+                    (calf.vaccinationCost || 0).toFixed(2),
+                    (calf.feedCost || 0).toFixed(2),
+                    (calf.laborCost || 0).toFixed(2)
+                ];
+                csv += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `dados_gado_${date}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log("Dados do Gado exportados para CSV.");
+        });
+
+        document.getElementById('exportCattleJsonBtn').addEventListener('click', () => {
+            const dataToExport = {
+                calves: window.allCalvesData,
+                logs: editLogsCollectionData.map(log => ({ // Convert Date objects to ISO strings for export
+                    ...log,
+                    timestamp: log.timestamp instanceof Date ? log.timestamp.toISOString() : log.timestamp
+                })),
+                pastureRotation: window.pastureRotationData
+            };
+            const json = JSON.stringify(dataToExport, null, 2);
+
+            const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `dados_gerenciador_gado_${date}.json`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log("Dados do Gerenciador de Gado exportados para JSON.");
+        });
+
+        document.getElementById('exportReportsPdfBtn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const tableColumn = ["Data/Hora", "Ação", "Bezerro", "Detalhes"];
+            const tableRows = [];
+
+            editLogsCollectionData.forEach(log => {
+                const formattedTimestamp = log.timestamp.toLocaleString('pt-BR');
+                tableRows.push([
+                    formattedTimestamp,
+                    log.actionType,
+                    log.calfName,
+                    log.details || '-'
+                ]);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 20,
+                headStyles: { fillColor: [68, 138, 255] },
+                alternateRowStyles: { fillColor: [240, 240, 240] },
+                styles: { font: "helvetica", fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+                columnStyles: {
+                    0: { cellWidth: 40 },
+                    1: { cellWidth: 30 },
+                    2: { cellWidth: 30 },
+                    3: { cellWidth: 60 }
+                }
+            });
+
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            doc.save(`relatorio_atividades_${date}.pdf`);
+            console.log("Relatório de Atividades exportado para PDF.");
+        });
+
+        document.getElementById('exportReportsExcelBtn').addEventListener('click', () => {
+            const ws_data = [
+                ["Data/Hora", "Ação", "Bezerro", "Detalhes", "ID do Utilizador", "ID do Bezerro"]
+            ];
+
+            editLogsCollectionData.forEach(log => {
+                const formattedTimestamp = log.timestamp.toLocaleString('pt-BR');
+                ws_data.push([
+                    formattedTimestamp,
+                    log.actionType,
+                    log.calfName,
+                    log.details || '-',
+                    log.userId,
+                    log.calfId
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Relatorios");
+
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            XLSX.writeFile(wb, `relatorio_atividades_${date}.xlsx`);
+            console.log("Relatório de Atividades exportado para Excel.");
+        });
+
+        document.getElementById('exportProfitLossPdfBtn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const tableColumn = ["Nome Bezerro", "Valor Venda (R$)", "Custo Vacinação (R$)", "Custo Ração (R$)", "Custo Mão de Obra (R$)", "Custo Total (R$)", "Lucro/Prejuízo (R$)"];
+            const tableRows = [];
+            let totalProfitLoss = 0;
+
+            window.allCalvesData.forEach(calf => {
+                const saleValue = calf.sold ? (calf.saleValue || 0) : 0;
+                const vaccinationCost = calf.vaccinationCost || 0;
+                const feedCost = calf.feedCost || 0;
+                const laborCost = calf.laborCost || 0;
+                const totalCosts = vaccinationCost + feedCost + laborCost;
+                const profitLoss = saleValue - totalCosts;
+                totalProfitLoss += profitLoss;
+
+                tableRows.push([
+                    calf.name,
+                    calf.sold ? saleValue.toFixed(2) : 'N/A',
+                    vaccinationCost.toFixed(2),
+                    feedCost.toFixed(2),
+                    laborCost.toFixed(2),
+                    totalCosts.toFixed(2),
+                    profitLoss.toFixed(2)
+                ]);
+            });
+
+            tableRows.push([
+                { content: "Total Lucro/Prejuízo:", colSpan: 6, styles: { fontStyle: 'bold', halign: 'right' } },
+                { content: totalProfitLoss.toFixed(2), styles: { fontStyle: 'bold', textColor: totalProfitLoss >= 0 ? [16, 185, 129] : [239, 68, 68] } }
+            ]);
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 20,
+                headStyles: { fillColor: [68, 138, 255] },
+                alternateRowStyles: { fillColor: [240, 240, 240] },
+                styles: { font: "helvetica", fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+                columnStyles: {
+                    0: { cellWidth: 30 },
+                    1: { cellWidth: 25 },
+                    2: { cellWidth: 25 },
+                    3: { cellWidth: 25 },
+                    4: { cellWidth: 25 },
+                    5: { cellWidth: 25 },
+                    6: { cellWidth: 25 }
+                }
+            });
+
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            doc.save(`relatorio_lucros_despesas_${date}.pdf`);
+            console.log("Relatório de Lucros e Despesas exportado para PDF.");
+        });
+
+        document.getElementById('exportProfitLossExcelBtn').addEventListener('click', () => {
+            const ws_data = [
+                ["Nome Bezerro", "Valor Venda (R$)", "Custo Vacinação (R$)", "Custo Ração (R$)", "Custo Mão de Obra (R$)", "Custo Total (R$)", "Lucro/Prejuízo (R$)"]
+            ];
+            let totalProfitLoss = 0;
+
+            window.allCalvesData.forEach(calf => {
+                const saleValue = calf.sold ? (calf.saleValue || 0) : 0;
+                const vaccinationCost = calf.vaccinationCost || 0;
+                const feedCost = calf.feedCost || 0;
+                const laborCost = calf.laborCost || 0;
+                const totalCosts = vaccinationCost + feedCost + laborCost;
+                const profitLoss = saleValue - totalCosts;
+                totalProfitLoss += profitLoss;
+
+                ws_data.push([
+                    calf.name,
+                    calf.sold ? saleValue.toFixed(2) : 'N/A',
+                    vaccinationCost.toFixed(2),
+                    feedCost.toFixed(2),
+                    laborCost.toFixed(2),
+                    totalCosts.toFixed(2),
+                    profitLoss.toFixed(2)
+                ]);
+            });
+
+            ws_data.push([]);
+            ws_data.push(["Total Lucro/Prejuízo:", "", "", "", "", "", totalProfitLoss.toFixed(2)]);
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Lucros_Despesas");
+
+            const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            XLSX.writeFile(wb, `relatorio_lucros_despesas_${date}.xlsx`);
+            console.log("Relatório de Lucros e Despesas exportado para Excel.");
+        });
+
+        window.onload = initializeAppWithoutFirebase;
+    </script>
 </body>
 </html>
