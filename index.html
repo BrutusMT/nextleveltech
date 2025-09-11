@@ -79,7 +79,7 @@
   </div>
 
   <script>
-      const ALL_QUESTIONS = [
+    const ALL_QUESTIONS = [
       {q:"Qual sistema operacional é baseado em Linux?",opts:["Windows","Android","macOS","iOS"],answer:1},
       {q:"Qual desses é considerado hardware?",opts:["Mouse","Excel","WhatsApp","Word"],answer:0},
       {q:"O que é um sistema operacional?",opts:["Gerencia hardware e software","Dispositivo físico","Antivírus","Planilha"],answer:0},
@@ -100,27 +100,37 @@
       {q:"O que é software proprietário?",opts:["Com licença restrita","Software livre","Código aberto","Sistema de hardware"],answer:0},
       {q:"No Linux, o comando 'pwd' mostra:",opts:["Diretório atual","Permissões","Processos","Usuários"],answer:0},
       {q:"O kernel no Linux é:",opts:["Núcleo do sistema","Navegador","Antivírus","Editor de texto"],answer:0},
-      {q:"Qual protocolo é usado para navegação na web?",opts:["HTTP/HTTPS","FTP","SMTP","SSH"],answer:0},
-      {q:"Qual é a função da placa de vídeo?",opts:["Processar gráficos","Armazenar arquivos","Executar cálculos lógicos","Resfriar o processador"],answer:0},
-      {q:"Qual comando do Windows abre o Gerenciador de Tarefas?",opts:["Ctrl + Alt + Del","Alt + F4","Ctrl + C","Shift + Esc"],answer:0},
-      {q:"Um exemplo de sistema operacional móvel é:",opts:["Android","Excel","Photoshop","CorelDraw"],answer:0},
-      {q:"Qual é a função do BIOS/UEFI?",opts:["Inicializar o hardware","Rodar jogos","Criar planilhas","Controlar internet"],answer:0},
-      {q:"O que é um arquivo PDF?",opts:["Formato de documento portátil","Programa executável","Imagem vetorial","Banco de dados"],answer:0},
-      {q:"Qual destes é um sistema operacional de código aberto?",opts:["Linux","Windows","macOS","iOS"],answer:0},
-      {q:"O que é um backup?",opts:["Cópia de segurança de dados","Atualização do sistema","Instalação de drivers","Formatação do HD"],answer:0},
-      {q:"Qual tecla é usada para atualizar uma página no navegador?",opts:["F5","F2","Ctrl","Shift"],answer:0},
-      {q:"Qual é a principal função do antivírus?",opts:["Proteger contra malwares","Acelerar internet","Editar documentos","Compactar arquivos"],answer:0},
-      {q:"O que significa a sigla URL?",opts:["Uniform Resource Locator","Universal Remote Login","User Random List","Unified Routing Layer"],answer:0},
-      {q:"Um exemplo de software de edição de imagens é:",opts:["Photoshop","Word","Excel","Access"],answer:0},
-      {q:"Qual comando no Linux mostra o diretório atual?",opts:["pwd","ls","cd","mkdir"],answer:0},
-      {q:"A sigla IP significa:",opts:["Internet Protocol","Internal Program","Integrated Process","Input Port"],answer:0},
-      {q:"Qual é a função do firewall?",opts:["Controlar o tráfego de rede","Aumentar a memória RAM","Compactar arquivos","Gerar energia"],answer:0},
-      {q:"Qual dispositivo é usado para entrada de dados?",opts:["Teclado","Monitor","Impressora","Projetor"],answer:0},
-      {q:"Um exemplo de sistema de armazenamento em nuvem é:",opts:["Google Drive","Windows","Paint","Linux"],answer:0},
-      {q:"O que significa a sigla HTML?",opts:["HyperText Markup Language","High Tech Machine Learning","Hyper Transfer Main Link","Home Tool Markup Language"],answer:0},
-      {q:"Qual programa é usado para criar planilhas?",opts:["Excel","Word","PowerPoint","Photoshop"],answer:0},
-      {q:"Qual é a função do comando 'cd' no Linux?",opts:["Mudar de diretório","Criar disco","Copiar dados","Configurar driver"],answer:0}
+      {q:"Um byte é formado por:",opts:["16 bits","8 bits","4 bits","2 bits"],answer:1},
+      {q:"Um pendrive de 16GB equivale a quantos MB?",opts:["16384","16000","32000","1024"],answer:0},
+      {q:"O que significa MB?",opts:["MegaByte","MainBoard","MicroBasic","MegaBlock"],answer:0},
+      {q:"Um HD de 1TB equivale a quantos GB?",opts:["1000","1024","500","2048"],answer:1},
+      {q:"Qual unidade vem após o GB?",opts:["MB","TB","KB","Bit"],answer:1},
+      {q:"Qual desses NÃO é um sistema operacional?",opts:["Windows","Linux","Intel","macOS"],answer:2},
+      {q:"O que é firmware?",opts:["Software básico do hardware","Editor de texto","Aplicativo de planilha","Antivírus"],answer:0},
+      {q:"O comando 'cd' no Linux serve para:",opts:["Mudar diretório","Criar diretório","Apagar arquivo","Copiar arquivo"],answer:0},
+      {q:"Qual desses é software livre?",opts:["Linux","MS Office","Photoshop","CorelDraw"],answer:0},
+      {q:"A sigla CPU significa:",opts:["Central Processing Unit","Computer Personal Unit","Central Peripheral Utility","Control Process Unit"],answer:0},
+      {q:"Qual componente é considerado a 'memória volátil' do computador?",opts:["HD","SSD","RAM","ROM"],answer:2},
+      {q:"Em informática, 'backup' significa:",opts:["Cópia de segurança","Atualização de sistema","Formatação de disco","Instalação de drivers"],answer:0},
+      {q:"A placa de vídeo é responsável por:",opts:["Processar gráficos","Armazenar arquivos","Controlar energia","Gerenciar redes"],answer:0},
+      {q:"Qual comando exibe o diretório atual no Windows (Prompt de Comando)?",opts:["dir","ls","cd","pwd"],answer:2},
+      {q:"Qual desses é exemplo de software de planilha?",opts:["Excel","Word","PowerPoint","Chrome"],answer:0},
+      {q:"A sigla BIOS significa:",opts:["Basic Input Output System","Binary Integrated Operating Setup","Base Internal Output Software","Basic Internal Operating System"],answer:0},
+      {q:"Um arquivo '.exe' é típico de qual sistema operacional?",opts:["Linux","Windows","macOS","Android"],answer:1},
+      {q:"Qual desses é um periférico de entrada?",opts:["Teclado","Monitor","Impressora","Caixa de som"],answer:0},
+      {q:"Qual é a função da fonte de alimentação do computador?",opts:["Converter energia elétrica","Armazenar dados","Resfriar componentes","Exibir imagens"],answer:0},
+      {q:"O que significa 'open source'?",opts:["Código aberto","Sistema operacional","Programa pago","Hardware proprietário"],answer:0}
     ];
+
+    function shuffle(array){
+      for(let i=array.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [array[i],array[j]]=[array[j],array[i]];
+      }
+      return array;
+    }
+
+    let QUESTIONS = [];
     let timeLeft = 0;
     let timerInterval = null;
     let penaltySeconds = 30;
@@ -146,7 +156,7 @@
       questionsDiv.innerHTML = '';
       QUESTIONS.forEach((item,i)=>{
         const div = document.createElement('div');div.className='question';
-        div.innerHTML = `<div><strong>${item.q}</strong></div>`;
+        div.innerHTML = `<div><strong>Q${i+1}: ${item.q}</strong></div>`;
         const opts = document.createElement('div');opts.className='options';
         item.opts.forEach((o,idx)=>{
           const b = document.createElement('div');b.className='opt';b.tabIndex=0;b.innerText=o;
@@ -220,7 +230,8 @@
     document.addEventListener('contextmenu',e=>e.preventDefault());
     document.addEventListener('copy',e=>e.preventDefault());
     document.addEventListener('cut',e=>e.preventDefault());
-    document.addEventListener('paste',e=>e.preventDefault());
+    document.addEventListener('paste',e=>e.prevent
+Default());
 
     startBtn.addEventListener('click',async()=>{
       if(examStarted) return;
@@ -291,4 +302,5 @@
   </script>
 </body>
 </html>
+
 
