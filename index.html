@@ -16,6 +16,7 @@
     #startScreen{display:grid;gap:12px}
     button.primary{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:#042026;font-weight:700;cursor:pointer;transition:transform 0.2s}
     button.primary:hover{transform:scale(1.05)}
+    input[type=text]{padding:8px;border-radius:6px;border:1px solid #334155;background:#0b1220;color:var(--text);width:100%}
     .question{margin:12px 0;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;opacity:0;transform:translateY(20px);animation:fadeIn 0.5s forwards}
     @keyframes fadeIn{to{opacity:1;transform:translateY(0)}}
     .options{display:flex;flex-direction:column;gap:8px;margin-top:8px}
@@ -32,6 +33,7 @@
     .danger{color:#ff7b7b}
     @media(max-width:600px){.wrap{padding:8px}.card{padding:12px}h1{font-size:18px}}
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <div class="wrap card">
@@ -45,8 +47,8 @@
 
     <main id="startScreen">
       <p>Esta prova só poderá ser iniciada <strong>uma vez</strong>. Ao iniciar, permita o modo tela cheia quando solicitado.</p>
-      <label class="small">Tempo da prova (min): <input id="timeInput" type="number" value="30" min="1" style="width:70px;margin-left:8px"/></label>
-      <label class="small">Tempo de punição ao sair (segundos): <input id="penaltyInput" type="number" value="30" min="5" style="width:70px;margin-left:8px"/></label>
+      <label for="studentName">Nome do Aluno:</label>
+      <input type="text" id="studentName" placeholder="Digite seu nome" required>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button id="startBtn" class="primary">Iniciar Prova</button>
       </div>
@@ -63,7 +65,7 @@
     <div id="result" class="hidden">
       <h3>Resultado</h3>
       <div id="resultBox" class="result"></div>
-      <div style="margin-top:12px;display:flex;gap:8px"><button id="downloadJson">Baixar (JSON)</button></div>
+      <div style="margin-top:12px;display:flex;gap:8px"><button id="downloadPdf">Baixar (PDF)</button></div>
     </div>
   </div>
 
@@ -77,7 +79,7 @@
   </div>
 
   <script>
-    const QUESTIONS = [
+    const ALL_QUESTIONS = [
       {q:"Qual sistema operacional é baseado em Linux?",opts:["Windows","Android","macOS","iOS"],answer:1},
       {q:"Qual desses é considerado hardware?",opts:["Mouse","Excel","WhatsApp","Word"],answer:0},
       {q:"O que é um sistema operacional?",opts:["Gerencia hardware e software","Dispositivo físico","Antivírus","Planilha"],answer:0},
@@ -300,6 +302,7 @@ Default());
   </script>
 </body>
 </html>
+
 
 
 
