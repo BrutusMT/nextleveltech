@@ -1,295 +1,294 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Quiz Interativo</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(120deg, #1e3c72, #2a5298);
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-  }
-  .quiz-container {
-    width: 90%;
-    max-width: 800px;
-    background: #ffffff22;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    text-align: center;
-  }
-  .question {
-    font-size: 1.3rem;
-    margin-bottom: 15px;
-  }
-  .options button {
-    display: block;
-    width: 100%;
-    margin: 8px 0;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  .options button:hover:not(:disabled) {
-    transform: scale(1.05);
-    background: #444;
-    color: #fff;
-  }
-  .correct {
-    background-color: green !important;
-    color: white;
-    animation: blink 0.6s infinite;
-  }
-  @keyframes blink {
-    0% { background-color: green; }
-    50% { background-color: limegreen; }
-    100% { background-color: green; }
-  }
-  .wrong {
-    background-color: red !important;
-    color: white;
-  }
-  .timer {
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-  }
-  .navigation {
-    margin-top: 15px;
-  }
-  #nextBtn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    background: #ff9800;
-    color: #fff;
-    display: none;
-  }
-  #report {
-    margin-top: 20px;
-    text-align: left;
-    background: #fff2;
-    padding: 15px;
-    border-radius: 12px;
-  }
-  input {
-    padding: 8px;
-    border-radius: 8px;
-    border: none;
-    margin-bottom: 10px;
-    width: 80%;
-  }
-  #startBtn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    background: #4caf50;
-    color: #fff;
-    margin-top: 10px;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prova - Modo Kiosk</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--text:#e6eef6}
+    *{box-sizing:border-box;font-family:Inter,Segoe UI,Arial;margin:0}
+    body{background:linear-gradient(180deg,#031025 0%,#071427 100%);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{width:100%;max-width:980px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.03));padding:18px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.7)}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    h1{font-size:20px}
+    .meta{font-size:13px;color:#9fb3c4}
+    #startScreen{display:grid;gap:12px}
+    button.primary{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:#042026;font-weight:700;cursor:pointer;transition:transform 0.2s}
+    button.primary:hover{transform:scale(1.05)}
+    input[type=text]{padding:8px;border-radius:6px;border:1px solid #334155;background:#0b1220;color:var(--text);width:100%}
+    .question{margin:12px 0;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;opacity:0;transform:translateY(20px);animation:fadeIn 0.5s forwards}
+    @keyframes fadeIn{to{opacity:1;transform:translateY(0)}}
+    .options{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .opt{background:rgba(255,255,255,0.03);padding:8px;border-radius:6px;cursor:pointer;transition:background 0.3s,transform 0.2s}
+    .opt:hover{background:rgba(6,182,212,0.1);transform:scale(1.02)}
+    .opt.selected{outline:2px solid rgba(6,182,212,0.5);background:rgba(6,182,212,0.2);pointer-events:none}
+    footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+    .timer{font-weight:700}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:9999;color:white}
+    .modal{background:#041526;padding:20px;border-radius:12px;max-width:680px}
+    .small{font-size:13px;color:#9fb3c4}
+    .hidden{display:none}
+    .result{padding:12px;background:linear-gradient(90deg,#031622,#042232);border-radius:10px}
+    .danger{color:#ff7b7b}
+    @media(max-width:600px){.wrap{padding:8px}.card{padding:12px}h1{font-size:18px}}
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-<div class="quiz-container">
-  <h2>Quiz de Tecnologia</h2>
-  <div id="startScreen">
-    <input type="text" id="username" placeholder="Digite seu nome completo" />
-    <button id="startBtn">Iniciar Quiz</button>
-  </div>
-  <div id="quizScreen" style="display:none;">
-    <div class="timer" id="timer">Tempo: 20</div>
-    <div class="question" id="question"></div>
-    <div class="options" id="options"></div>
-    <div class="navigation">
-      <button id="nextBtn">Próxima</button>
+  <div class="wrap card">
+    <header>
+      <div>
+        <h1>Prova - Modo Kiosk</h1>
+        <div class="meta">Instrutor: Painel automático • Não permita sair da tela.</div>
+      </div>
+      <div class="meta">Violação: <span id="violations">0</span></div>
+    </header>
+
+    <main id="startScreen">
+      <p>Esta prova só poderá ser iniciada <strong>uma vez</strong>. Ao iniciar, permita o modo tela cheia quando solicitado.</p>
+      <label for="studentName">Nome do Aluno:</label>
+      <input type="text" id="studentName" placeholder="Digite seu nome" required>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="startBtn" class="primary">Iniciar Prova</button>
+      </div>
+    </main>
+
+    <form id="quiz" class="hidden">
+      <div id="questions"></div>
+      <footer>
+        <div class="timer">Tempo restante: <span id="timerDisplay">00:00</span></div>
+        <div><button id="submitBtn" type="button" class="primary">Enviar Prova</button></div>
+      </footer>
+    </form>
+
+    <div id="result" class="hidden">
+      <h3>Resultado</h3>
+      <div id="resultBox" class="result"></div>
+      <div style="margin-top:12px;display:flex;gap:8px"><button id="downloadPdf">Baixar (PDF)</button></div>
     </div>
-    <div id="report"></div>
   </div>
-</div>
 
-<script>
-const quizData = [
-  {q:"Qual sistema operacional é baseado em Linux?", options:["Windows","Android","macOS","iOS"], answer:1},
-  {q:"Qual desses é considerado hardware?", options:["Mouse","Excel","WhatsApp","Word"], answer:0},
-  {q:"O que é um sistema operacional?", options:["Dispositivo físico","Gerencia hardware e software","Antivírus","Editor de texto"], answer:1},
-  {q:"Quantos bits tem 1 byte?", options:["4","8","16","32"], answer:1},
-  {q:"Qual unidade é maior?", options:["KB","MB","GB","TB"], answer:3},
-  {q:"Qual sistema operacional é baseado em Linux?",options:["Windows","Android","macOS","iOS"],answer:1},
-  {q:"Qual desses é considerado hardware?",options:["Mouse","Excel","WhatsApp","Word"],answer:0},
-  {q:"O que é um sistema operacional?",options:["Dispositivo físico","Gerencia hardware e software","Antivírus","Editor de texto"],answer:1},
-  {q:"Quantos bits existem em 1 byte?",options:["2","4","8","16"],answer:2},
-  {q:"Qual é maior?",options:["1 KB","1 MB","1 GB","1 TB"],answer:3},
-  {q:"Qual sistema operacional é baseado em Linux?",options:["Windows","Android","macOS","iOS"],answer:1},
-  {q:"Qual desses é considerado hardware?",options:["Mouse","Excel","WhatsApp","Word"],answer:0},
-  {q:"O que é um sistema operacional?",options:["Dispositivo físico","Gerencia hardware e software","Antivírus","Editor de texto"],answer:1},
-  {q:"Quantos bits existem em 1 byte?",options:["2","4","8","16"],answer:2},
-  {q:"Qual é a ordem correta das unidades de armazenamento?",options:["KB → MB → GB → TB","MB → KB → TB → GB","GB → KB → MB → TB","TB → GB → MB → KB"],answer:0},
-  {q:"Quem desenvolveu o Windows?",options:["Apple","Google","Microsoft","IBM"],answer:2},
-  {q:"O Linux foi criado por:",options:["Bill Gates","Linus Torvalds","Steve Jobs","Mark Zuckerberg"],answer:1},
-  {q:"O que significa a sigla 'KB'?",options:["KiloByte","KiloBit","KiloBlock","KernelBase"],answer:0},
-  {q:"Um HD de 1TB equivale a quantos GB?",options:["100","512","1024","2048"],answer:2},
-  {q:"Qual software é usado para navegar na internet?",options:["Chrome","Teclado","Memória RAM","Fonte ATX"],answer:0},
-  {q:"Qual desses é um exemplo de software livre?",options:["Linux","Windows 11","macOS","MS Office"],answer:0},
-  {q:"A parte física do computador é chamada de:",options:["Software","Firmware","Hardware","Sistema"],answer:2},
-  {q:"O processador é responsável por:",options:["Armazenar dados","Executar instruções","Gerar energia","Controlar periféricos"],answer:1},
-  {q:"Qual é a menor unidade de informação digital?",options:["Byte","Bit","KB","MB"],answer:1},
-  {q:"Um pendrive de 16GB equivale a quantos MB?",options:["1024","16000","16384","32000"],answer:2},
-  {q:"O que é multitarefa em um SO?",options:["Executar vários programas ao mesmo tempo","Usar vários computadores","Aumentar a memória RAM","Instalar jogos"],answer:0},
-  {q:"O comando 'ls' no Linux serve para:",options:["Listar arquivos","Apagar arquivos","Copiar arquivos","Abrir programas"],answer:0},
-  {q:"Qual unidade vem após o GB?",options:["KB","TB","MB","Bit"],answer:1},
-  {q:"A memória RAM é:",options:["Volátil","Não volátil","Disco rígido","Fonte de energia"],answer:0},
-  {q:"Um byte é formado por:",options:["4 bits","2 bits","8 bits","16 bits"],answer:2},
-  {q:"O que significa SO?",options:["Sistema Operacional","Servidor Online","Software Oficial","Sistema Óptico"],answer:0},
-  {q:"No Linux, o diretório raiz é representado por:",options:["\\","/","C:","root"],answer:1},
-  {q:"Qual peça armazena permanentemente os dados no PC?",options:["RAM","Processador","HD/SSD","Placa-mãe"],answer:2},
-  {q:"O que é software proprietário?",options:["De código aberto","Distribuído gratuitamente","Com licença restrita","Sistema de hardware"],answer:2},
-  {q:"O que significa MB?",options:["MegaBit","MegaByte","MicroByte","MainBoard"],answer:1},
-  {q:"No Linux, o comando 'pwd' mostra:",options:["Usuários logados","Diretório atual","Arquivos ocultos","Permissões"],answer:1},
-  {q:"O que é firmware?",options:["Software básico do hardware","Disco rígido","Sistema operacional","Editor de texto"],answer:0},
-  {q:"Qual unidade é maior?",options:["500 MB","1 GB","1000 KB","800 MB"],answer:1},
-  {q:"O kernel no Linux é:",options:["Interface gráfica","Núcleo do sistema","Editor de texto","Navegador"],answer:1},
-  {q:"Qual desses NÃO é um sistema operacional?",options:["Linux","Windows","Android","Intel"],answer:3}
-];
+  <div id="overlay" class="overlay hidden">
+    <div class="modal">
+      <h3 id="overlayTitle">Você saiu da prova</h3>
+      <p id="overlayMsg">Tempo de punição: <span id="penaltyTimer">30</span>s</p>
+      <p class="small">A prova ficará bloqueada até o fim da punição.</p>
+      <div style="margin-top:10px"><button id="overlayClose" class="primary">OK (aguarde)</button></div>
+    </div>
+  </div>
 
-let currentQ = 0;
-let timer;
-let timeLeft = 20;
-let userAnswers = [];
-let userIP = null;
-let userName = "";
+  <script>
+    const QUESTIONS = [
+      {q:"Q1: Qual sistema operacional é baseado em Linux?",opts:["Windows","Android","macOS","iOS"],answer:1},
+      {q:"Q2: Qual desses é considerado hardware?",opts:["Mouse","Excel","WhatsApp","Word"],answer:0},
+      {q:"Q3: O que é um sistema operacional?",opts:["Gerencia hardware e software","Dispositivo físico","Antivírus","Programa de edição"],answer:0},
+      {q:"Q4: Quantos bits tem 1 byte?",opts:["4","8","16","32"],answer:1},
+      {q:"Q5: Qual unidade é maior?",opts:["KB","MB","GB","TB"],answer:3},
+      {q:"Q6: Qual sistema operacional é baseado em Linux? (rep)" ,opts:["Windows","Android","macOS","iOS"],answer:1},
+      {q:"Q7: Qual desses é considerado hardware? (rep)",opts:["WhatsApp","Excel","Mouse","Word"],answer:2},
+      {q:"Q8: O que é um sistema operacional? (rep)",opts:["Dispositivo físico","Gerencia hardware e software","Aplicativo","Sistema de rede"],answer:1},
+      {q:"Q9: Quantos bits existem em 1 byte? (rep)",opts:["2","8","10","16"],answer:1},
+      {q:"Q10: Qual é maior?",opts:["800 MB","1 GB","700 MB","900 MB"],answer:1},
+      {q:"Q11: Qual sistema operacional é baseado em Linux?",opts:["Windows","Android","macOS","iOS"],answer:1},
+      {q:"Q12: Qual desses é considerado hardware?",opts:["Excel","Word","Mouse","Photoshop"],answer:2},
+      {q:"Q13: O que é um sistema operacional?",opts:["Antivírus","Gerencia hardware e software","Editor de texto","Programa de gerenciamento"],answer:1},
+      {q:"Q14: Quantos bits existem em 1 byte?",opts:["8","16","4","32"],answer:0},
+      {q:"Q15: Qual é a ordem correta das unidades de armazenamento?",opts:["GB > KB > MB > TB","KB > MB > GB > TB","MB > GB > KB > TB","TB > GB > MB > KB"],answer:1},
+      {q:"Q16: Quem desenvolveu o Windows?",opts:["Apple","Linus Torvalds","Microsoft","IBM"],answer:2},
+      {q:"Q17: O Linux foi criado por:",opts:["Steve Jobs","Linus Torvalds","Bill Gates","Alan Turing"],answer:1},
+      {q:"Q18: O que significa a sigla 'KB'?",opts:["KiloBlock","KiloByte","KiloBit","KiloBucket"],answer:1},
+      {q:"Q19: Um HD de 1TB equivale a quantos GB?",opts:["1000","1024","2048","512"],answer:1},
+      {q:"Q20: Qual software é usado para navegar na internet?",opts:["Editor de texto","Antivírus","Navegador (Browser)","Sistema operacional"],answer:2},
+      {q:"Q21: Qual desses é um exemplo de software livre?",opts:["MS Office","Windows","Linux","Photoshop"],answer:2},
+      {q:"Q22: A parte física do computador é chamada de:",opts:["Sistema","Hardware","Software","Arquivo"],answer:1},
+      {q:"Q23: O processador é responsável por:",opts:["Controlar periféricos","Executar instruções","Armazenar dados","Fornecer energia"],answer:1},
+      {q:"Q24: Qual é a menor unidade de informação digital?",opts:["MB","Byte","Bit","GB"],answer:2},
+      {q:"Q25: Um pendrive de 16GB equivale a quantos MB?",opts:["16000","16384","32000","15000"],answer:1},
+      {q:"Q26: O que é multitarefa em um SO?",opts:["Instalar jogos","Executar vários programas ao mesmo tempo","Atualizar o sistema","Gerenciar arquivos"],answer:1},
+      {q:"Q27: O comando 'ls' no Linux serve para:",opts:["Abrir programas","Listar arquivos","Editar arquivos","Instalar pacotes"],answer:1},
+      {q:"Q28: Qual unidade vem após o GB?",opts:["MB","TB","Bit","Byte"],answer:1},
+      {q:"Q29: A memória RAM é:",opts:["Fonte de energia","Volátil","Permanente","Armazenamento externo"],answer:1},
+      {q:"Q30: Um byte é formado por:",opts:["8 bits","16 bits","4 bits","32 bits"],answer:0},
+      {q:"Q31: O que significa SO?",opts:["Sistema Óptico","Sistema Operacional","Software Obrigatório","Servidor Online"],answer:1},
+      {q:"Q32: No Linux, o diretório raiz é representado por:",opts:["root","/","home","~"],answer:1},
+      {q:"Q33: Qual peça armazena permanentemente os dados no PC?",opts:["Placa-mãe","HD/SSD","RAM","Fonte"],answer:1},
+      {q:"Q34: O que é software proprietário?",opts:["Sistema de hardware","Com licença restrita","Software livre","Placa de vídeo"],answer:1},
+      {q:"Q35: O que significa MB?",opts:["MainBoard","MegaByte","MicroByte","MegaBit"],answer:1},
+      {q:"Q36: No Linux, o comando 'pwd' mostra:",opts:["Permissões","Diretório atual","Processos ativos","Tamanho do disco"],answer:1},
+      {q:"Q37: O que é firmware?",opts:["Editor de texto","Software básico do hardware","Aplicativo móvel","Driver de impressora"],answer:1},
+      {q:"Q38: Qual unidade é maior?",opts:["800 MB","1 GB","700 MB","900 MB"],answer:1},
+      {q:"Q39: O kernel no Linux é:",opts:["Navegador","Núcleo do sistema","Aplicativo","Interface gráfica"],answer:1},
+      {q:"Q40: Qual desses NÃO é um sistema operacional?",opts:["Windows","Linux","macOS","Intel"],answer:3}
+    ];
 
-// Captura IP
-fetch('https://api.ipify.org?format=json')
-  .then(res => res.json())
-  .then(data => {
-    userIP = data.ip;
-    if(localStorage.getItem("quiz_done_"+userIP)) {
-      document.querySelector(".quiz-container").innerHTML = "<h2>Você já realizou este quiz.</h2>";
+    let timeLeft = 0;
+    let timerInterval = null;
+    let penaltySeconds = 30;
+    let violations = 0;
+    let penaltyActive = false;
+    let penaltyHistory = [];
+    let examStarted = false;
+    let studentName = "";
+
+    const startBtn = document.getElementById('startBtn');
+    const quizForm = document.getElementById('quiz');
+    const questionsDiv = document.getElementById('questions');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const overlay = document.getElementById('overlay');
+    const penaltyTimerSpan = document.getElementById('penaltyTimer');
+    const violationsSpan = document.getElementById('violations');
+    const resultBox = document.getElementById('resultBox');
+    const resultDiv = document.getElementById('result');
+    const startScreen = document.getElementById('startScreen');
+    const studentNameInput = document.getElementById('studentName');
+
+    function buildQuestions(){
+      questionsDiv.innerHTML = '';
+      QUESTIONS.forEach((item,i)=>{
+        const div = document.createElement('div');div.className='question';
+        div.innerHTML = `<div><strong>${item.q}</strong></div>`;
+        const opts = document.createElement('div');opts.className='options';
+        item.opts.forEach((o,idx)=>{
+          const b = document.createElement('div');b.className='opt';b.tabIndex=0;b.innerText=o;
+          b.addEventListener('click',()=>select(i,idx,b));
+          b.addEventListener('keydown',(e)=>{if(e.key==='Enter')select(i,idx,b)});
+          opts.appendChild(b);
+        });
+        div.appendChild(opts);
+        questionsDiv.appendChild(div);
+      });
     }
-  });
 
-document.getElementById("startBtn").onclick = () => {
-  userName = document.getElementById("username").value.trim();
-  if(userName === ""){
-    alert("Por favor, digite seu nome completo.");
-    return;
-  }
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("quizScreen").style.display = "block";
-  loadQuestion();
-}
-
-function loadQuestion(){
-  timeLeft = 20;
-  document.getElementById("timer").innerText = "Tempo: "+timeLeft;
-  timer = setInterval(()=>{
-    timeLeft--;
-    document.getElementById("timer").innerText = "Tempo: "+timeLeft;
-    if(timeLeft<=0){
-      clearInterval(timer);
-      autoSelect();
+    function select(qIndex,optIndex,elem){
+      const qEl = questionsDiv.children[qIndex];
+      if(qEl.dataset.answered) return;
+      Array.from(qEl.querySelectorAll('.opt')).forEach((el,idx)=>{
+        el.classList.toggle('selected', idx===optIndex);
+        if(idx!==optIndex) el.style.pointerEvents='none';
+      });
+      qEl.dataset.selected = optIndex;
+      qEl.dataset.answered = true;
     }
-  },1000);
 
-  let q = quizData[currentQ];
-  document.getElementById("question").innerText = q.q;
-  let optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML="";
-  q.options.forEach((opt, idx) => {
-    let btn = document.createElement("button");
-    btn.innerText = opt;
-    btn.onclick = () => selectAnswer(btn, idx);
-    optionsDiv.appendChild(btn);
-  });
-  document.getElementById("nextBtn").style.display="none";
-}
-
-function selectAnswer(btn, answerIndex){
-  clearInterval(timer);
-  let correctIndex = quizData[currentQ].answer;
-  let buttons = document.querySelectorAll(".options button");
-
-  buttons.forEach((b, idx) => {
-    b.disabled = true;
-    if(idx === correctIndex) b.classList.add("correct");
-    if(idx === answerIndex && answerIndex !== correctIndex) b.classList.add("wrong");
-  });
-
-  userAnswers.push({
-    question: quizData[currentQ].q,
-    answer: answerIndex >= 0 ? quizData[currentQ].options[answerIndex] : "(Sem resposta)",
-    correct: quizData[currentQ].options[correctIndex]
-  });
-
-  document.getElementById("nextBtn").style.display="inline-block";
-}
-
-function autoSelect(){
-  selectAnswer(null, -1);
-}
-
-document.getElementById("nextBtn").onclick = () => {
-  currentQ++;
-  if(currentQ < quizData.length){
-    loadQuestion();
-  } else {
-    finishQuiz();
-  }
-}
-
-function finishQuiz(){
-  localStorage.setItem("quiz_done_"+userIP, true);
-
-  let reportDiv = document.getElementById("report");
-  reportDiv.innerHTML = "<h3>Relatório Final</h3>";
-  let acertos = 0, erros = 0;
-  userAnswers.forEach((res,i)=>{
-    if(res.answer === res.correct) acertos++; else erros++;
-    reportDiv.innerHTML += `<p><b>Q${i+1}:</b> ${res.question}<br> Sua resposta: ${res.answer}<br> Correta: ${res.correct}</p>`;
-  });
-  reportDiv.innerHTML += `<p><b>Acertos:</b> ${acertos} | <b>Erros:</b> ${erros}</p>`;
-
-  // Gera PDF
-  const { jsPDF } = window.jspdf;
-  let doc = new jsPDF();
-  let y = 20;
-  doc.setFontSize(14);
-  doc.text("Relatório do Quiz", 10, y);
-  y+=10;
-  doc.setFontSize(12);
-  doc.text("Nome: "+userName, 10, y);
-  y+=10;
-  doc.text("IP: Oculto", 10, y);
-  y+=10;
-  doc.text("Acertos: "+acertos+" | Erros: "+erros, 10, y);
-  y+=15;
-
-  userAnswers.forEach((res,i)=>{
-    let lines = doc.splitTextToSize(`Q${i+1}: ${res.question}`, 180);
-    doc.text(lines, 10, y); y += lines.length*7;
-    doc.text(`Sua resposta: ${res.answer}`, 10, y); y+=7;
-    doc.text(`Correta: ${res.correct}`, 10, y); y+=10;
-
-    if(y > 270){
-      doc.addPage();
-      y = 20;
+    function getAnswers(){
+      return Array.from(questionsDiv.children).map((qEl,idx)=>{
+        const sel = qEl.dataset.selected;
+        return sel===undefined?null:parseInt(sel,10);
+      });
     }
-  });
 
-  doc.save("relatorio_quiz.pdf");
-}
-</script>
+    function startTimer(){
+      clearInterval(timerInterval);
+      timerInterval = setInterval(()=>{
+        if(!penaltyActive){
+          timeLeft--;
+          if(timeLeft<=0){
+            clearInterval(timerInterval);submitQuiz();
+          }
+          updateTimerDisplay();
+        }
+      },1000);
+    }
+
+    function updateTimerDisplay(){
+      const mm = String(Math.floor(timeLeft/60)).padStart(2,'0');
+      const ss = String(timeLeft%60).padStart(2,'0');
+      timerDisplay.textContent = `${mm}:${ss}`;
+    }
+
+    function showOverlay(seconds){
+      penaltyActive = true;
+      overlay.classList.remove('hidden');
+      let s = seconds;penaltyTimerSpan.textContent=s;
+      const iv = setInterval(()=>{
+        s--;penaltyTimerSpan.textContent=s;
+        if(s<=0){clearInterval(iv);penaltyActive=false;overlay.classList.add('hidden');}
+      },1000);
+    }
+
+    function triggerViolation(){
+      violations++;violationsSpan.textContent=violations;
+      penaltyHistory.push({time:new Date().toLocaleTimeString(),penalty:penaltySeconds});
+      if(timeLeft>penaltySeconds) timeLeft-=penaltySeconds; else timeLeft=0;
+      updateTimerDisplay();
+      showOverlay(penaltySeconds);
+    }
+
+    document.addEventListener('visibilitychange',()=>{if(document.hidden) triggerViolation();});
+    window.addEventListener('blur',()=>{if(!penaltyActive) triggerViolation();});
+
+    document.addEventListener('contextmenu',e=>e.preventDefault());
+    document.addEventListener('copy',e=>e.preventDefault());
+    document.addEventListener('cut',e=>e.preventDefault());
+    document.addEventListener('paste',e=>e.preventDefault());
+
+    startBtn.addEventListener('click',async()=>{
+      if(examStarted) return;
+      if(!studentNameInput.value.trim()){alert('Digite seu nome antes de iniciar.');return;}
+      studentName = studentNameInput.value.trim();
+      examStarted = true;
+      startBtn.disabled = true;
+      studentNameInput.disabled = true;
+      timeLeft = 30*60; // tempo fixo de 30 min
+      penaltySeconds = 30; // punição fixa de 30s
+      buildQuestions();
+      startScreen.classList.add('hidden');
+      quizForm.classList.remove('hidden');
+      updateTimerDisplay();
+      startTimer();
+      try{if(document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen();}}catch(err){}
+    });
+
+    document.getElementById('submitBtn').addEventListener('click',submitQuiz);
+
+    function submitQuiz(){
+      clearInterval(timerInterval);
+      const answers = getAnswers();
+      let correct=0;let total=QUESTIONS.length;
+      const details = [];
+      QUESTIONS.forEach((q,i)=>{
+        const a = answers[i];
+        const ok = (a!==null && a===q.answer);
+        if(ok) correct++;
+        details.push({question:q.q,selected: a===null?null:q.opts[a],correct:q.opts[q.answer],ok});
+      });
+      const percent = Math.round((correct/total)*100);
+      resultBox.innerHTML = `<strong>Aluno:</strong> ${studentName}<br>`+
+        `Acertos: <strong>${correct}</strong> / ${total} (${percent}%)<br>` +
+        `Violações: ${violations}<br>` +
+        `<div style="max-height:260px;overflow:auto;margin-top:8px">` +
+        details.map((d,i)=>`<div><strong>Q${i+1}</strong> ${d.ok?'✅':'❌'} — Sua: ${d.selected||'<em>não respondeu</em>'} • Correta: ${d.correct}</div>`).join('') +
+        `</div><br><strong>Penalidades:</strong><br>` + penaltyHistory.map((p,i)=>`#${i+1} em ${p.time} — -${p.penalty}s`).join('<br>');
+      quizForm.classList.add('hidden');
+      resultDiv.classList.remove('hidden');
+      window.latestResult = {studentName,timestamp:new Date().toISOString(),timeLeft,violations,penaltyHistory,score:{correct,total,percent},details};
+    }
+
+    document.getElementById('downloadPdf').addEventListener('click',()=>{
+      if(!window.latestResult){return;}
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(12);
+      doc.text(`Aluno: ${window.latestResult.studentName}`,10,10);
+      doc.text(`Data: ${new Date(window.latestResult.timestamp).toLocaleString()}`,10,20);
+      doc.text(`Acertos: ${window.latestResult.score.correct} / ${window.latestResult.score.total} (${window.latestResult.score.percent}%)`,10,30);
+      doc.text(`Violações: ${window.latestResult.violations}`,10,40);
+      doc.text('Penalidades:',10,50);
+      window.latestResult.penaltyHistory.forEach((p,i)=>{
+        doc.text(`#${i+1} em ${p.time} — -${p.penalty}s`,15,60+i*10);
+      });
+      let y = 70 + window.latestResult.penaltyHistory.length*10;
+      doc.text('Detalhes:',10,y);
+      window.latestResult.details.forEach((d,i)=>{
+        y+=10;
+        if(y>270){doc.addPage();y=20;}
+        doc.text(`Q${i+1}: ${d.ok?'✅':'❌'} Sua: ${d.selected||'não respondeu'} | Correta: ${d.correct}`,10,y);
+      });
+      doc.save(`resultado_${window.latestResult.studentName}.pdf`);
+    });
+
+    buildQuestions();
+  </script>
 </body>
 </html>
