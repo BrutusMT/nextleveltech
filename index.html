@@ -143,7 +143,18 @@
         <span class="check">✔</span>
       </div>
     </div>
-    
+          <div class="opcao" onclick="selecionar(this)">
+        <span>Doce de Leite</span>
+        <input type="number" id="carne" min="0" value="0" onclick="event.stopPropagation()">
+        <span class="check">✔</span>
+      </div>
+    </div>
+        <div class="opcao" onclick="selecionar(this)">
+        <span>Romeu e Julieta</span>
+        <input type="number" id="carne" min="0" value="0" onclick="event.stopPropagation()">
+        <span class="check">✔</span>
+      </div>
+    </div>
     <textarea id="observacoes" placeholder="Observações (opcional)"></textarea>
     
     <button onclick="enviarPedido()">📲 Enviar Pedido via WhatsApp</button>
@@ -211,3 +222,4 @@
   </script>
 </body>
 </html>
+
