@@ -3,353 +3,177 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prova - Modo Kiosk</title>
+  <title>Panquecas Delícia</title>
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--text:#e6eef6}
-    *{box-sizing:border-box;font-family:Inter,Segoe UI,Arial;margin:0}
-    body{background:linear-gradient(180deg,#031025 0%,#071427 100%);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-    .wrap{width:100%;max-width:980px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.03));padding:18px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.7)}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    h1{font-size:20px}
-    .meta{font-size:13px;color:#9fb3c4}
-    #startScreen{display:grid;gap:12px}
-    button.primary{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:#042026;font-weight:700;cursor:pointer;transition:transform 0.2s}
-    button.primary:hover{transform:scale(1.05)}
-    input[type=text]{padding:8px;border-radius:6px;border:1px solid #334155;background:#0b1220;color:var(--text);width:100%}
-    .notice{color:#ffd080;font-size:13px}
-    .question{margin:12px 0;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;opacity:0;transform:translateY(20px);animation:fadeIn 0.5s forwards}
-    @keyframes fadeIn{to{opacity:1;transform:translateY(0)}}
-    .options{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .opt{background:rgba(255,255,255,0.03);padding:8px;border-radius:6px;cursor:pointer;transition:background 0.3s,transform 0.2s}
-    .opt:hover{background:rgba(6,182,212,0.1);transform:scale(1.02)}
-    .opt.selected{outline:2px solid rgba(6,182,212,0.5);background:rgba(6,182,212,0.2);pointer-events:none}
-    footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
-    .timer{font-weight:700}
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:9999;color:white}
-    .modal{background:#041526;padding:20px;border-radius:12px;max-width:680px}
-    .small{font-size:13px;color:#9fb3c4}
-    .hidden{display:none}
-    .result{padding:12px;background:linear-gradient(90deg,#031622,#042232);border-radius:10px}
-    .danger{color:#ff7b7b}
-    @media(max-width:600px){.wrap{padding:8px}.card{padding:12px}h1{font-size:18px}}
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+
+      background: url("123.png") no-repeat center center fixed;
+      background-size: cover;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      text-align: center;
+      max-width: 440px;
+      width: 100%;
+      backdrop-filter: blur(6px);
+    }
+    .card h1 {
+      color: #e67e22;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .preco {
+      background: #fdf2e9;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      color: #d35400;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+    }
+    .opcoes {
+      text-align: left;
+      margin: 15px 0;
+    }
+    .opcao {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 8px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .opcao.selecionada {
+      border-color: #27ae60;
+      background: #eafaf1;
+    }
+    .opcao span {
+      font-size: 1rem;
+      flex: 1;
+    }
+    .opcao input[type=number] {
+      width: 60px;
+      padding: 6px;
+      text-align: center;
+    }
+    .check {
+      font-size: 1.2rem;
+      color: #27ae60;
+      margin-left: 8px;
+      visibility: hidden;
+    }
+    .opcao.selecionada .check {
+      visibility: visible;
+    }
+    button {
+      background: #27ae60;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 12px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #1e8449;
+    }
+    .delivery-link {
+      display: block;
+      margin-top: 15px;
+      text-decoration: none;
+      color: #2980b9;
+      font-weight: bold;
+    }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <div class="wrap card">
-    <header>
-      <div>
-        <h1>Prova - Modo Kiosk</h1>
-        <div class="meta">Instrutor: Painel automático • Não permita sair da tela.</div>
+  <div class="card">
+    <h1>🥞 Panquecas Delícia</h1>
+    <p>Bandeja com 2 unidades recheadas. <br> Escolha seus sabores favoritos!</p>
+    
+    <div class="preco">A partir de R$ 15,00</div>
+    
+    <input type="text" id="nome" placeholder="Seu nome" required>
+    
+    <div class="opcoes">
+      <b>Sabores:</b><br><br>
+      <div class="opcao" onclick="selecionar(this)">
+        <span>Frango com Catupiry</span>
+        <input type="number" id="frango" min="0" value="0" onclick="event.stopPropagation()">
+        <span class="check">✔</span>
       </div>
-      <div class="meta">Violação: <span id="violations">0</span></div>
-    </header>
-
-    <main id="startScreen">
-      <p>Esta prova só poderá ser iniciada <strong>uma vez</strong>. Ao iniciar, permita o modo tela cheia quando solicitado.</p>
-      <label for="studentName">Nome do Aluno:</label>
-      <input type="text" id="studentName" placeholder="Digite seu nome" required>
-      <div id="alreadyTaken" class="notice hidden">Você já realizou esta prova — não é possível refazer.</div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button id="startBtn" class="primary">Iniciar Prova</button>
+      <div class="opcao" onclick="selecionar(this)">
+        <span>Carne com Queijo</span>
+        <input type="number" id="carne" min="0" value="0" onclick="event.stopPropagation()">
+        <span class="check">✔</span>
       </div>
-    </main>
-
-    <form id="quiz" class="hidden">
-      <div id="questions"></div>
-      <footer>
-        <div class="timer">Tempo restante: <span id="timerDisplay">00:00</span></div>
-        <div><button id="submitBtn" type="button" class="primary">Enviar Prova</button></div>
-      </footer>
-    </form>
-
-    <div id="result" class="hidden">
-      <h3>Resultado</h3>
-      <div id="resultBox" class="result"></div>
-      <div style="margin-top:12px;display:flex;gap:8px"><button id="downloadPdf">Baixar (PDF)</button></div>
     </div>
-  </div>
-
-  <div id="overlay" class="overlay hidden">
-    <div class="modal">
-      <h3 id="overlayTitle">Você saiu da prova</h3>
-      <p id="overlayMsg">Tempo de punição: <span id="penaltyTimer">30</span>s</p>
-      <p class="small">A prova ficará bloqueada até o fim da punição.</p>
-      <div style="margin-top:10px"><button id="overlayClose" class="primary">OK (aguarde)</button></div>
-    </div>
+    
+    <textarea id="observacoes" placeholder="Observações (opcional)"></textarea>
+    
+    <button onclick="enviarPedido()">📲 Enviar Pedido via WhatsApp</button>
+    
+    <a href="https://maisdeliveryapp.com.br/pwa/shop/detail/list/product/subcategorie/ODUwMDU=" target="_blank" class="delivery-link">
+      🔗 Ver no Delivery Oficial
+    </a>
   </div>
 
   <script>
-    // exam identifier (change if you want a different exam)
-    const EXAM_ID = 'prova_kiosk_v1';
-
-    const ALL_QUESTIONS = [
-      {q:"Qual sistema operacional é baseado em Linux?",opts:["Windows","Android","macOS","iOS"],answer:1},
-      {q:"Qual desses é considerado hardware?",opts:["Mouse","Excel","WhatsApp","Word"],answer:0},
-      {q:"O que é um sistema operacional?",opts:["Gerencia hardware e software","Dispositivo físico","Antivírus","Planilha"],answer:0},
-      {q:"Quantos bits existem em 1 byte?",opts:["4","8","16","32"],answer:1},
-      {q:"Qual é a ordem correta das unidades de armazenamento?",opts:["KB → MB → GB → TB","GB → KB → MB → TB","MB → KB → GB → TB","TB → GB → MB → KB"],answer:0},
-      {q:"Quem desenvolveu o Windows?",opts:["Microsoft","Apple","Google","Linux Foundation"],answer:0},
-      {q:"O Linux foi criado por:",opts:["Steve Jobs","Bill Gates","Linus Torvalds","Mark Zuckerberg"],answer:2},
-      {q:"O que significa a sigla 'KB'?",opts:["KiloByte","KiloBlock","KeyBoard","Kernel Base"],answer:0},
-      {q:"Qual software é usado para navegar na internet?",opts:["Chrome","Word","Excel","Paint"],answer:0},
-      {q:"A parte física do computador é chamada de:",opts:["Sistema","Hardware","Software","Firmware"],answer:1},
-      {q:"O processador é responsável por:",opts:["Controlar periféricos","Executar instruções","Gerar energia","Armazenar dados"],answer:1},
-      {q:"Qual é a menor unidade de informação digital?",opts:["Bit","Byte","KB","MB"],answer:0},
-      {q:"O que é multitarefa em um SO?",opts:["Executar vários programas ao mesmo tempo","Instalar jogos","Criar backups","Desligar o PC"],answer:0},
-      {q:"O comando 'ls' no Linux serve para:",opts:["Abrir programas","Listar arquivos","Formatar disco","Criar pastas"],answer:1},
-      {q:"A memória RAM é:",opts:["Volátil","Permanente","Fonte de energia","Placa de vídeo"],answer:0},
-      {q:"O que significa SO?",opts:["Sistema Operacional","Sistema Óptico","Servidor Online","Software Oficial"],answer:0},
-      {q:"Qual peça armazena permanentemente os dados no PC?",opts:["Placa-mãe","Fonte","HD/SSD","Memória RAM"],answer:2},
-      {q:"O que é software proprietário?",opts:["Com licença restrita","Software livre","Código aberto","Sistema de hardware"],answer:0},
-      {q:"No Linux, o comando 'pwd' mostra:",opts:["Diretório atual","Permissões","Processos","Usuários"],answer:0},
-      {q:"O kernel no Linux é:",opts:["Núcleo do sistema","Navegador","Antivírus","Editor de texto"],answer:0},
-      {q:"Um byte é formado por:",opts:["16 bits","8 bits","4 bits","2 bits"],answer:1},
-      {q:"Um pendrive de 16GB equivale a quantos MB?",opts:["16384","16000","32000","1024"],answer:0},
-      {q:"O que significa MB?",opts:["MegaByte","MainBoard","MicroBasic","MegaBlock"],answer:0},
-      {q:"Um HD de 1TB equivale a quantos GB?",opts:["1000","1024","500","2048"],answer:1},
-      {q:"Qual unidade vem após o GB?",opts:["MB","TB","KB","Bit"],answer:1},
-      {q:"Qual desses NÃO é um sistema operacional?",opts:["Windows","Linux","Intel","macOS"],answer:2},
-      {q:"O que é firmware?",opts:["Software básico do hardware","Editor de texto","Aplicativo de planilha","Antivírus"],answer:0},
-      {q:"O comando 'cd' no Linux serve para:",opts:["Mudar diretório","Criar diretório","Apagar arquivo","Copiar arquivo"],answer:0},
-      {q:"Qual desses é software livre?",opts:["Linux","MS Office","Photoshop","CorelDraw"],answer:0},
-      {q:"A sigla CPU significa:",opts:["Central Processing Unit","Computer Personal Unit","Central Peripheral Utility","Control Process Unit"],answer:0},
-      {q:"Qual componente é considerado a 'memória volátil' do computador?",opts:["HD","SSD","RAM","ROM"],answer:2},
-      {q:"Em informática, 'backup' significa:",opts:["Cópia de segurança","Atualização de sistema","Formatação de disco","Instalação de drivers"],answer:0},
-      {q:"A placa de vídeo é responsável por:",opts:["Processar gráficos","Armazenar arquivos","Controlar energia","Gerenciar redes"],answer:0},
-      {q:"Qual comando exibe o diretório atual no Windows (Prompt de Comando)?",opts:["dir","ls","cd","pwd"],answer:2},
-      {q:"Qual desses é exemplo de software de planilha?",opts:["Excel","Word","PowerPoint","Chrome"],answer:0},
-      {q:"A sigla BIOS significa:",opts:["Basic Input Output System","Binary Integrated Operating Setup","Base Internal Output Software","Basic Internal Operating System"],answer:0},
-      {q:"Um arquivo '.exe' é típico de qual sistema operacional?",opts:["Linux","Windows","macOS","Android"],answer:1},
-      {q:"Qual desses é um periférico de entrada?",opts:["Teclado","Monitor","Impressora","Caixa de som"],answer:0},
-      {q:"Qual é a função da fonte de alimentação do computador?",opts:["Converter energia elétrica","Armazenar dados","Resfriar componentes","Exibir imagens"],answer:0},
-      {q:"O que significa 'open source'?",opts:["Código aberto","Sistema operacional","Programa pago","Hardware proprietário"],answer:0}
-    ];
-
-    function shuffle(array){
-      for(let i=array.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [array[i],array[j]]=[array[j],array[i]];
+    function selecionar(div) {
+      const input = div.querySelector("input[type=number]");
+      div.classList.toggle("selecionada");
+      if (div.classList.contains("selecionada") && input.value == 0) {
+        input.value = 1; // seleciona pelo menos 1
       }
-      return array;
     }
 
-    let QUESTIONS = [];
-    let timeLeft = 0;
-    let timerInterval = null;
-    let penaltySeconds = 30;
-    let violations = 0;
-    let penaltyActive = false;
-    let penaltyHistory = [];
-    let examStarted = false;
-    let studentName = "";
+    function enviarPedido() {
+      const nome = document.getElementById("nome").value;
+      const frango = document.getElementById("frango").value;
+      const carne = document.getElementById("carne").value;
+      const observacoes = document.getElementById("observacoes").value;
 
-    const startBtn = document.getElementById('startBtn');
-    const quizForm = document.getElementById('quiz');
-    const questionsDiv = document.getElementById('questions');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const overlay = document.getElementById('overlay');
-    const penaltyTimerSpan = document.getElementById('penaltyTimer');
-    const violationsSpan = document.getElementById('violations');
-    const resultBox = document.getElementById('resultBox');
-    const resultDiv = document.getElementById('result');
-    const startScreen = document.getElementById('startScreen');
-    const studentNameInput = document.getElementById('studentName');
-
-    function buildQuestions(){
-      questionsDiv.innerHTML = '';
-      QUESTIONS.forEach((item,i)=>{
-        const div = document.createElement('div');div.className='question';
-        div.innerHTML = `<div><strong>Q${i+1}: ${item.q}</strong></div>`;
-        const opts = document.createElement('div');opts.className='options';
-        item.opts.forEach((o,idx)=>{
-          const b = document.createElement('div');b.className='opt';b.tabIndex=0;b.innerText=o;
-          b.addEventListener('click',()=>select(i,idx,b));
-          b.addEventListener('keydown',(e)=>{if(e.key==='Enter')select(i,idx,b)});
-          opts.appendChild(b);
-        });
-        div.appendChild(opts);
-        questionsDiv.appendChild(div);
-      });
-    }
-
-    function select(qIndex,optIndex,elem){
-      const qEl = questionsDiv.children[qIndex];
-      if(qEl.dataset.answered) return;
-      Array.from(qEl.querySelectorAll('.opt')).forEach((el,idx)=>{
-        el.classList.toggle('selected', idx===optIndex);
-        if(idx!==optIndex) el.style.pointerEvents='none';
-      });
-      qEl.dataset.selected = optIndex;
-      qEl.dataset.answered = true;
-    }
-
-    function getAnswers(){
-      return Array.from(questionsDiv.children).map((qEl,idx)=>{
-        const sel = qEl.dataset.selected;
-        return sel===undefined?null:parseInt(sel,10);
-      });
-    }
-
-    function startTimer(){
-      clearInterval(timerInterval);
-      timerInterval = setInterval(()=>{
-        if(!penaltyActive){
-          timeLeft--;
-          if(timeLeft<=0){
-            clearInterval(timerInterval);submitQuiz();
-          }
-          updateTimerDisplay();
-        }
-      },1000);
-    }
-
-    function updateTimerDisplay(){
-      const mm = String(Math.floor(timeLeft/60)).padStart(2,'0');
-      const ss = String(timeLeft%60).padStart(2,'0');
-      timerDisplay.textContent = `${mm}:${ss}`;
-    }
-
-    function showOverlay(seconds){
-      penaltyActive = true;
-      overlay.classList.remove('hidden');
-      let s = seconds;penaltyTimerSpan.textContent=s;
-      const iv = setInterval(()=>{
-        s--;penaltyTimerSpan.textContent=s;
-        if(s<=0){clearInterval(iv);penaltyActive=false;overlay.classList.add('hidden');}
-      },1000);
-    }
-
-    function triggerViolation(){
-      violations++;violationsSpan.textContent=violations;
-      penaltyHistory.push({time:new Date().toLocaleTimeString(),penalty:penaltySeconds});
-      if(timeLeft>penaltySeconds) timeLeft-=penaltySeconds; else timeLeft=0;
-      updateTimerDisplay();
-      showOverlay(penaltySeconds);
-    }
-
-    document.addEventListener('visibilitychange',()=>{if(document.hidden) triggerViolation();});
-    window.addEventListener('blur',()=>{if(!penaltyActive) triggerViolation();});
-
-    document.addEventListener('contextmenu',e=>e.preventDefault());
-    document.addEventListener('copy',e=>e.preventDefault());
-    document.addEventListener('cut',e=>e.preventDefault());
-    document.addEventListener('paste',e=>e.preventDefault());
-
-    startBtn.addEventListener('click',async()=>{
-      if(examStarted) return;
-      if(!studentNameInput.value.trim()){alert('Digite seu nome antes de iniciar.');return;}
-      studentName = studentNameInput.value.trim();
-      // check localStorage: if result exists, block
-      try{
-        const key = `exam_result_${EXAM_ID}_${studentName}`;
-        if(localStorage.getItem(key)){
-          document.getElementById('alreadyTaken').classList.remove('hidden');
-          startBtn.disabled = true;return;
-        }
-      }catch(e){console.warn('localStorage inacessível',e)}
-
-      examStarted = true;
-      startBtn.disabled = true;
-      studentNameInput.disabled = true;
-      timeLeft = 30*60; // tempo fixo de 30 min
-      penaltySeconds = 30; // punição fixa de 30s
-      // use all 40 questions (no repeat)
-      QUESTIONS = shuffle([...ALL_QUESTIONS]);
-      buildQuestions();
-      startScreen.classList.add('hidden');
-      quizForm.classList.remove('hidden');
-      updateTimerDisplay();
-      startTimer();
-      try{if(document.documentElement.requestFullscreen){await document.documentElement.requestFullscreen();}}catch(err){}
-
-      // mark as started (prevents opening again in same browser under same name)
-      try{localStorage.setItem(`exam_started_${EXAM_ID}_${studentName}`, JSON.stringify({startedAt:new Date().toISOString()}));}catch(e){console.warn('localStorage set failed',e)}
-    });
-
-    document.getElementById('submitBtn').addEventListener('click',submitQuiz);
-
-    // warn on unload to avoid accidental close
-    window.addEventListener('beforeunload', function (e) {
-      if(examStarted && !window.latestResult){
-        e.preventDefault(); e.returnValue = '';
+      if (frango == 0 && carne == 0) {
+        alert("Por favor, escolha pelo menos um sabor!");
+        return;
       }
-    });
 
-    function submitQuiz(){
-      clearInterval(timerInterval);
-      const answers = getAnswers();
-      let correct=0;let total=QUESTIONS.length;
-      const details = [];
-      QUESTIONS.forEach((q,i)=>{
-        const a = answers[i];
-        const ok = (a!==null && a===q.answer);
-        if(ok) correct++;
-        details.push({question:q.q,selected: a===null?null:q.opts[a],correct:q.opts[q.answer],ok});
-      });
-      const percent = Math.round((correct/total)*100);
-      resultBox.innerHTML = `<strong>Aluno:</strong> ${studentName}<br>`+
-        `Acertos: <strong>${correct}</strong> / ${total} (${percent}%)<br>` +
-        `Violações: ${violations}<br>` +
-        `<div style="max-height:260px;overflow:auto;margin-top:8px">` +
-        details.map((d,i)=>`<div><strong>Q${i+1}</strong> ${d.ok?'✅':'❌'} — Sua: ${d.selected||'<em>não respondeu</em>'} • Correta: ${d.correct}</div>`).join('') +
-        `</div><br><strong>Penalidades:</strong><br>` + penaltyHistory.map((p,i)=>`#${i+1} em ${p.time} — -${p.penalty}s`).join('<br>');
-      quizForm.classList.add('hidden');
-      resultDiv.classList.remove('hidden');
-      window.latestResult = {studentName,timestamp:new Date().toISOString(),timeLeft,violations,penaltyHistory,score:{correct,total,percent},details};
+      let mensagem = `🍴 Pedido de Panquecas\n`;
+      mensagem += `👤 Nome: ${nome}\n`;
+      if (frango > 0) mensagem += `🥞 Frango com Catupiry: ${frango} un.\n`;
+      if (carne > 0) mensagem += `🥞 Carne com Queijo: ${carne} un.\n`;
+      mensagem += `💰 Valor: a partir de R$ 15,00\n`;
+      if (observacoes) mensagem += `📝 Obs: ${observacoes}`;
 
-      // persist result to localStorage to lock the exam for this student
-      try{
-        const key = `exam_result_${EXAM_ID}_${studentName}`;
-        localStorage.setItem(key, JSON.stringify(window.latestResult));
-        // also set a global flag for this browser (optional)
-        localStorage.setItem(`exam_taken_global_${EXAM_ID}`, 'true');
-      }catch(e){console.warn('Falha ao salvar resultado localmente',e)}
+      const telefone = "5565999544343"; // <-- ajuste seu número (DDI+DDD+número)
+      const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
+      
+      window.open(url, "_blank");
     }
-
-    document.getElementById('downloadPdf').addEventListener('click',()=>{
-      if(!window.latestResult){return;}
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      // simple formatted PDF
-      doc.setFontSize(16);doc.text('Relatório da Prova',105,15,null,null,'center');
-      doc.setFontSize(12);
-      doc.text(`Aluno: ${window.latestResult.studentName}`,10,30);
-      doc.text(`Data: ${new Date(window.latestResult.timestamp).toLocaleString()}`,10,38);
-      doc.text(`Acertos: ${window.latestResult.score.correct} / ${window.latestResult.score.total} (${window.latestResult.score.percent}%)`,10,46);
-      doc.text(`Violações: ${window.latestResult.violations}`,10,54);
-      doc.text('Penalidades:',10,64);
-      window.latestResult.penaltyHistory.forEach((p,i)=>{
-        doc.text(`#${i+1} em ${p.time} — -${p.penalty}s`,14,72+i*8);
-      });
-      let y = 82 + window.latestResult.penaltyHistory.length*8;
-      doc.text('Detalhes:',10,y); y+=8;
-      window.latestResult.details.forEach((d,i)=>{
-        if(y>280){doc.addPage();y=20;}
-        doc.text(`Q${i+1}: ${d.ok?'OK':'ERR'} | Sua: ${d.selected||'não respondeu'} | Correta: ${d.correct}`,10,y);
-        y+=7;
-      });
-      doc.save(`resultado_${window.latestResult.studentName.replace(/\s+/g,'_')}.pdf`);
-    });
-
-    // on load: if a name is typed, check if result exists and show notice
-    studentNameInput.addEventListener('blur',()=>{
-      const name = studentNameInput.value.trim();
-      if(!name) return;
-      try{
-        const key = `exam_result_${EXAM_ID}_${name}`;
-        if(localStorage.getItem(key)){
-          document.getElementById('alreadyTaken').classList.remove('hidden');
-          startBtn.disabled = true;
-        }else{
-          document.getElementById('alreadyTaken').classList.add('hidden');
-          startBtn.disabled = false;
-        }
-      }catch(e){console.warn('localStorage inacessível',e)}
-    });
-
-    buildQuestions();
   </script>
 </body>
 </html>
