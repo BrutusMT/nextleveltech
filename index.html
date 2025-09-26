@@ -23,7 +23,7 @@
       border-radius: 18px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.25);
       text-align: center;
-      max-width: 440px;
+      max-width: 460px;
       width: 100%;
       backdrop-filter: blur(6px);
     }
@@ -101,6 +101,13 @@
     button:hover {
       background: #1e8449;
     }
+    .btn-localizacao {
+      background: #2980b9;
+      margin-top: 8px;
+    }
+    .btn-localizacao:hover {
+      background: #1f618d;
+    }
     .delivery-link {
       display: block;
       margin-top: 15px;
@@ -118,7 +125,11 @@
     <div class="preco">A partir de R$ 15,00</div>
     
     <input type="text" id="nome" placeholder="Seu nome" required>
-    
+    <input type="text" id="endereco" placeholder="Endereço para entrega">
+
+    <button class="btn-localizacao" onclick="pegarLocalizacao()">📍 Usar minha localização</button>
+    <input type="hidden" id="localizacao">
+
     <div class="opcoes">
       <b>Sabores:</b><br><br>
       <div class="opcao" onclick="selecionar(this)">
@@ -147,12 +158,30 @@
       const input = div.querySelector("input[type=number]");
       div.classList.toggle("selecionada");
       if (div.classList.contains("selecionada") && input.value == 0) {
-        input.value = 1; // seleciona pelo menos 1
+        input.value = 1;
+      }
+    }
+
+    function pegarLocalizacao() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const link = `https://www.google.com/maps?q=${lat},${lon}`;
+          document.getElementById("localizacao").value = link;
+          alert("📍 Localização adicionada com sucesso!");
+        }, function() {
+          alert("❌ Não foi possível obter sua localização.");
+        });
+      } else {
+        alert("Seu navegador não suporta geolocalização.");
       }
     }
 
     function enviarPedido() {
       const nome = document.getElementById("nome").value;
+      const endereco = document.getElementById("endereco").value;
+      const localizacao = document.getElementById("localizacao").value;
       const frango = parseInt(document.getElementById("frango").value) || 0;
       const carne = parseInt(document.getElementById("carne").value) || 0;
       const observacoes = document.getElementById("observacoes").value;
@@ -162,18 +191,19 @@
         return;
       }
 
-      // calcula o total
       const precoUnitario = 15;
       const total = (frango + carne) * precoUnitario;
 
       let mensagem = `🍴 Pedido de Panquecas\n`;
       mensagem += `👤 Nome: ${nome}\n`;
+      if (endereco) mensagem += `🏠 Endereço: ${endereco}\n`;
       if (frango > 0) mensagem += `🥞 Frango com Catupiry: ${frango} un.\n`;
       if (carne > 0) mensagem += `🥞 Carne com Queijo: ${carne} un.\n`;
       mensagem += `💰 Total: R$ ${total},00\n`;
-      if (observacoes) mensagem += `📝 Obs: ${observacoes}`;
+      if (observacoes) mensagem += `📝 Obs: ${observacoes}\n`;
+      if (localizacao) mensagem += `📍 Localização: ${localizacao}`;
 
-      const telefone = "5565999544343"; // <-- ajuste seu número (DDI+DDD+número)
+      const telefone = "5565999544343"; // ajuste seu número
       const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
       
       window.open(url, "_blank");
